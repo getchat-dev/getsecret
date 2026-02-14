@@ -11,7 +11,7 @@ services:
     init: true
     env_file: .env
     expose:
-      - "3000"
+      - "${APP_PORT}"
     networks:
       - web
     labels:
@@ -19,7 +19,7 @@ services:
       - traefik.docker.network=web # <<< force Traefik to use the 'web' network
 
       # your app's internal port inside the container
-      - traefik.http.services.burnotes.loadbalancer.server.port=80
+      - traefik.http.services.burnotes.loadbalancer.server.port=${APP_PORT}
 
       # HTTPS router
       - traefik.http.routers.burnotes.rule=Host(`${APP_HOST}`)
