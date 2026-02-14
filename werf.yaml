@@ -1,0 +1,63 @@
+project: burnotes
+configVersion: 1
+
+---
+image: base-build-node
+from: ubuntu:24.04
+docker:
+  WORKDIR: /app
+  ENV:
+    TERM: xterm
+shell:
+  beforeInstall:
+    - |
+      set -e
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y apt-transport-https curl tzdata
+      rm -f /etc/localtime
+      ln -s /usr/share/zoneinfo/UTC /etc/localtime
+  install:
+    - |
+      set -e
+      curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+      apt-get install -y build-essential python3 nodejs
+      npm install -g npm tsx dotenv-cli vite-node
+      npm install -g pnpm
+---
+image: app
+fromImage: base-build-node
+shell:
+  install:
+    - cd /app
+    - if [ -f package-lock.json ]; then npm ci; else npm install; fi
+  setup:
+    - cd /app
+    - npm run build
+    - npm prune --omit=dev
+git:
+- add: /
+  to: /app
+  excludePaths:
+  - .git
+  - .env.example
+  - .helm
+  - .werf
+  - .next
+  - node_modules
+  - werf.yaml
+  - werf-giterminism.yaml
+  - docker-compose.yml
+  - docker-compose.dev.yml
+  - .gitlab-ci.yml
+  stageDependencies:
+    install:
+      - package.json
+      - package-lock.json
+    setup:
+      - src
+      - public
+      - package.json
+      - next.config.ts
+      - tsconfig.json
+      - next-env.d.ts

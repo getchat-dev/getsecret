@@ -1,0 +1,37 @@
+name: burnotes
+
+networks:
+  web:
+    external: true
+
+services:
+  app:
+    image: $WERF_APP_DOCKER_IMAGE_NAME
+    command: ["npm", "start"]
+    init: true
+    env_file: .env
+    expose:
+      - "3000"
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web # <<< force Traefik to use the 'web' network
+
+      # your app's internal port inside the container
+      - traefik.http.services.burnotes.loadbalancer.server.port=80
+
+      # HTTPS router
+      - traefik.http.routers.burnotes.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.burnotes.entrypoints=websecure
+      - traefik.http.routers.burnotes.tls=true
+      - traefik.http.routers.burnotes.tls.certresolver=le
+
+      # HTTP router -> redirect to HTTPS
+      - traefik.http.routers.burnotesinsecure.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.burnotesinsecure.entrypoints=web
+      - traefik.http.routers.burnotesinsecure.middlewares=redirect-to-https
+
+      # Redirect middleware
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true

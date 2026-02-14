@@ -1,0 +1,22 @@
+name: burnotes-dev
+
+services:
+  app:
+    image: $WERF_APP_DOCKER_IMAGE_NAME
+    # command: ["tail", "-f", "/dev/null"]
+    command: ["npm", "start"]
+    env_file: .env
+    expose:
+      - "3000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.burnotes.rule=Host(`${APP_HOST}`)
+      - traefik.http.routers.burnotes.entrypoints=http
+      - traefik.http.services.burnotes.loadbalancer.server.port=80
+    networks:
+      - burnotes-net
+    restart: unless-stopped
+
+networks:
+  burnotes-net:
+    driver: bridge
