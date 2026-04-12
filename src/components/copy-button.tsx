@@ -13,6 +13,10 @@ type CopyFeedbackMessages = {
     errorMessage: string;
 };
 
+type CopyTextOptions = {
+    silentError?: boolean;
+};
+
 type CopyButtonProps = {
     textToCopy: string;
     copyLabel: string;
@@ -63,7 +67,11 @@ export function useClipboardCopy() {
         }, 2400);
     }
 
-    async function copyText(textToCopy: string, { successMessage, errorMessage }: CopyFeedbackMessages) {
+    async function copyText(
+        textToCopy: string,
+        { successMessage, errorMessage }: CopyFeedbackMessages,
+        options?: CopyTextOptions,
+    ) {
         try {
             await navigator.clipboard.writeText(textToCopy);
             navigator.vibrate?.(12);
@@ -71,9 +79,11 @@ export function useClipboardCopy() {
             showToast({ kind: 'success', message: successMessage });
             scheduleCopyStatusReset();
         } catch {
-            setCopyStatus('error');
-            showToast({ kind: 'error', message: errorMessage });
-            scheduleCopyStatusReset();
+            if (!options?.silentError) {
+                setCopyStatus('error');
+                showToast({ kind: 'error', message: errorMessage });
+                scheduleCopyStatusReset();
+            }
         }
     }
 

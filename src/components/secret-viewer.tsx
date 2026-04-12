@@ -233,10 +233,14 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         try {
             const nextLink = await createSecretLink(secret);
             setReshareState({ status: 'ready', link: nextLink });
-            await copyText(nextLink, {
-                successMessage: 'New secret link copied to clipboard',
-                errorMessage: 'Could not copy new link to clipboard',
-            });
+            await copyText(
+                nextLink,
+                {
+                    successMessage: 'New secret link copied to clipboard',
+                    errorMessage: 'Could not copy new link to clipboard',
+                },
+                { silentError: true },
+            );
         } catch (error) {
             setReshareState({
                 status: 'error',

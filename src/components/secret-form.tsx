@@ -30,10 +30,14 @@ export function SecretForm() {
             const nextLink = await createSecretLink(secret);
             setLink(nextLink);
             setSecret('');
-            await copyText(nextLink, {
-                successMessage: 'Secret link copied to clipboard',
-                errorMessage: 'Could not copy link to clipboard',
-            });
+            await copyText(
+                nextLink,
+                {
+                    successMessage: 'Secret link copied to clipboard',
+                    errorMessage: 'Could not copy link to clipboard',
+                },
+                { silentError: true },
+            );
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Failed to create secret link');
         } finally {
