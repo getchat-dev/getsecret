@@ -1,26 +1,26 @@
 {
-  "name": "burnotes",
-  "version": "2.0.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "format": "biome format --write",
-    "lint": "biome lint --write",
-    "clean": "rm -rf .next"
-  },
-  "dependencies": {
-    "next": "16.0.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "22.15.29",
-    "@types/react": "19.1.8",
-    "@types/react-dom": "19.1.6",
-    "eslint": "9.30.1",
-    "eslint-config-next": "16.0.0",
-    "typescript": "5.8.3"
-  }
+    "name": "burnotes",
+    "version": "2.0.1",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "format": "npx @biomejs/biome format --write",
+        "lint": "npx @biomejs/biome lint --write",
+        "clean": "rm -rf .next"
+    },
+    "dependencies": {
+        "next": "16.0.0",
+        "react": "19.1.0",
+        "react-dom": "19.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "22.15.29",
+        "@types/react": "19.1.8",
+        "@types/react-dom": "19.1.6",
+        "eslint": "9.30.1",
+        "eslint-config-next": "16.0.0",
+        "typescript": "5.8.3"
+    }
 }

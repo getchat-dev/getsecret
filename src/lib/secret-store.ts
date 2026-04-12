@@ -4,86 +4,82 @@ const SECRET_TTL_MS = 24 * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 60 * 1000;
 
 type SecretRecord = {
-  encryptedSecret: EncryptedSecret;
-  accessTokenHash: string;
-  expiresAt: number;
+    encryptedSecret: EncryptedSecret;
+    accessTokenHash: string;
+    expiresAt: number;
 };
 
 class SecretStore {
-  private readonly store = new Map<string, SecretRecord>();
+    private readonly store = new Map<string, SecretRecord>();
 
-  constructor() {
-    const timer = setInterval(() => this.cleanupExpired(), CLEANUP_INTERVAL_MS);
-    timer.unref();
-  }
-
-  create(
-    id: string,
-    encryptedSecret: EncryptedSecret,
-    accessTokenHash: string
-  ): { expiresAt: number } | null {
-    this.cleanupExpired();
-
-    if (this.store.has(id)) {
-      return null;
+    constructor() {
+        const timer = setInterval(() => this.cleanupExpired(), CLEANUP_INTERVAL_MS);
+        timer.unref();
     }
 
-    const expiresAt = Date.now() + SECRET_TTL_MS;
-    this.store.set(id, { encryptedSecret, accessTokenHash, expiresAt });
-    return { expiresAt };
-  }
+    create(id: string, encryptedSecret: EncryptedSecret, accessTokenHash: string): { expiresAt: number } | null {
+        this.cleanupExpired();
 
-  getMetadata(id: string): { expiresAt: number } | null {
-    this.cleanupExpired();
+        if (this.store.has(id)) {
+            return null;
+        }
 
-    const record = this.store.get(id);
-    if (!record) {
-      return null;
+        const expiresAt = Date.now() + SECRET_TTL_MS;
+        this.store.set(id, { encryptedSecret, accessTokenHash, expiresAt });
+        return { expiresAt };
     }
 
-    return { expiresAt: record.expiresAt };
-  }
+    getMetadata(id: string): { expiresAt: number } | null {
+        this.cleanupExpired();
 
-  consume(id: string, accessTokenHash: string): EncryptedSecret | null {
-    this.cleanupExpired();
+        const record = this.store.get(id);
+        if (!record) {
+            return null;
+        }
 
-    const record = this.store.get(id);
-    if (!record) {
-      return null;
+        return { expiresAt: record.expiresAt };
     }
 
-    if (record.accessTokenHash !== accessTokenHash) {
-      return null;
-    }
+    consume(id: string, accessTokenHash: string): EncryptedSecret | null {
+        this.cleanupExpired();
 
-    this.store.delete(id);
+        const record = this.store.get(id);
+        if (!record) {
+            return null;
+        }
 
-    if (record.expiresAt <= Date.now()) {
-      return null;
-    }
+        if (record.accessTokenHash !== accessTokenHash) {
+            return null;
+        }
 
-    return record.encryptedSecret;
-  }
-
-  private cleanupExpired(): void {
-    const now = Date.now();
-    for (const [id, record] of this.store.entries()) {
-      if (record.expiresAt <= now) {
         this.store.delete(id);
-      }
+
+        if (record.expiresAt <= Date.now()) {
+            return null;
+        }
+
+        return record.encryptedSecret;
     }
-  }
+
+    private cleanupExpired(): void {
+        const now = Date.now();
+        for (const [id, record] of this.store.entries()) {
+            if (record.expiresAt <= now) {
+                this.store.delete(id);
+            }
+        }
+    }
 }
 
 declare global {
-  // eslint-disable-next-line no-var
-  var __secretStore: SecretStore | undefined;
+    // eslint-disable-next-line no-var
+    var __secretStore: SecretStore | undefined;
 }
 
 export const secretStore = globalThis.__secretStore ?? new SecretStore();
 
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.__secretStore = secretStore;
+    globalThis.__secretStore = secretStore;
 }
 
 export const SECRET_TTL_SECONDS = SECRET_TTL_MS / 1000;

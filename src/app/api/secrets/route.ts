@@ -1,11 +1,6 @@
 import { jsonNoStore, getClientIp } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
-import {
-  hashAccessToken,
-  isValidAccessToken,
-  isValidEncryptedSecret,
-  isValidSecretId
-} from '@/lib/secret-crypto';
+import { hashAccessToken, isValidAccessToken, isValidEncryptedSecret, isValidSecretId } from '@/lib/secret-crypto';
 import { secretStore, SECRET_TTL_SECONDS } from '@/lib/secret-store';
 
 export const runtime = 'nodejs';
@@ -15,54 +10,54 @@ const CREATE_LIMIT = 30;
 const CREATE_WINDOW_MS = 60_000;
 
 type CreateSecretBody = {
-  id?: unknown;
-  encryptedSecret?: unknown;
-  accessToken?: unknown;
+    id?: unknown;
+    encryptedSecret?: unknown;
+    accessToken?: unknown;
 };
 
 export async function POST(request: Request) {
-  const clientIp = getClientIp(request);
-  if (rateLimiter.isLimited(`create:${clientIp}`, CREATE_LIMIT, CREATE_WINDOW_MS)) {
-    return jsonNoStore({ error: 'Too many requests' }, 429);
-  }
+    const clientIp = getClientIp(request);
+    if (rateLimiter.isLimited(`create:${clientIp}`, CREATE_LIMIT, CREATE_WINDOW_MS)) {
+        return jsonNoStore({ error: 'Too many requests' }, 429);
+    }
 
-  const contentType = request.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    return jsonNoStore({ error: 'Invalid content type' }, 415);
-  }
+    const contentType = request.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+        return jsonNoStore({ error: 'Invalid content type' }, 415);
+    }
 
-  let body: CreateSecretBody;
-  try {
-    body = (await request.json()) as CreateSecretBody;
-  } catch {
-    return jsonNoStore({ error: 'Invalid JSON body' }, 400);
-  }
+    let body: CreateSecretBody;
+    try {
+        body = (await request.json()) as CreateSecretBody;
+    } catch {
+        return jsonNoStore({ error: 'Invalid JSON body' }, 400);
+    }
 
-  if (typeof body.id !== 'string' || !isValidSecretId(body.id)) {
-    return jsonNoStore({ error: 'Invalid secret id' }, 400);
-  }
+    if (typeof body.id !== 'string' || !isValidSecretId(body.id)) {
+        return jsonNoStore({ error: 'Invalid secret id' }, 400);
+    }
 
-  if (!isValidEncryptedSecret(body.encryptedSecret)) {
-    return jsonNoStore({ error: 'Invalid encrypted secret payload' }, 400);
-  }
+    if (!isValidEncryptedSecret(body.encryptedSecret)) {
+        return jsonNoStore({ error: 'Invalid encrypted secret payload' }, 400);
+    }
 
-  if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
-    return jsonNoStore({ error: 'Invalid secret access token' }, 400);
-  }
+    if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
+        return jsonNoStore({ error: 'Invalid secret access token' }, 400);
+    }
 
-  const accessTokenHash = await hashAccessToken(body.accessToken);
-  const createdSecret = secretStore.create(body.id, body.encryptedSecret, accessTokenHash);
-  if (!createdSecret) {
-    return jsonNoStore({ error: 'Secret id already exists' }, 409);
-  }
+    const accessTokenHash = await hashAccessToken(body.accessToken);
+    const createdSecret = secretStore.create(body.id, body.encryptedSecret, accessTokenHash);
+    if (!createdSecret) {
+        return jsonNoStore({ error: 'Secret id already exists' }, 409);
+    }
 
-  return jsonNoStore(
-    {
-      id: body.id,
-      path: `/s/${body.id}`,
-      expiresAt: createdSecret.expiresAt,
-      expiresInSeconds: SECRET_TTL_SECONDS
-    },
-    201
-  );
+    return jsonNoStore(
+        {
+            id: body.id,
+            path: `/s/${body.id}`,
+            expiresAt: createdSecret.expiresAt,
+            expiresInSeconds: SECRET_TTL_SECONDS,
+        },
+        201,
+    );
 }

@@ -10,45 +10,42 @@ const CONSUME_LIMIT = 120;
 const CONSUME_WINDOW_MS = 60_000;
 
 type ConsumeSecretBody = {
-  accessToken?: unknown;
+    accessToken?: unknown;
 };
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const clientIp = getClientIp(request);
-  if (rateLimiter.isLimited(`consume:${clientIp}`, CONSUME_LIMIT, CONSUME_WINDOW_MS)) {
-    return jsonNoStore({ error: 'Too many requests' }, 429);
-  }
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const clientIp = getClientIp(request);
+    if (rateLimiter.isLimited(`consume:${clientIp}`, CONSUME_LIMIT, CONSUME_WINDOW_MS)) {
+        return jsonNoStore({ error: 'Too many requests' }, 429);
+    }
 
-  const { id } = await params;
+    const { id } = await params;
 
-  if (!isValidSecretId(id)) {
-    return jsonNoStore({ error: 'Invalid secret id' }, 400);
-  }
+    if (!isValidSecretId(id)) {
+        return jsonNoStore({ error: 'Invalid secret id' }, 400);
+    }
 
-  const contentType = request.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    return jsonNoStore({ error: 'Invalid content type' }, 415);
-  }
+    const contentType = request.headers.get('content-type') ?? '';
+    if (!contentType.includes('application/json')) {
+        return jsonNoStore({ error: 'Invalid content type' }, 415);
+    }
 
-  let body: ConsumeSecretBody;
-  try {
-    body = (await request.json()) as ConsumeSecretBody;
-  } catch {
-    return jsonNoStore({ error: 'Invalid JSON body' }, 400);
-  }
+    let body: ConsumeSecretBody;
+    try {
+        body = (await request.json()) as ConsumeSecretBody;
+    } catch {
+        return jsonNoStore({ error: 'Invalid JSON body' }, 400);
+    }
 
-  if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
-    return jsonNoStore({ error: 'Invalid secret access token' }, 400);
-  }
+    if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
+        return jsonNoStore({ error: 'Invalid secret access token' }, 400);
+    }
 
-  const accessTokenHash = await hashAccessToken(body.accessToken);
-  const encryptedSecret = secretStore.consume(id, accessTokenHash);
-  if (!encryptedSecret) {
-    return jsonNoStore({ error: 'Secret not found or expired' }, 404);
-  }
+    const accessTokenHash = await hashAccessToken(body.accessToken);
+    const encryptedSecret = secretStore.consume(id, accessTokenHash);
+    if (!encryptedSecret) {
+        return jsonNoStore({ error: 'Secret not found or expired' }, 404);
+    }
 
-  return jsonNoStore({ encryptedSecret }, 200);
+    return jsonNoStore({ encryptedSecret }, 200);
 }
