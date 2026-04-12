@@ -42,6 +42,4 @@ declare global {
 
 export const rateLimiter = globalThis.__memoryRateLimiter ?? new MemoryRateLimiter();
 
-if (process.env.NODE_ENV !== 'production') {
-    globalThis.__memoryRateLimiter = rateLimiter;
-}
+globalThis.__memoryRateLimiter = rateLimiter;

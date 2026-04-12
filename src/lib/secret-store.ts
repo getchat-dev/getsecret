@@ -78,8 +78,6 @@ declare global {
 
 export const secretStore = globalThis.__secretStore ?? new SecretStore();
 
-if (process.env.NODE_ENV !== 'production') {
-    globalThis.__secretStore = secretStore;
-}
+globalThis.__secretStore = secretStore;
 
 export const SECRET_TTL_SECONDS = SECRET_TTL_MS / 1000;
