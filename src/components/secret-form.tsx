@@ -1,6 +1,6 @@
 'use client';
 
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { CopyButton } from '@/components/copy-button';
 import { createSecretLink } from '@/lib/create-secret-link';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
@@ -10,8 +10,13 @@ export function SecretForm() {
     const [link, setLink] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const secretInputRef = useRef<HTMLTextAreaElement | null>(null);
 
     const remaining = useMemo(() => MAX_SECRET_LENGTH - secret.length, [secret.length]);
+
+    useEffect(() => {
+        secretInputRef.current?.focus();
+    }, []);
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -38,6 +43,7 @@ export function SecretForm() {
                     Secret text
                 </label>
                 <textarea
+                    ref={secretInputRef}
                     id="secret"
                     name="secret"
                     className="textarea"
