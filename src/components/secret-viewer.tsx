@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CopyButton } from '@/components/copy-button';
+import { createSecretLink } from '@/lib/create-secret-link';
 import {
     decryptSecret,
     deriveSecretAccessToken,
@@ -19,6 +20,12 @@ type SecretState =
 type LinkState =
     | { status: 'checking' }
     | { status: 'ready'; secretKey: string; accessToken: string }
+    | { status: 'error'; message: string };
+
+type ReshareState =
+    | { status: 'idle' }
+    | { status: 'creating' }
+    | { status: 'ready'; link: string }
     | { status: 'error'; message: string };
 
 function useUtcNow() {
@@ -83,15 +90,21 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
     const [linkState, setLinkState] = useState<LinkState>(() =>
         expiresAtUtc ? { status: 'checking' } : { status: 'error', message: 'Secret not found or expired' },
     );
+    const [reshareState, setReshareState] = useState<ReshareState>({ status: 'idle' });
+    const [isInfoFocused, setIsInfoFocused] = useState(false);
+    const [isInfoPinned, setIsInfoPinned] = useState(false);
     const requestedRef = useRef(false);
+    const infoPopoverRef = useRef<HTMLDivElement | null>(null);
     const nowUtcMs = useUtcNow();
     const expiresAtMs = useMemo(() => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN), [expiresAtUtc]);
     const isExpired = Number.isFinite(expiresAtMs) ? expiresAtMs <= nowUtcMs : true;
+    const isInfoVisible = isInfoFocused || isInfoPinned;
 
     useEffect(() => {
         let cancelled = false;
 
         requestedRef.current = false;
+        setReshareState({ status: 'idle' });
         setState(expiresAtUtc ? { status: 'idle' } : { status: 'error', message: 'Secret not found or expired' });
 
         if (!expiresAtUtc) {
@@ -140,6 +153,32 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         };
     }, [id, expiresAtUtc]);
 
+    useEffect(() => {
+        if (!isInfoPinned) {
+            return;
+        }
+
+        function handlePointerDown(event: PointerEvent) {
+            if (!infoPopoverRef.current?.contains(event.target as Node)) {
+                setIsInfoPinned(false);
+            }
+        }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                setIsInfoPinned(false);
+            }
+        }
+
+        window.addEventListener('pointerdown', handlePointerDown);
+        window.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            window.removeEventListener('pointerdown', handlePointerDown);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isInfoPinned]);
+
     async function revealSecret() {
         if (requestedRef.current || !expiresAtUtc || isExpired || linkState.status !== 'ready') {
             return;
@@ -180,6 +219,24 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
             });
         } finally {
             requestedRef.current = false;
+        }
+    }
+
+    async function createReplacementLink(secret: string) {
+        if (reshareState.status === 'creating') {
+            return;
+        }
+
+        setReshareState({ status: 'creating' });
+
+        try {
+            const nextLink = await createSecretLink(secret);
+            setReshareState({ status: 'ready', link: nextLink });
+        } catch (error) {
+            setReshareState({
+                status: 'error',
+                message: error instanceof Error ? error.message : 'Failed to create secret link',
+            });
         }
     }
 
@@ -234,7 +291,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
     }
 
     return (
-        <section className="card">
+        <section className="card" aria-live="polite">
             <h2 className="subtitle">Secret</h2>
             <pre className="secret-value">{state.secret}</pre>
             <div className="viewer-actions">
@@ -245,7 +302,50 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
                     successMessage="Secret copied to clipboard"
                     errorMessage="Could not copy secret to clipboard"
                 />
+                <button
+                    className="button"
+                    onClick={() => void createReplacementLink(state.secret)}
+                    type="button"
+                    disabled={reshareState.status === 'creating'}
+                >
+                    {reshareState.status === 'creating' ? 'Generating...' : 'Generate new link'}
+                </button>
+                <div ref={infoPopoverRef} className={`info-popover ${isInfoVisible ? 'is-open' : ''}`.trim()}>
+                    <button
+                        className="info-popover-trigger"
+                        aria-label="Why generate a new link?"
+                        aria-expanded={isInfoVisible}
+                        aria-controls="reshare-info"
+                        onFocus={() => setIsInfoFocused(true)}
+                        onBlur={() => setIsInfoFocused(false)}
+                        onClick={() => setIsInfoPinned((value) => !value)}
+                        type="button"
+                    >
+                        <span className="info-popover-icon" aria-hidden="true">
+                            i
+                        </span>
+                    </button>
+                    <div className="info-popover-content" id="reshare-info" role="tooltip">
+                        Use this when the secret was already opened, but you need to pass it to someone else through a
+                        fresh one-time link.
+                    </div>
+                </div>
             </div>
+            {reshareState.status === 'error' ? <p className="error">{reshareState.message}</p> : null}
+            {reshareState.status === 'ready' ? (
+                <div className="result">
+                    <a href={reshareState.link} className="secret-link" rel="noreferrer nofollow">
+                        {reshareState.link}
+                    </a>
+                    <CopyButton
+                        textToCopy={reshareState.link}
+                        copyLabel="Copy new secret link"
+                        copiedLabel="New secret link copied"
+                        successMessage="New secret link copied to clipboard"
+                        errorMessage="Could not copy new link to clipboard"
+                    />
+                </div>
+            ) : null}
             <p className="hint">The encrypted payload has now been deleted from server memory.</p>
         </section>
     );
