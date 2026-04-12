@@ -29,6 +29,17 @@ class SecretStore {
     return { id, expiresAt };
   }
 
+  getMetadata(id: string): { expiresAt: number } | null {
+    this.cleanupExpired();
+
+    const record = this.store.get(id);
+    if (!record) {
+      return null;
+    }
+
+    return { expiresAt: record.expiresAt };
+  }
+
   consume(id: string): string | null {
     this.cleanupExpired();
 

@@ -211,6 +211,22 @@ body {
   gap: 0.75rem;
 }
 
+.viewer-actions-spread {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.countdown {
+  color: var(--text-muted);
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.95rem;
+}
+
+.countdown-expired {
+  color: var(--error);
+  font-weight: 600;
+}
+
 .toast {
   position: fixed;
   right: 1.25rem;

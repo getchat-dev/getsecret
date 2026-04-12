@@ -1,71 +1,88 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type SecretState =
+  | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'success'; secret: string }
+  | { status: 'revealed'; secret: string }
   | { status: 'error'; message: string };
 
-export function SecretViewer({ id }: { id: string }) {
-  const [state, setState] = useState<SecretState>({ status: 'loading' });
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
-  const requestedRef = useRef(false);
+function useUtcNow() {
+  const [nowUtcMs, setNowUtcMs] = useState(() => Date.now());
 
   useEffect(() => {
-    if (requestedRef.current) {
-      return;
-    }
-    requestedRef.current = true;
+    const syncNow = () => {
+      setNowUtcMs(Date.now());
+    };
 
-    let cancelled = false;
+    syncNow();
 
-    async function consumeSecret() {
-      try {
-        const response = await fetch(`/api/secrets/${encodeURIComponent(id)}`, {
-          method: 'POST',
-          cache: 'no-store',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        const data = (await response.json()) as { secret?: string; error?: string };
-
-        if (cancelled) {
-          return;
-        }
-
-        if (!response.ok || typeof data.secret !== 'string') {
-          setState({
-            status: 'error',
-            message: data.error ?? 'Secret not found or already consumed'
-          });
-          return;
-        }
-
-        setState({ status: 'success', secret: data.secret });
-      } catch {
-        if (!cancelled) {
-          setState({ status: 'error', message: 'Network error while loading secret' });
-        }
-      }
-    }
-
-    void consumeSecret();
+    const interval = window.setInterval(syncNow, 1000);
 
     return () => {
-      cancelled = true;
+      window.clearInterval(interval);
     };
-  }, [id]);
+  }, []);
 
-  if (state.status === 'loading') {
-    return (
-      <section className="card">
-        <p className="hint">Loading secret...</p>
-      </section>
-    );
+  return nowUtcMs;
+}
+
+function formatRemainingTime(remainingMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+  const days = Math.floor(totalSeconds / 86_400);
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const hh = String(hours).padStart(2, '0');
+  const mm = String(minutes).padStart(2, '0');
+  const ss = String(seconds).padStart(2, '0');
+
+  if (days > 0) {
+    return `${days}d ${hh}:${mm}:${ss}`;
   }
+
+  return `${hh}:${mm}:${ss}`;
+}
+
+function ExpiryCountdown({ expiresAtUtc }: { expiresAtUtc: string }) {
+  const expiresAtMs = useMemo(() => Date.parse(expiresAtUtc), [expiresAtUtc]);
+  const nowUtcMs = useUtcNow();
+
+  if (!Number.isFinite(expiresAtMs)) {
+    return <span className="error">Invalid expiration time</span>;
+  }
+
+  const remainingMs = Math.max(0, expiresAtMs - nowUtcMs);
+
+  return (
+    <span className={`countdown ${remainingMs === 0 ? 'countdown-expired' : ''}`}>
+      {remainingMs === 0 ? 'Expired' : `Expires in ${formatRemainingTime(remainingMs)}`}
+    </span>
+  );
+}
+
+export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: string | null }) {
+  const [state, setState] = useState<SecretState>(() =>
+    expiresAtUtc ? { status: 'idle' } : { status: 'error', message: 'Secret not found or expired' }
+  );
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
+  const requestedRef = useRef(false);
+  const nowUtcMs = useUtcNow();
+  const expiresAtMs = useMemo(
+    () => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN),
+    [expiresAtUtc]
+  );
+  const isExpired = Number.isFinite(expiresAtMs) ? expiresAtMs <= nowUtcMs : true;
+
+  useEffect(() => {
+    requestedRef.current = false;
+    setCopyStatus('idle');
+    setState(
+      expiresAtUtc ? { status: 'idle' } : { status: 'error', message: 'Secret not found or expired' }
+    );
+  }, [id, expiresAtUtc]);
 
   if (state.status === 'error') {
     return (
@@ -82,6 +99,66 @@ export function SecretViewer({ id }: { id: string }) {
     } catch {
       setCopyStatus('error');
     }
+  }
+
+  async function revealSecret() {
+    if (requestedRef.current || !expiresAtUtc || isExpired) {
+      return;
+    }
+
+    requestedRef.current = true;
+    setState({ status: 'loading' });
+
+    try {
+      const response = await fetch(`/api/secrets/${encodeURIComponent(id)}`, {
+        method: 'POST',
+        cache: 'no-store',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = (await response.json()) as { secret?: string; error?: string };
+
+      if (!response.ok || typeof data.secret !== 'string') {
+        setState({
+          status: 'error',
+          message: data.error ?? 'Secret not found or already consumed'
+        });
+        return;
+      }
+
+      setState({ status: 'revealed', secret: data.secret });
+    } catch {
+      setState({ status: 'error', message: 'Network error while loading secret' });
+    } finally {
+      requestedRef.current = false;
+    }
+  }
+
+  if (state.status === 'idle') {
+    return (
+      <section className="card">
+        <h2 className="subtitle">Secret</h2>
+        <p className="hint">This secret is hidden until you choose to reveal it.</p>
+        <div className="viewer-actions viewer-actions-spread">
+          <button className="button" onClick={() => void revealSecret()} type="button" disabled={isExpired}>
+            Reveal secret
+          </button>
+          {expiresAtUtc ? <ExpiryCountdown expiresAtUtc={expiresAtUtc} /> : null}
+        </div>
+        {isExpired ? <p className="error">This secret has expired before it was opened.</p> : null}
+      </section>
+    );
+  }
+
+  if (state.status === 'loading') {
+    return (
+      <section className="card">
+        <h2 className="subtitle">Secret</h2>
+        <p className="hint">Loading secret...</p>
+      </section>
+    );
   }
 
   return (
