@@ -1,7 +1,7 @@
 'use client';
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { CopyButton } from '@/components/copy-button';
+import { CopyButton, useClipboardCopy } from '@/components/copy-button';
 import { createSecretLink } from '@/lib/create-secret-link';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 
@@ -11,6 +11,7 @@ export function SecretForm() {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const secretInputRef = useRef<HTMLTextAreaElement | null>(null);
+    const { copyText, toast } = useClipboardCopy();
 
     const remaining = useMemo(() => MAX_SECRET_LENGTH - secret.length, [secret.length]);
 
@@ -29,6 +30,10 @@ export function SecretForm() {
             const nextLink = await createSecretLink(secret);
             setLink(nextLink);
             setSecret('');
+            await copyText(nextLink, {
+                successMessage: 'Secret link copied to clipboard',
+                errorMessage: 'Could not copy link to clipboard',
+            });
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Failed to create secret link');
         } finally {
@@ -74,9 +79,9 @@ export function SecretForm() {
 
             {link ? (
                 <div className="result">
-                    <a href={link} className="secret-link" rel="noreferrer nofollow">
+                    <span className="secret-link" title="Secret link">
                         {link}
-                    </a>
+                    </span>
                     <CopyButton
                         textToCopy={link}
                         copyLabel="Copy secret link"
@@ -84,6 +89,15 @@ export function SecretForm() {
                         successMessage="Secret link copied to clipboard"
                         errorMessage="Could not copy link to clipboard"
                     />
+                </div>
+            ) : null}
+
+            {toast ? (
+                <div
+                    className={`toast ${toast.kind === 'success' ? 'toast-success' : 'toast-error'}`}
+                    role={toast.kind === 'success' ? 'status' : 'alert'}
+                >
+                    {toast.message}
                 </div>
             ) : null}
         </section>

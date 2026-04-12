@@ -137,13 +137,9 @@ body {
 }
 
 .secret-link {
-    color: #0b4aa7;
     text-decoration: none;
     overflow-wrap: anywhere;
-}
-
-.secret-link:hover {
-    text-decoration: underline;
+    font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
 }
 
 .icon-button {

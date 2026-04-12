@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-type CopyStatus = 'idle' | 'copied' | 'error';
-type ToastState = {
+export type CopyStatus = 'idle' | 'copied' | 'error';
+export type ToastState = {
     kind: 'success' | 'error';
     message: string;
+};
+
+type CopyFeedbackMessages = {
+    successMessage: string;
+    errorMessage: string;
 };
 
 type CopyButtonProps = {
@@ -16,7 +21,7 @@ type CopyButtonProps = {
     errorMessage: string;
 };
 
-export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage, errorMessage }: CopyButtonProps) {
+export function useClipboardCopy() {
     const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
     const [toast, setToast] = useState<ToastState | null>(null);
     const copyStatusTimeoutRef = useRef<number | null>(null);
@@ -58,7 +63,7 @@ export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage,
         }, 2400);
     }
 
-    async function handleCopy() {
+    async function copyText(textToCopy: string, { successMessage, errorMessage }: CopyFeedbackMessages) {
         try {
             await navigator.clipboard.writeText(textToCopy);
             navigator.vibrate?.(12);
@@ -72,11 +77,17 @@ export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage,
         }
     }
 
+    return { copyStatus, toast, copyText };
+}
+
+export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage, errorMessage }: CopyButtonProps) {
+    const { copyStatus, toast, copyText } = useClipboardCopy();
+
     return (
         <>
             <button
                 className={`icon-button ${copyStatus === 'copied' ? 'is-success' : ''} ${copyStatus === 'error' ? 'is-error' : ''}`.trim()}
-                onClick={() => void handleCopy()}
+                onClick={() => void copyText(textToCopy, { successMessage, errorMessage })}
                 type="button"
                 aria-label={copyStatus === 'copied' ? copiedLabel : copyLabel}
             >
