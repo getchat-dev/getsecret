@@ -163,10 +163,6 @@ body {
         box-shadow 180ms ease;
 }
 
-.icon-button:hover {
-    transform: translateY(-1px);
-}
-
 .icon-button:active {
     transform: scale(0.96);
 }
@@ -202,15 +198,27 @@ body {
     margin: 0 0 0.8rem;
 }
 
+.secret-value-wrap {
+    position: relative;
+}
+
 .secret-value {
     margin: 0;
+    min-height: 4.25rem;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     border-radius: 10px;
     border: 1px solid #d1d8e4;
     background: #f8fafc;
-    padding: 0.75rem;
+    padding: 0.75rem 4rem 0.75rem 0.75rem;
     font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+.secret-value-copy {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.6rem;
+    display: flex;
 }
 
 .viewer-actions {

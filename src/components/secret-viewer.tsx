@@ -293,15 +293,19 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
     return (
         <section className="card" aria-live="polite">
             <h2 className="subtitle">Secret</h2>
-            <pre className="secret-value">{state.secret}</pre>
+            <div className="secret-value-wrap">
+                <pre className="secret-value">{state.secret}</pre>
+                <div className="secret-value-copy">
+                    <CopyButton
+                        textToCopy={state.secret}
+                        copyLabel="Copy secret"
+                        copiedLabel="Secret copied"
+                        successMessage="Secret copied to clipboard"
+                        errorMessage="Could not copy secret to clipboard"
+                    />
+                </div>
+            </div>
             <div className="viewer-actions">
-                <CopyButton
-                    textToCopy={state.secret}
-                    copyLabel="Copy secret"
-                    copiedLabel="Secret copied"
-                    successMessage="Secret copied to clipboard"
-                    errorMessage="Could not copy secret to clipboard"
-                />
                 <button
                     className="button"
                     onClick={() => void createReplacementLink(state.secret)}
