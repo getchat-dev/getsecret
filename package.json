@@ -1,12 +1,14 @@
 {
   "name": "burnotes",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "format": "biome format --write",
+    "lint": "biome lint --write",
+    "clean": "rm -rf .next"
   },
   "dependencies": {
     "next": "16.0.0",
