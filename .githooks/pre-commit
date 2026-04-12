@@ -1,0 +1,13 @@
+#!/bin/sh
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+if [ -z "$repo_root" ]; then
+    echo "Unable to determine repository root"
+    exit 1
+fi
+
+cd "$repo_root" || exit 1
+
+echo "Running Biome check before commit..."
+npm run check

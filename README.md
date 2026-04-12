@@ -15,10 +15,35 @@ One-time secret sharing app on Node.js + Next.js.
 
 ```bash
 npm install
+npm run hooks:install
 npm run dev
 ```
 
 Open `http://localhost:3000`.
+
+## Git hooks
+
+Install repository hooks once per clone:
+
+```bash
+npm run hooks:install
+```
+
+This enables the versioned pre-commit hook from `.githooks/`. Before each commit it runs `npm run check`, which executes `biome check` and blocks the commit if formatting, lint, or assist checks fail.
+
+## Docker dev mode
+
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+
+Or through the existing helper:
+
+```bash
+./start.sh --dev
+```
+
+In this mode the source tree is mounted into the container, dependencies are installed into a named Docker volume, and `next dev` runs with file watching enabled. Changes in `src/**`, `public/**`, and config files are picked up automatically without rebuilding the image.
 
 ## Docker Compose + Traefik
 

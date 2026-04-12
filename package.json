@@ -1,13 +1,18 @@
 {
     "name": "burnotes",
-    "version": "2.0.6",
+    "version": "2.0.7",
     "private": true,
     "scripts": {
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "format": "npx @biomejs/biome format --write",
-        "lint": "npx @biomejs/biome lint --write",
+        "hooks:install": "git config core.hooksPath .githooks",
+        "format": "biome format --write",
+        "lint": "biome lint",
+        "lint:fix": "biome lint --write",
+        "check": "biome check",
+        "fix": "biome check --write",
+        "lint:ci": "biome check",
         "clean": "rm -rf .next"
     },
     "dependencies": {
@@ -16,6 +21,7 @@
         "react-dom": "19.1.0"
     },
     "devDependencies": {
+        "@biomejs/biome": "^2.4.11",
         "@types/node": "22.15.29",
         "@types/react": "19.1.8",
         "@types/react-dom": "19.1.6",
