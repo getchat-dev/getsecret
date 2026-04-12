@@ -2,7 +2,7 @@
 
 import { CopyButton } from '@/components/copy-button';
 import { MAX_SECRET_LENGTH, prepareSecretUpload, type PreparedSecretUpload } from '@/lib/secret-crypto';
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 
 type CreateResponse = {
     id: string;
