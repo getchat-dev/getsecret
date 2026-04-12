@@ -1,8 +1,8 @@
 'use client';
 
-import { CopyButton } from '@/components/copy-button';
-import { MAX_SECRET_LENGTH, prepareSecretUpload, type PreparedSecretUpload } from '@/lib/secret-crypto';
 import { type FormEvent, useMemo, useState } from 'react';
+import { CopyButton } from '@/components/copy-button';
+import { MAX_SECRET_LENGTH, type PreparedSecretUpload, prepareSecretUpload } from '@/lib/secret-crypto';
 
 type CreateResponse = {
     id: string;

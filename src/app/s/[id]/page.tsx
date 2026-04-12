@@ -1,6 +1,6 @@
+import type { Metadata } from 'next';
 import { SecretViewer } from '@/components/secret-viewer';
 import { secretStore } from '@/lib/secret-store';
-import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {

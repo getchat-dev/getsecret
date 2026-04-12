@@ -1,14 +1,14 @@
 'use client';
 
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CopyButton } from '@/components/copy-button';
 import {
     decryptSecret,
     deriveSecretAccessToken,
     deriveSecretId,
-    readSecretKeyFromHash,
     type EncryptedSecret,
+    readSecretKeyFromHash,
 } from '@/lib/secret-crypto';
-import { useEffect, useMemo, useRef, useState } from 'react';
 
 type SecretState =
     | { status: 'idle' }
