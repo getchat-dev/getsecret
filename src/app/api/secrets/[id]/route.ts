@@ -1,5 +1,6 @@
 import { getClientIp, jsonNoStore } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
+import { hashAccessToken, isValidAccessToken, isValidSecretId } from '@/lib/secret-crypto';
 import { secretStore } from '@/lib/secret-store';
 
 export const runtime = 'nodejs';
@@ -7,6 +8,10 @@ export const dynamic = 'force-dynamic';
 
 const CONSUME_LIMIT = 120;
 const CONSUME_WINDOW_MS = 60_000;
+
+type ConsumeSecretBody = {
+  accessToken?: unknown;
+};
 
 export async function POST(
   request: Request,
@@ -19,14 +24,31 @@ export async function POST(
 
   const { id } = await params;
 
-  if (!/^[A-Za-z0-9_-]{40,80}$/.test(id)) {
+  if (!isValidSecretId(id)) {
     return jsonNoStore({ error: 'Invalid secret id' }, 400);
   }
 
-  const secret = secretStore.consume(id);
-  if (!secret) {
+  const contentType = request.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    return jsonNoStore({ error: 'Invalid content type' }, 415);
+  }
+
+  let body: ConsumeSecretBody;
+  try {
+    body = (await request.json()) as ConsumeSecretBody;
+  } catch {
+    return jsonNoStore({ error: 'Invalid JSON body' }, 400);
+  }
+
+  if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
+    return jsonNoStore({ error: 'Invalid secret access token' }, 400);
+  }
+
+  const accessTokenHash = await hashAccessToken(body.accessToken);
+  const encryptedSecret = secretStore.consume(id, accessTokenHash);
+  if (!encryptedSecret) {
     return jsonNoStore({ error: 'Secret not found or expired' }, 404);
   }
 
-  return jsonNoStore({ secret }, 200);
+  return jsonNoStore({ encryptedSecret }, 200);
 }

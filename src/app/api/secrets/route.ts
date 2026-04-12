@@ -1,16 +1,23 @@
 import { jsonNoStore, getClientIp } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
+import {
+  hashAccessToken,
+  isValidAccessToken,
+  isValidEncryptedSecret,
+  isValidSecretId
+} from '@/lib/secret-crypto';
 import { secretStore, SECRET_TTL_SECONDS } from '@/lib/secret-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const MAX_SECRET_LENGTH = 10_000;
 const CREATE_LIMIT = 30;
 const CREATE_WINDOW_MS = 60_000;
 
 type CreateSecretBody = {
-  secret?: unknown;
+  id?: unknown;
+  encryptedSecret?: unknown;
+  accessToken?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -31,29 +38,29 @@ export async function POST(request: Request) {
     return jsonNoStore({ error: 'Invalid JSON body' }, 400);
   }
 
-  if (typeof body.secret !== 'string') {
-    return jsonNoStore({ error: 'Secret must be a string' }, 400);
+  if (typeof body.id !== 'string' || !isValidSecretId(body.id)) {
+    return jsonNoStore({ error: 'Invalid secret id' }, 400);
   }
 
-  const secret = body.secret;
-  if (secret.length === 0 || secret.length > MAX_SECRET_LENGTH) {
-    return jsonNoStore(
-      { error: `Secret length must be between 1 and ${MAX_SECRET_LENGTH} characters` },
-      400
-    );
+  if (!isValidEncryptedSecret(body.encryptedSecret)) {
+    return jsonNoStore({ error: 'Invalid encrypted secret payload' }, 400);
   }
 
-  if (secret.includes('\u0000')) {
-    return jsonNoStore({ error: 'Secret contains forbidden characters' }, 400);
+  if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
+    return jsonNoStore({ error: 'Invalid secret access token' }, 400);
   }
 
-  const { id, expiresAt } = secretStore.create(secret);
+  const accessTokenHash = await hashAccessToken(body.accessToken);
+  const createdSecret = secretStore.create(body.id, body.encryptedSecret, accessTokenHash);
+  if (!createdSecret) {
+    return jsonNoStore({ error: 'Secret id already exists' }, 409);
+  }
 
   return jsonNoStore(
     {
-      id,
-      path: `/s/${id}`,
-      expiresAt,
+      id: body.id,
+      path: `/s/${body.id}`,
+      expiresAt: createdSecret.expiresAt,
       expiresInSeconds: SECRET_TTL_SECONDS
     },
     201

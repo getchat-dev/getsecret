@@ -1,10 +1,11 @@
-import crypto from 'node:crypto';
+import type { EncryptedSecret } from '@/lib/secret-crypto';
 
 const SECRET_TTL_MS = 24 * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 60 * 1000;
 
 type SecretRecord = {
-  value: string;
+  encryptedSecret: EncryptedSecret;
+  accessTokenHash: string;
   expiresAt: number;
 };
 
@@ -16,17 +17,20 @@ class SecretStore {
     timer.unref();
   }
 
-  create(secret: string): { id: string; expiresAt: number } {
+  create(
+    id: string,
+    encryptedSecret: EncryptedSecret,
+    accessTokenHash: string
+  ): { expiresAt: number } | null {
     this.cleanupExpired();
 
-    let id = this.generateId();
-    while (this.store.has(id)) {
-      id = this.generateId();
+    if (this.store.has(id)) {
+      return null;
     }
 
     const expiresAt = Date.now() + SECRET_TTL_MS;
-    this.store.set(id, { value: secret, expiresAt });
-    return { id, expiresAt };
+    this.store.set(id, { encryptedSecret, accessTokenHash, expiresAt });
+    return { expiresAt };
   }
 
   getMetadata(id: string): { expiresAt: number } | null {
@@ -40,11 +44,15 @@ class SecretStore {
     return { expiresAt: record.expiresAt };
   }
 
-  consume(id: string): string | null {
+  consume(id: string, accessTokenHash: string): EncryptedSecret | null {
     this.cleanupExpired();
 
     const record = this.store.get(id);
     if (!record) {
+      return null;
+    }
+
+    if (record.accessTokenHash !== accessTokenHash) {
       return null;
     }
 
@@ -54,7 +62,7 @@ class SecretStore {
       return null;
     }
 
-    return record.value;
+    return record.encryptedSecret;
   }
 
   private cleanupExpired(): void {
@@ -64,10 +72,6 @@ class SecretStore {
         this.store.delete(id);
       }
     }
-  }
-
-  private generateId(): string {
-    return crypto.randomBytes(32).toString('base64url');
   }
 }
 

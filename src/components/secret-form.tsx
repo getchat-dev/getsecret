@@ -1,6 +1,11 @@
 'use client';
 
 import { CopyButton } from '@/components/copy-button';
+import {
+  MAX_SECRET_LENGTH,
+  prepareSecretUpload,
+  type PreparedSecretUpload
+} from '@/lib/secret-crypto';
 import { FormEvent, useMemo, useState } from 'react';
 
 type CreateResponse = {
@@ -12,8 +17,6 @@ type CreateResponse = {
 type ErrorResponse = {
   error?: string;
 };
-
-const MAX_SECRET_LENGTH = 10_000;
 
 export function SecretForm() {
   const [secret, setSecret] = useState('');
@@ -35,6 +38,15 @@ export function SecretForm() {
 
     setIsSubmitting(true);
 
+    let preparedSecret: PreparedSecretUpload;
+    try {
+      preparedSecret = await prepareSecretUpload(secret);
+    } catch {
+      setError('Browser encryption is not available');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/secrets', {
         method: 'POST',
@@ -42,7 +54,11 @@ export function SecretForm() {
           'Content-Type': 'application/json'
         },
         cache: 'no-store',
-        body: JSON.stringify({ secret })
+        body: JSON.stringify({
+          id: preparedSecret.id,
+          encryptedSecret: preparedSecret.encryptedSecret,
+          accessToken: preparedSecret.accessToken
+        })
       });
 
       const data = (await response.json()) as CreateResponse | ErrorResponse;
@@ -53,8 +69,9 @@ export function SecretForm() {
         return;
       }
 
-      const absoluteUrl = new URL(data.path, window.location.origin).toString();
-      setLink(absoluteUrl);
+      const absoluteUrl = new URL(data.path, window.location.origin);
+      absoluteUrl.hash = preparedSecret.key;
+      setLink(absoluteUrl.toString());
       setSecret('');
     } catch {
       setError('Network error while creating secret link');
@@ -92,7 +109,8 @@ export function SecretForm() {
       </form>
 
       <p className="hint">
-        Secret will be deleted after the first view or automatically after 24 hours.
+        Secret is encrypted in your browser. The decryption key stays only after <code>#</code>{' '}
+        in the generated link.
       </p>
 
       {error ? <p className="error">{error}</p> : null}
