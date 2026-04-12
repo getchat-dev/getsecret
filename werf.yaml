@@ -50,7 +50,6 @@ git:
     setup:
       - src
       - public
-      - package.json
       - next.config.ts
       - tsconfig.json
       - next-env.d.ts
