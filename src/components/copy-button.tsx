@@ -80,11 +80,26 @@ export function useClipboardCopy() {
     return { copyStatus, toast, copyText };
 }
 
+export function ToastMessage({ toast }: { toast: ToastState | null }) {
+    if (!toast) {
+        return null;
+    }
+
+    return (
+        <div
+            className={`toast ${toast.kind === 'success' ? 'toast-success' : 'toast-error'}`}
+            role={toast.kind === 'success' ? 'status' : 'alert'}
+        >
+            {toast.message}
+        </div>
+    );
+}
+
 export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage, errorMessage }: CopyButtonProps) {
     const { copyStatus, toast, copyText } = useClipboardCopy();
 
     return (
-        <>
+        <span className="toast-anchor">
             <button
                 className={`icon-button ${copyStatus === 'copied' ? 'is-success' : ''} ${copyStatus === 'error' ? 'is-error' : ''}`.trim()}
                 onClick={() => void copyText(textToCopy, { successMessage, errorMessage })}
@@ -101,15 +116,7 @@ export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage,
                     )}
                 </svg>
             </button>
-
-            {toast ? (
-                <div
-                    className={`toast ${toast.kind === 'success' ? 'toast-success' : 'toast-error'}`}
-                    role={toast.kind === 'success' ? 'status' : 'alert'}
-                >
-                    {toast.message}
-                </div>
-            ) : null}
-        </>
+            <ToastMessage toast={toast} />
+        </span>
     );
 }

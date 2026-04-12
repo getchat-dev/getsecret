@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CopyButton } from '@/components/copy-button';
+import { CopyButton, ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { createSecretLink } from '@/lib/create-secret-link';
 import {
     decryptSecret,
@@ -95,6 +95,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
     const [isInfoPinned, setIsInfoPinned] = useState(false);
     const requestedRef = useRef(false);
     const infoPopoverRef = useRef<HTMLDivElement | null>(null);
+    const { copyText, toast } = useClipboardCopy();
     const nowUtcMs = useUtcNow();
     const expiresAtMs = useMemo(() => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN), [expiresAtUtc]);
     const isExpired = Number.isFinite(expiresAtMs) ? expiresAtMs <= nowUtcMs : true;
@@ -232,6 +233,10 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         try {
             const nextLink = await createSecretLink(secret);
             setReshareState({ status: 'ready', link: nextLink });
+            await copyText(nextLink, {
+                successMessage: 'New secret link copied to clipboard',
+                errorMessage: 'Could not copy new link to clipboard',
+            });
         } catch (error) {
             setReshareState({
                 status: 'error',
@@ -306,14 +311,17 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
                 </div>
             </div>
             <div className="viewer-actions">
-                <button
-                    className="button"
-                    onClick={() => void createReplacementLink(state.secret)}
-                    type="button"
-                    disabled={reshareState.status === 'creating'}
-                >
-                    {reshareState.status === 'creating' ? 'Generating...' : 'Generate new link'}
-                </button>
+                <div className="toast-anchor toast-anchor-start">
+                    <button
+                        className="button"
+                        onClick={() => void createReplacementLink(state.secret)}
+                        type="button"
+                        disabled={reshareState.status === 'creating'}
+                    >
+                        {reshareState.status === 'creating' ? 'Generating...' : 'Generate new link'}
+                    </button>
+                    <ToastMessage toast={toast} />
+                </div>
                 <div ref={infoPopoverRef} className={`info-popover ${isInfoVisible ? 'is-open' : ''}`.trim()}>
                     <button
                         className="info-popover-trigger"
@@ -338,9 +346,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
             {reshareState.status === 'error' ? <p className="error">{reshareState.message}</p> : null}
             {reshareState.status === 'ready' ? (
                 <div className="result">
-                    <a href={reshareState.link} className="secret-link" rel="noreferrer nofollow">
-                        {reshareState.link}
-                    </a>
+                    <span className="secret-link">{reshareState.link}</span>
                     <CopyButton
                         textToCopy={reshareState.link}
                         copyLabel="Copy new secret link"

@@ -1,7 +1,7 @@
 'use client';
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { CopyButton, useClipboardCopy } from '@/components/copy-button';
+import { CopyButton, ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { createSecretLink } from '@/lib/create-secret-link';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 
@@ -65,9 +65,12 @@ export function SecretForm() {
                     <small className="hint">{remaining} characters left</small>
                 </div>
 
-                <button type="submit" className="button" disabled={isSubmitting}>
-                    {isSubmitting ? 'Creating...' : 'Share secret'}
-                </button>
+                <div className="toast-anchor toast-anchor-start">
+                    <button type="submit" className="button" disabled={isSubmitting}>
+                        {isSubmitting ? 'Creating...' : 'Share secret'}
+                    </button>
+                    <ToastMessage toast={toast} />
+                </div>
             </form>
 
             <p className="hint">
@@ -89,15 +92,6 @@ export function SecretForm() {
                         successMessage="Secret link copied to clipboard"
                         errorMessage="Could not copy link to clipboard"
                     />
-                </div>
-            ) : null}
-
-            {toast ? (
-                <div
-                    className={`toast ${toast.kind === 'success' ? 'toast-success' : 'toast-error'}`}
-                    role={toast.kind === 'success' ? 'status' : 'alert'}
-                >
-                    {toast.message}
                 </div>
             ) : null}
         </section>
