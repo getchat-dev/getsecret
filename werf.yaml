@@ -3,7 +3,7 @@ configVersion: 1
 
 ---
 image: base-build-node
-from: ubuntu:24.04
+from: node:22-bookworm
 docker:
   WORKDIR: /app
   ENV:
@@ -14,16 +14,9 @@ shell:
       set -e
       export DEBIAN_FRONTEND=noninteractive
       apt-get update
-      apt-get install -y apt-transport-https curl tzdata
+      apt-get install -y build-essential python3 tzdata
       rm -f /etc/localtime
       ln -s /usr/share/zoneinfo/UTC /etc/localtime
-  install:
-    - |
-      set -e
-      curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-      apt-get install -y build-essential python3 nodejs
-      npm install -g npm tsx dotenv-cli vite-node
-      npm install -g pnpm
 ---
 image: app
 fromImage: base-build-node
