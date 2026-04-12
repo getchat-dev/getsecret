@@ -1,5 +1,6 @@
 'use client';
 
+import { CopyButton } from '@/components/copy-button';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type SecretState =
@@ -67,7 +68,6 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
   const [state, setState] = useState<SecretState>(() =>
     expiresAtUtc ? { status: 'idle' } : { status: 'error', message: 'Secret not found or expired' }
   );
-  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const requestedRef = useRef(false);
   const nowUtcMs = useUtcNow();
   const expiresAtMs = useMemo(
@@ -78,7 +78,6 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
 
   useEffect(() => {
     requestedRef.current = false;
-    setCopyStatus('idle');
     setState(
       expiresAtUtc ? { status: 'idle' } : { status: 'error', message: 'Secret not found or expired' }
     );
@@ -90,15 +89,6 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         <p className="error">{state.message}</p>
       </section>
     );
-  }
-
-  async function copySecret(secret: string) {
-    try {
-      await navigator.clipboard.writeText(secret);
-      setCopyStatus('copied');
-    } catch {
-      setCopyStatus('error');
-    }
   }
 
   async function revealSecret() {
@@ -166,18 +156,13 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
       <h2 className="subtitle">Secret</h2>
       <pre className="secret-value">{state.secret}</pre>
       <div className="viewer-actions">
-        <button
-          className="icon-button"
-          onClick={() => void copySecret(state.secret)}
-          type="button"
-          aria-label="Copy secret"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z" />
-          </svg>
-        </button>
-        {copyStatus === 'copied' ? <span className="hint">Copied to clipboard</span> : null}
-        {copyStatus === 'error' ? <span className="error">Could not copy secret</span> : null}
+        <CopyButton
+          textToCopy={state.secret}
+          copyLabel="Copy secret"
+          copiedLabel="Secret copied"
+          successMessage="Secret copied to clipboard"
+          errorMessage="Could not copy secret to clipboard"
+        />
       </div>
       <p className="hint">This secret has now been deleted from server memory.</p>
     </section>
