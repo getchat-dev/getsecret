@@ -9,6 +9,7 @@ type SecretState =
 
 export function SecretViewer({ id }: { id: string }) {
   const [state, setState] = useState<SecretState>({ status: 'loading' });
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle');
   const requestedRef = useRef(false);
 
   useEffect(() => {
@@ -74,10 +75,33 @@ export function SecretViewer({ id }: { id: string }) {
     );
   }
 
+  async function copySecret(secret: string) {
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopyStatus('copied');
+    } catch {
+      setCopyStatus('error');
+    }
+  }
+
   return (
     <section className="card">
       <h2 className="subtitle">Secret</h2>
       <pre className="secret-value">{state.secret}</pre>
+      <div className="viewer-actions">
+        <button
+          className="icon-button"
+          onClick={() => void copySecret(state.secret)}
+          type="button"
+          aria-label="Copy secret"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z" />
+          </svg>
+        </button>
+        {copyStatus === 'copied' ? <span className="hint">Copied to clipboard</span> : null}
+        {copyStatus === 'error' ? <span className="error">Could not copy secret</span> : null}
+      </div>
       <p className="hint">This secret has now been deleted from server memory.</p>
     </section>
   );
