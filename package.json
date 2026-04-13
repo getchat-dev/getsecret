@@ -1,11 +1,13 @@
 {
     "name": "burnotes",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "private": true,
     "scripts": {
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
+        "test": "vitest run",
+        "test:watch": "vitest",
         "hooks:install": "git config core.hooksPath .githooks",
         "format": "biome format --write",
         "lint": "biome lint",
@@ -27,6 +29,7 @@
         "@types/react-dom": "19.1.6",
         "eslint": "9.30.1",
         "eslint-config-next": "16.0.0",
-        "typescript": "5.8.3"
+        "typescript": "5.8.3",
+        "vitest": "^4.1.4"
     }
 }
