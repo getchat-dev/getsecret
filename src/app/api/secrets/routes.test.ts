@@ -108,4 +108,68 @@ describe('secret API routes', () => {
             error: 'Invalid content type',
         });
     });
+
+    it('rejects create requests whose content-length exceeds the cap', async () => {
+        const oversized = 'a'.repeat(200_000);
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'content-length': '200000',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({ padding: oversized }),
+            }),
+        );
+
+        expect(response.status).toBe(413);
+        await expect(response.json()).resolves.toEqual({
+            error: 'Payload too large',
+        });
+    });
+
+    it('rejects create requests whose body streams past the cap even if content-length is small', async () => {
+        const encoder = new TextEncoder();
+        const oversizedPayload = encoder.encode(`{"padding":"${'a'.repeat(200_000)}"}`);
+        const stream = new ReadableStream({
+            start(controller) {
+                controller.enqueue(oversizedPayload);
+                controller.close();
+            },
+        });
+
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: stream,
+                // @ts-expect-error duplex is required for streaming bodies
+                duplex: 'half',
+            }),
+        );
+
+        expect(response.status).toBe(413);
+    });
+
+    it('rejects consume requests with oversized bodies', async () => {
+        const validId = 'a'.repeat(43);
+        const response = await consumeSecret(
+            new Request(`http://localhost/api/secrets/${validId}`, {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'content-length': '50000',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({ accessToken: 'x'.repeat(50_000) }),
+            }),
+            { params: Promise.resolve({ id: validId }) },
+        );
+
+        expect(response.status).toBe(413);
+    });
 });

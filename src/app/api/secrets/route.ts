@@ -1,4 +1,4 @@
-import { getClientIp, jsonNoStore } from '@/lib/http';
+import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
 import { hashAccessToken, isValidAccessToken, isValidEncryptedSecret, isValidSecretId } from '@/lib/secret-crypto';
 import { SECRET_TTL_SECONDS, secretStore } from '@/lib/secret-store';
@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const CREATE_LIMIT = 30;
 const CREATE_WINDOW_MS = 60_000;
+const CREATE_MAX_BODY_BYTES = 128 * 1024;
 
 type CreateSecretBody = {
     id?: unknown;
@@ -26,12 +27,15 @@ export async function POST(request: Request) {
         return jsonNoStore({ error: 'Invalid content type' }, 415);
     }
 
-    let body: CreateSecretBody;
-    try {
-        body = (await request.json()) as CreateSecretBody;
-    } catch {
+    const parsed = await readJsonBody<CreateSecretBody>(request, CREATE_MAX_BODY_BYTES);
+    if (!parsed.ok) {
+        if (parsed.error === 'body-too-large') {
+            return jsonNoStore({ error: 'Payload too large' }, 413);
+        }
         return jsonNoStore({ error: 'Invalid JSON body' }, 400);
     }
+
+    const body = parsed.body;
 
     if (typeof body.id !== 'string' || !isValidSecretId(body.id)) {
         return jsonNoStore({ error: 'Invalid secret id' }, 400);

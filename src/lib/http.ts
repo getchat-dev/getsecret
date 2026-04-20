@@ -63,6 +63,58 @@ export function getClientIp(request: Request): string {
     return 'unknown';
 }
 
+export type ReadJsonResult<T> = { ok: true; body: T } | { ok: false; error: 'body-too-large' | 'invalid-json' };
+
+export async function readJsonBody<T>(request: Request, maxBytes: number): Promise<ReadJsonResult<T>> {
+    const contentLength = request.headers.get('content-length');
+    if (contentLength !== null) {
+        const declaredSize = Number.parseInt(contentLength, 10);
+        if (!Number.isFinite(declaredSize) || declaredSize < 0 || declaredSize > maxBytes) {
+            return { ok: false, error: 'body-too-large' };
+        }
+    }
+
+    if (!request.body) {
+        return { ok: false, error: 'invalid-json' };
+    }
+
+    const reader = request.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        }
+
+        if (!value) {
+            continue;
+        }
+
+        received += value.byteLength;
+        if (received > maxBytes) {
+            await reader.cancel().catch(() => undefined);
+            return { ok: false, error: 'body-too-large' };
+        }
+
+        chunks.push(value);
+    }
+
+    const buffer = new Uint8Array(received);
+    let offset = 0;
+    for (const chunk of chunks) {
+        buffer.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    try {
+        return { ok: true, body: JSON.parse(new TextDecoder().decode(buffer)) as T };
+    } catch {
+        return { ok: false, error: 'invalid-json' };
+    }
+}
+
 export function jsonNoStore<T>(body: T, status = 200): NextResponse<T> {
     return NextResponse.json(body, {
         status,

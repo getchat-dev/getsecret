@@ -1,4 +1,4 @@
-import { getClientIp, jsonNoStore } from '@/lib/http';
+import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
 import { hashAccessToken, isValidAccessToken, isValidSecretId } from '@/lib/secret-crypto';
 import { secretStore } from '@/lib/secret-store';
@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const CONSUME_LIMIT = 120;
 const CONSUME_WINDOW_MS = 60_000;
+const CONSUME_MAX_BODY_BYTES = 1024;
 
 type ConsumeSecretBody = {
     accessToken?: unknown;
@@ -30,12 +31,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return jsonNoStore({ error: 'Invalid content type' }, 415);
     }
 
-    let body: ConsumeSecretBody;
-    try {
-        body = (await request.json()) as ConsumeSecretBody;
-    } catch {
+    const parsed = await readJsonBody<ConsumeSecretBody>(request, CONSUME_MAX_BODY_BYTES);
+    if (!parsed.ok) {
+        if (parsed.error === 'body-too-large') {
+            return jsonNoStore({ error: 'Payload too large' }, 413);
+        }
         return jsonNoStore({ error: 'Invalid JSON body' }, 400);
     }
+
+    const body = parsed.body;
 
     if (typeof body.accessToken !== 'string' || !isValidAccessToken(body.accessToken)) {
         return jsonNoStore({ error: 'Invalid secret access token' }, 400);
