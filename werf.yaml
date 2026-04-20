@@ -17,9 +17,12 @@ shell:
       apt-get install -y build-essential python3 tzdata
       rm -f /etc/localtime
       ln -s /usr/share/zoneinfo/UTC /etc/localtime
+      useradd --system --create-home --home-dir /home/burnotes --shell /usr/sbin/nologin --uid 10001 burnotes
 ---
 image: app
 fromImage: base-build-node
+docker:
+  USER: burnotes
 shell:
   install:
     - cd /app
@@ -28,6 +31,7 @@ shell:
     - cd /app
     - npm run build
     - npm prune --omit=dev
+    - chown -R burnotes:burnotes /app
 git:
 - add: /
   to: /app
