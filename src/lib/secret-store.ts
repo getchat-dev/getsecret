@@ -1,13 +1,24 @@
+import { timingSafeEqual } from 'node:crypto';
 import type { EncryptedSecret } from '@/lib/secret-crypto';
 
 const SECRET_TTL_MS = 24 * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 60 * 1000;
+const MAX_FAILED_ATTEMPTS = 5;
 
 type SecretRecord = {
     encryptedSecret: EncryptedSecret;
     accessTokenHash: string;
     expiresAt: number;
+    failedAttempts: number;
 };
+
+function safeEqualStrings(a: string, b: string): boolean {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+}
 
 class SecretStore {
     private readonly store = new Map<string, SecretRecord>();
@@ -25,7 +36,7 @@ class SecretStore {
         }
 
         const expiresAt = Date.now() + SECRET_TTL_MS;
-        this.store.set(id, { encryptedSecret, accessTokenHash, expiresAt });
+        this.store.set(id, { encryptedSecret, accessTokenHash, expiresAt, failedAttempts: 0 });
         return { expiresAt };
     }
 
@@ -48,16 +59,20 @@ class SecretStore {
             return null;
         }
 
-        if (record.accessTokenHash !== accessTokenHash) {
+        if (!safeEqualStrings(record.accessTokenHash, accessTokenHash)) {
+            record.failedAttempts += 1;
+            if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
+                this.store.delete(id);
+            }
+            return null;
+        }
+
+        if (record.expiresAt <= Date.now()) {
+            this.store.delete(id);
             return null;
         }
 
         this.store.delete(id);
-
-        if (record.expiresAt <= Date.now()) {
-            return null;
-        }
-
         return record.encryptedSecret;
     }
 
