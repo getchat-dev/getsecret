@@ -1,26 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { POST as consumeSecret } from '@/app/api/secrets/[id]/route';
 import { POST as createSecret } from '@/app/api/secrets/route';
-import { rateLimiter } from '@/lib/rate-limit';
 import { decryptSecret, type EncryptedSecret, prepareSecretUpload } from '@/lib/secret-crypto';
-import { SECRET_TTL_SECONDS, secretStore } from '@/lib/secret-store';
-
-type SecretStoreInternals = {
-    store: Map<string, unknown>;
-};
-
-type RateLimiterInternals = {
-    buckets: Map<string, unknown>;
-};
-
-function clearState() {
-    (secretStore as unknown as SecretStoreInternals).store.clear();
-    (rateLimiter as unknown as RateLimiterInternals).buckets.clear();
-}
+import { SECRET_TTL_SECONDS } from '@/lib/secret-store';
+import { getValkey } from '@/lib/valkey-client';
 
 describe('secret API routes', () => {
-    beforeEach(() => {
-        clearState();
+    beforeEach(async () => {
+        await getValkey().flushall();
     });
 
     it('creates and consumes a secret through the API', async () => {

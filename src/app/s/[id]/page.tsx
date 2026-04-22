@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function SecretPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const secretMetadata = secretStore.getMetadata(id);
+    const secretMetadata = await secretStore.getMetadata(id);
 
     return (
         <main className="page">

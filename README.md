@@ -6,10 +6,10 @@ One-time secret sharing app on Node.js + Next.js.
 
 - No accounts or authentication.
 - User can create a link with a secret text.
-- Secret is stored only in memory (`Map`) in Node.js runtime.
+- Ciphertext and rate-limit state are stored in Valkey (Redis-compatible) with a 24h TTL.
 - Secret is deleted after first read.
 - Secret is deleted automatically after 24 hours.
-- Basic hardening: strict input validation, no-store responses, CSP and security headers, simple in-memory rate limiting.
+- Basic hardening: strict input validation, no-store responses, CSP and security headers, sliding-window rate limiting.
 
 ## Local run
 
@@ -30,6 +30,7 @@ npm run hooks:install
 ```
 
 This enables the versioned pre-commit hook from `.githooks/`. Before each commit it runs `npm run check`, which executes `biome check` and blocks the commit if formatting, lint, or assist checks fail.
+It also runs `npm test`, which executes the Vitest suite and blocks the commit if core behavior regresses.
 
 ## Docker dev mode
 
@@ -54,6 +55,70 @@ BURNOTES_IMAGE=burnotes:latest docker compose up -d
 Open app: `http://burnotes.localhost`.
 Traefik dashboard: `http://localhost:8080`.
 
+## Infrastructure (Valkey)
+
+Burnotes stores encrypted secrets and rate-limit state in Valkey
+(a Redis-compatible server). Valkey runs in its **own** Compose stack so it is
+not affected by `./start.sh --down` or `--purge` — only the app comes and goes.
+
+### Bring the infrastructure up (once per host)
+
+```bash
+docker compose -f docker-compose.infra.yml up -d
+```
+
+This creates:
+- Docker network `burnotes-infra` (shared with the app via `external: true`).
+- Named volume `burnotes-infra_valkey-data` with AOF + periodic RDB snapshots.
+
+The app reads `VALKEY_URL` from `.env` and connects to `valkey:6379` inside
+that network. `APP` and `DEV` Compose files both attach to `burnotes-infra`.
+
+### Everyday operations
+
+```bash
+# Start / restart the app while Valkey stays up:
+./start.sh              # prod
+./start.sh --dev        # dev (live source mount)
+./start.sh --down       # stops only the app — Valkey keeps running
+./start.sh --purge      # stops the app and removes its volumes — Valkey keeps running
+
+# Infrastructure controls:
+docker compose -f docker-compose.infra.yml ps
+docker compose -f docker-compose.infra.yml logs -f valkey
+docker compose -f docker-compose.infra.yml exec valkey valkey-cli
+docker compose -f docker-compose.infra.yml restart valkey
+
+# Stop the infrastructure (data stays in the volume):
+docker compose -f docker-compose.infra.yml down
+
+# DANGEROUS: stop and wipe all stored secrets:
+docker compose -f docker-compose.infra.yml down -v
+```
+
+### Backup
+
+The data lives in the named volume `burnotes-infra_valkey-data`:
+
+```bash
+docker run --rm \
+  -v burnotes-infra_valkey-data:/data \
+  -v "$PWD":/backup \
+  alpine tar czf /backup/valkey-backup.tgz /data
+```
+
+### Running the app on the host (`npm run dev`) against Dockerised Valkey
+
+Uncomment the `ports:` block in `docker-compose.infra.yml` (binds `127.0.0.1:6379`)
+and set `VALKEY_URL=redis://localhost:6379/0` in `.env`.
+
+### Security notes
+
+Valkey is not exposed outside the internal network, so it runs without a
+password. If you ever route traffic across an untrusted network, add
+`--requirepass` to the `valkey-server` command and update `VALKEY_URL`
+accordingly (`redis://:password@valkey:6379/0`).
+
 ## Build with werf
 
 ```bash
@@ -64,5 +129,5 @@ Use the resulting image tag from `werf build` output in `BURNOTES_IMAGE`.
 
 ## Notes
 
-- Storage is in-memory only. Restarting container removes all secrets.
-- App should run as a single instance, because secrets are not shared across replicas.
+- Encrypted payloads live in Valkey. Restarting the app container preserves all active links; restarting Valkey preserves them via AOF + RDB.
+- App can run as multiple instances since state is external; Valkey itself must remain a single reachable endpoint.

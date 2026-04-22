@@ -3,6 +3,9 @@ name: burnotes
 networks:
   web:
     external: true
+  infra:
+    external: true
+    name: burnotes-infra
 
 services:
   app:
@@ -14,6 +17,7 @@ services:
       - "${APP_PORT}"
     networks:
       - web
+      - infra
     labels:
       - traefik.enable=true
       - traefik.docker.network=web # <<< force Traefik to use the 'web' network

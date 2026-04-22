@@ -1,98 +1,119 @@
-import { timingSafeEqual } from 'node:crypto';
+import type { Redis } from 'ioredis';
 import type { EncryptedSecret } from '@/lib/secret-crypto';
+import { getValkey, SECRET_KEY_PREFIX } from '@/lib/valkey-client';
 
 const SECRET_TTL_MS = 24 * 60 * 60 * 1000;
-const CLEANUP_INTERVAL_MS = 60 * 1000;
 const MAX_FAILED_ATTEMPTS = 5;
 
-type SecretRecord = {
-    encryptedSecret: EncryptedSecret;
-    accessTokenHash: string;
-    expiresAt: number;
-    failedAttempts: number;
+const CREATE_SCRIPT = `
+if redis.call('EXISTS', KEYS[1]) == 1 then
+    return 0
+end
+redis.call('HSET', KEYS[1],
+    'encryptedSecret', ARGV[1],
+    'accessTokenHash', ARGV[2],
+    'expiresAt', ARGV[3],
+    'failedAttempts', '0')
+redis.call('PEXPIRE', KEYS[1], ARGV[4])
+return 1
+`;
+
+// Constant-time compare inside the script: we always read the stored hash,
+// always iterate the full length on match, and always HINCRBY on miss — so an
+// attacker cannot distinguish "missing" from "wrong token" from "wrong length"
+// through a timing oracle on the Valkey round trip.
+const CONSUME_SCRIPT = `
+local stored = redis.call('HGET', KEYS[1], 'accessTokenHash')
+if not stored then
+    return {'missing'}
+end
+local diff = 0
+if #stored == #ARGV[1] then
+    for i = 1, #stored do
+        local a = string.byte(stored, i)
+        local b = string.byte(ARGV[1], i)
+        diff = diff + (a - b) * (a - b)
+    end
+else
+    diff = 1
+end
+if diff > 0 then
+    local failed = redis.call('HINCRBY', KEYS[1], 'failedAttempts', 1)
+    if failed >= tonumber(ARGV[2]) then
+        redis.call('DEL', KEYS[1])
+    end
+    return {'mismatch'}
+end
+local encrypted = redis.call('HGET', KEYS[1], 'encryptedSecret')
+redis.call('DEL', KEYS[1])
+return {'ok', encrypted}
+`;
+
+type BurnotesCommands = {
+    burnotesCreate: (...args: (string | number)[]) => Promise<number>;
+    burnotesConsume: (...args: (string | number)[]) => Promise<[string] | [string, string]>;
 };
 
-function safeEqualStrings(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-        return false;
-    }
+const registered = new WeakSet<Redis>();
 
-    return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+function getClient(): Redis & BurnotesCommands {
+    const client = getValkey();
+    if (!registered.has(client)) {
+        client.defineCommand('burnotesCreate', { numberOfKeys: 1, lua: CREATE_SCRIPT });
+        client.defineCommand('burnotesConsume', { numberOfKeys: 1, lua: CONSUME_SCRIPT });
+        registered.add(client);
+    }
+    return client as Redis & BurnotesCommands;
+}
+
+function secretKey(id: string): string {
+    return `${SECRET_KEY_PREFIX}${id}`;
 }
 
 class SecretStore {
-    private readonly store = new Map<string, SecretRecord>();
-
-    constructor() {
-        const timer = setInterval(() => this.cleanupExpired(), CLEANUP_INTERVAL_MS);
-        timer.unref();
-    }
-
-    create(id: string, encryptedSecret: EncryptedSecret, accessTokenHash: string): { expiresAt: number } | null {
-        this.cleanupExpired();
-
-        if (this.store.has(id)) {
+    async create(
+        id: string,
+        encryptedSecret: EncryptedSecret,
+        accessTokenHash: string,
+    ): Promise<{ expiresAt: number } | null> {
+        const client = getClient();
+        const expiresAt = Date.now() + SECRET_TTL_MS;
+        const result = await client.burnotesCreate(
+            secretKey(id),
+            JSON.stringify(encryptedSecret),
+            accessTokenHash,
+            String(expiresAt),
+            String(SECRET_TTL_MS),
+        );
+        if (result !== 1) {
             return null;
         }
-
-        const expiresAt = Date.now() + SECRET_TTL_MS;
-        this.store.set(id, { encryptedSecret, accessTokenHash, expiresAt, failedAttempts: 0 });
         return { expiresAt };
     }
 
-    getMetadata(id: string): { expiresAt: number } | null {
-        this.cleanupExpired();
-
-        const record = this.store.get(id);
-        if (!record) {
+    async getMetadata(id: string): Promise<{ expiresAt: number } | null> {
+        const client = getClient();
+        const expiresAt = await client.hget(secretKey(id), 'expiresAt');
+        if (!expiresAt) {
             return null;
         }
-
-        return { expiresAt: record.expiresAt };
+        return { expiresAt: Number(expiresAt) };
     }
 
-    consume(id: string, accessTokenHash: string): EncryptedSecret | null {
-        this.cleanupExpired();
-
-        const record = this.store.get(id);
-        if (!record) {
+    async consume(id: string, accessTokenHash: string): Promise<EncryptedSecret | null> {
+        const client = getClient();
+        const result = await client.burnotesConsume(secretKey(id), accessTokenHash, String(MAX_FAILED_ATTEMPTS));
+        if (!Array.isArray(result) || result[0] !== 'ok' || typeof result[1] !== 'string') {
             return null;
         }
-
-        if (!safeEqualStrings(record.accessTokenHash, accessTokenHash)) {
-            record.failedAttempts += 1;
-            if (record.failedAttempts >= MAX_FAILED_ATTEMPTS) {
-                this.store.delete(id);
-            }
+        try {
+            return JSON.parse(result[1]) as EncryptedSecret;
+        } catch {
             return null;
-        }
-
-        if (record.expiresAt <= Date.now()) {
-            this.store.delete(id);
-            return null;
-        }
-
-        this.store.delete(id);
-        return record.encryptedSecret;
-    }
-
-    private cleanupExpired(): void {
-        const now = Date.now();
-        for (const [id, record] of this.store.entries()) {
-            if (record.expiresAt <= now) {
-                this.store.delete(id);
-            }
         }
     }
 }
 
-declare global {
-    // eslint-disable-next-line no-var
-    var __secretStore: SecretStore | undefined;
-}
-
-export const secretStore = globalThis.__secretStore ?? new SecretStore();
-
-globalThis.__secretStore = secretStore;
+export const secretStore = new SecretStore();
 
 export const SECRET_TTL_SECONDS = SECRET_TTL_MS / 1000;

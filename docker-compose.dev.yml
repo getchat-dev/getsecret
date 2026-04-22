@@ -1,22 +1,28 @@
 name: burnotes-dev
 
+networks:
+  infra:
+    external: true
+    name: burnotes-infra
+
 services:
   app:
-    image: $WERF_APP_DOCKER_IMAGE_NAME
-    # command: ["tail", "-f", "/dev/null"]
-    command: ["npm", "start"]
+    image: ${WERF_APP_DOCKER_IMAGE_NAME:-burnotes:latest}
+    command: ["tail", "-f", "/dev/null"]
+    # command: ["npm", "run", "dev"]
+    volumes:
+      - ./:/app
     env_file: .env
     expose:
-      - "3000"
+      - "${APP_PORT}"
     labels:
       - traefik.enable=true
+      # - traefik.docker.network=web
       - traefik.http.routers.burnotes.rule=Host(`${APP_HOST}`)
       - traefik.http.routers.burnotes.entrypoints=http
-      - traefik.http.services.burnotes.loadbalancer.server.port=80
+      - traefik.http.services.burnotes.loadbalancer.server.port=${APP_PORT}
+      # - traefik.http.routers.burnotes.entrypoints=web
+      # - traefik.http.services.burnotes.loadbalancer.server.port=${APP_PORT}
     networks:
-      - burnotes-net
+      - infra
     restart: unless-stopped
-
-networks:
-  burnotes-net:
-    driver: bridge

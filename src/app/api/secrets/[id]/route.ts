@@ -16,7 +16,7 @@ type ConsumeSecretBody = {
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
     const clientIp = getClientIp(request);
-    if (rateLimiter.isLimited(`consume:${clientIp}`, CONSUME_LIMIT, CONSUME_WINDOW_MS)) {
+    if (await rateLimiter.isLimited(`consume:${clientIp}`, CONSUME_LIMIT, CONSUME_WINDOW_MS)) {
         return jsonNoStore({ error: 'Too many requests' }, 429);
     }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const accessTokenHash = await hashAccessToken(body.accessToken);
-    const encryptedSecret = secretStore.consume(id, accessTokenHash);
+    const encryptedSecret = await secretStore.consume(id, accessTokenHash);
     if (!encryptedSecret) {
         return jsonNoStore({ error: 'Secret not found or expired' }, 404);
     }

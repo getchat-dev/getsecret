@@ -1,0 +1,39 @@
+name: burnotes-infra
+
+networks:
+  infra:
+    name: burnotes-infra
+
+volumes:
+  valkey-data:
+
+services:
+  valkey:
+    image: valkey/valkey:8-alpine
+    restart: unless-stopped
+    command:
+      - valkey-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --save
+      - "900 1"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - valkey-data:/data
+    networks:
+      - infra
+    # Valkey is not exposed to the host by default — the app reaches it via the
+    # `burnotes-infra` network. Uncomment for local `npm run dev` on the host:
+    # ports:
+    #   - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

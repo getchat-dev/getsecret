@@ -1,45 +1,32 @@
-type Bucket = {
-    hits: number[];
-};
+import { randomBytes } from 'node:crypto';
+import { getValkey, RATE_LIMIT_KEY_PREFIX } from '@/lib/valkey-client';
 
-class MemoryRateLimiter {
-    private readonly buckets = new Map<string, Bucket>();
-
-    isLimited(key: string, limit: number, windowMs: number): boolean {
+class RateLimiter {
+    async isLimited(key: string, limit: number, windowMs: number): Promise<boolean> {
+        const client = getValkey();
         const now = Date.now();
-        const bucket = this.buckets.get(key) ?? { hits: [] };
+        const member = `${now}-${randomBytes(6).toString('hex')}`;
+        const rlKey = `${RATE_LIMIT_KEY_PREFIX}${key}`;
+        const windowStart = now - windowMs;
 
-        bucket.hits = bucket.hits.filter((timestamp) => now - timestamp < windowMs);
-        bucket.hits.push(now);
+        const results = await client
+            .multi()
+            .zremrangebyscore(rlKey, 0, windowStart)
+            .zadd(rlKey, now, member)
+            .zcard(rlKey)
+            .pexpire(rlKey, windowMs)
+            .exec();
 
-        this.buckets.set(key, bucket);
-
-        if (bucket.hits.length > limit) {
-            return true;
+        if (!results) {
+            return false;
         }
 
-        if (this.buckets.size > 10_000) {
-            this.compact(now, windowMs);
+        const zcardResult = results[2];
+        if (!zcardResult || zcardResult[0]) {
+            return false;
         }
-
-        return false;
-    }
-
-    private compact(now: number, windowMs: number): void {
-        for (const [key, bucket] of this.buckets.entries()) {
-            bucket.hits = bucket.hits.filter((timestamp) => now - timestamp < windowMs);
-            if (bucket.hits.length === 0) {
-                this.buckets.delete(key);
-            }
-        }
+        return Number(zcardResult[1]) > limit;
     }
 }
 
-declare global {
-    // eslint-disable-next-line no-var
-    var __memoryRateLimiter: MemoryRateLimiter | undefined;
-}
-
-export const rateLimiter = globalThis.__memoryRateLimiter ?? new MemoryRateLimiter();
-
-globalThis.__memoryRateLimiter = rateLimiter;
+export const rateLimiter = new RateLimiter();

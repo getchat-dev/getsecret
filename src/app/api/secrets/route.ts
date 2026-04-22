@@ -18,7 +18,7 @@ type CreateSecretBody = {
 
 export async function POST(request: Request) {
     const clientIp = getClientIp(request);
-    if (rateLimiter.isLimited(`create:${clientIp}`, CREATE_LIMIT, CREATE_WINDOW_MS)) {
+    if (await rateLimiter.isLimited(`create:${clientIp}`, CREATE_LIMIT, CREATE_WINDOW_MS)) {
         return jsonNoStore({ error: 'Too many requests' }, 429);
     }
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     const accessTokenHash = await hashAccessToken(body.accessToken);
-    const createdSecret = secretStore.create(body.id, body.encryptedSecret, accessTokenHash);
+    const createdSecret = await secretStore.create(body.id, body.encryptedSecret, accessTokenHash);
     if (!createdSecret) {
         return jsonNoStore({ error: 'Secret id already exists' }, 409);
     }
