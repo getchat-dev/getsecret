@@ -4,6 +4,7 @@ import { STATIC_SECURITY_HEADERS } from './src/lib/security-headers';
 const nextConfig: NextConfig = {
     output: 'standalone',
     poweredByHeader: false,
+    serverExternalPackages: ['ioredis'],
     async headers() {
         return [
             {

@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
+import { DEFAULT_EXPIRATION_SECONDS } from '@/lib/expiration';
 import type { EncryptedSecret } from '@/lib/secret-crypto';
 import { getValkey, SECRET_KEY_PREFIX } from '@/lib/valkey-client';
 
-const SECRET_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_FAILED_ATTEMPTS = 5;
 
 const CREATE_SCRIPT = `
@@ -75,15 +75,17 @@ class SecretStore {
         id: string,
         encryptedSecret: EncryptedSecret,
         accessTokenHash: string,
+        ttlSeconds: number = DEFAULT_EXPIRATION_SECONDS,
     ): Promise<{ expiresAt: number } | null> {
         const client = getClient();
-        const expiresAt = Date.now() + SECRET_TTL_MS;
+        const ttlMs = ttlSeconds * 1000;
+        const expiresAt = Date.now() + ttlMs;
         const result = await client.burnotesCreate(
             secretKey(id),
             JSON.stringify(encryptedSecret),
             accessTokenHash,
             String(expiresAt),
-            String(SECRET_TTL_MS),
+            String(ttlMs),
         );
         if (result !== 1) {
             return null;
@@ -116,4 +118,4 @@ class SecretStore {
 
 export const secretStore = new SecretStore();
 
-export const SECRET_TTL_SECONDS = SECRET_TTL_MS / 1000;
+export const SECRET_TTL_SECONDS = DEFAULT_EXPIRATION_SECONDS;

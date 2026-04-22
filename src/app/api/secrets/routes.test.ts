@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { POST as consumeSecret } from '@/app/api/secrets/[id]/route';
 import { POST as createSecret } from '@/app/api/secrets/route';
+import { MAX_EXPIRATION_SECONDS } from '@/lib/expiration';
 import { decryptSecret, type EncryptedSecret, prepareSecretUpload } from '@/lib/secret-crypto';
 import { SECRET_TTL_SECONDS } from '@/lib/secret-store';
 import { getValkey } from '@/lib/valkey-client';
@@ -140,6 +141,75 @@ describe('secret API routes', () => {
         );
 
         expect(response.status).toBe(413);
+    });
+
+    it('honours a custom expiresInSeconds and echoes it back', async () => {
+        const prepared = await prepareSecretUpload('custom-ttl payload');
+        const customTtl = 2 * 60 * 60;
+
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    expiresInSeconds: customTtl,
+                }),
+            }),
+        );
+
+        expect(response.status).toBe(201);
+        const data = (await response.json()) as { expiresInSeconds: number };
+        expect(data.expiresInSeconds).toBe(customTtl);
+    });
+
+    it('rejects expiresInSeconds above MAX_EXPIRATION_SECONDS', async () => {
+        const prepared = await prepareSecretUpload('too-long payload');
+
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    expiresInSeconds: MAX_EXPIRATION_SECONDS + 1,
+                }),
+            }),
+        );
+
+        expect(response.status).toBe(400);
+    });
+
+    it('rejects non-integer expiresInSeconds', async () => {
+        const prepared = await prepareSecretUpload('non-integer ttl');
+
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    expiresInSeconds: 3.14,
+                }),
+            }),
+        );
+
+        expect(response.status).toBe(400);
     });
 
     it('rejects consume requests with oversized bodies', async () => {

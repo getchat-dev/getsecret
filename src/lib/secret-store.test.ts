@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MAX_EXPIRATION_SECONDS } from '@/lib/expiration';
 import type { EncryptedSecret } from '@/lib/secret-crypto';
 import { secretStore } from '@/lib/secret-store';
-import { getValkey } from '@/lib/valkey-client';
+import { getValkey, SECRET_KEY_PREFIX } from '@/lib/valkey-client';
 
 function sampleEncryptedSecret(): EncryptedSecret {
     return {
@@ -64,5 +65,21 @@ describe('secret-store', () => {
     it('rejects consume when the stored hash has a different length', async () => {
         await secretStore.create('length-check', sampleEncryptedSecret(), 'token-hash-aaaa');
         expect(await secretStore.consume('length-check', 'token-hash-bbbbbbbbbb')).toBeNull();
+    });
+
+    it('applies a custom ttlSeconds to the stored record', async () => {
+        const customTtl = 2 * 60 * 60;
+        const created = await secretStore.create('custom-ttl', sampleEncryptedSecret(), 'token-hash', customTtl);
+
+        expect(created).not.toBeNull();
+        const pttl = await getValkey().pttl(`${SECRET_KEY_PREFIX}custom-ttl`);
+        expect(pttl).toBeGreaterThan(0);
+        expect(pttl).toBeLessThanOrEqual(customTtl * 1000);
+        expect(pttl).toBeGreaterThan(customTtl * 1000 - 5000);
+    });
+
+    it('exposes MAX_EXPIRATION_SECONDS as a positive integer', () => {
+        expect(Number.isInteger(MAX_EXPIRATION_SECONDS)).toBe(true);
+        expect(MAX_EXPIRATION_SECONDS).toBeGreaterThan(0);
     });
 });

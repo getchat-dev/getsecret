@@ -8,7 +8,7 @@ type ErrorResponse = {
     error?: string;
 };
 
-export async function createSecretLink(secret: string): Promise<string> {
+export async function createSecretLink(secret: string, expiresInSeconds?: number): Promise<string> {
     if (secret.length === 0 || secret.length > MAX_SECRET_LENGTH) {
         throw new Error(`Secret length must be between 1 and ${MAX_SECRET_LENGTH} characters.`);
     }
@@ -32,6 +32,7 @@ export async function createSecretLink(secret: string): Promise<string> {
                 id: preparedSecret.id,
                 encryptedSecret: preparedSecret.encryptedSecret,
                 accessToken: preparedSecret.accessToken,
+                ...(typeof expiresInSeconds === 'number' ? { expiresInSeconds } : {}),
             }),
         });
     } catch {

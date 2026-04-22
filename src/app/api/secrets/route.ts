@@ -1,7 +1,8 @@
+import { DEFAULT_EXPIRATION_SECONDS, isValidExpirationSeconds } from '@/lib/expiration';
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
 import { hashAccessToken, isValidAccessToken, isValidEncryptedSecret, isValidSecretId } from '@/lib/secret-crypto';
-import { SECRET_TTL_SECONDS, secretStore } from '@/lib/secret-store';
+import { secretStore } from '@/lib/secret-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,6 +15,7 @@ type CreateSecretBody = {
     id?: unknown;
     encryptedSecret?: unknown;
     accessToken?: unknown;
+    expiresInSeconds?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -49,8 +51,13 @@ export async function POST(request: Request) {
         return jsonNoStore({ error: 'Invalid secret access token' }, 400);
     }
 
+    const expiresInSeconds = body.expiresInSeconds ?? DEFAULT_EXPIRATION_SECONDS;
+    if (!isValidExpirationSeconds(expiresInSeconds)) {
+        return jsonNoStore({ error: 'Invalid expiration' }, 400);
+    }
+
     const accessTokenHash = await hashAccessToken(body.accessToken);
-    const createdSecret = await secretStore.create(body.id, body.encryptedSecret, accessTokenHash);
+    const createdSecret = await secretStore.create(body.id, body.encryptedSecret, accessTokenHash, expiresInSeconds);
     if (!createdSecret) {
         return jsonNoStore({ error: 'Secret id already exists' }, 409);
     }
@@ -60,7 +67,7 @@ export async function POST(request: Request) {
             id: body.id,
             path: `/s/${body.id}`,
             expiresAt: createdSecret.expiresAt,
-            expiresInSeconds: SECRET_TTL_SECONDS,
+            expiresInSeconds,
         },
         201,
     );

@@ -241,6 +241,74 @@ body {
     font-weight: 600;
 }
 
+.submit-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.ttl-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ttl-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.ttl-input {
+    width: 4.5rem;
+    padding: 0.45rem 0.6rem;
+    font: inherit;
+    border-radius: 8px;
+    border: 1px solid #c7d2e0;
+    background: #f8fafc;
+    text-align: right;
+}
+
+.ttl-input:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent), white 30%);
+    outline-offset: 2px;
+    border-color: var(--accent);
+}
+
+.ttl-toggle {
+    display: inline-flex;
+    border-radius: 8px;
+    border: 1px solid #c7d2e0;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+.ttl-toggle-option {
+    border: 0;
+    background: transparent;
+    padding: 0.45rem 0.75rem;
+    font: inherit;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.ttl-toggle-option + .ttl-toggle-option {
+    border-left: 1px solid #c7d2e0;
+}
+
+.ttl-toggle-option[aria-pressed="true"] {
+    background: var(--accent);
+    color: #f0fdfb;
+    font-weight: 700;
+}
+
+.ttl-toggle-option:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent), white 30%);
+    outline-offset: -2px;
+}
+
 .toast-anchor {
     position: relative;
     display: inline-flex;
