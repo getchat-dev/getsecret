@@ -20,7 +20,7 @@ describe('security-headers', () => {
         expect(header('Permissions-Policy')).toContain('camera=()');
     });
 
-    it('does NOT carry a static Content-Security-Policy (must come from middleware)', () => {
+    it('does NOT carry a static Content-Security-Policy (must come from proxy)', () => {
         expect(header('Content-Security-Policy')).toBeUndefined();
     });
 
