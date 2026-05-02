@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { SecretViewer } from '@/components/secret-viewer';
+import { BurnedScreen } from '@/components/secret/burned-screen';
+import { Viewer } from '@/components/secret/viewer';
 import { secretStore } from '@/lib/secret-store';
 
 export const dynamic = 'force-dynamic';
@@ -15,18 +16,27 @@ export default async function SecretPage({ params }: { params: Promise<{ locale:
     const { locale, id } = await params;
     setRequestLocale(locale);
     const t = await getTranslations('reveal');
+    const tEyebrow = await getTranslations('eyebrow');
+
     const secretMetadata = await secretStore.getMetadata(id);
+
+    if (!secretMetadata) {
+        return (
+            <main className="page">
+                <BurnedScreen reason="not-found" />
+            </main>
+        );
+    }
 
     return (
         <main className="page">
-            <header className="hero">
-                <h1>{t('title')}</h1>
-                <p>{t('lede')}</p>
-            </header>
-            <SecretViewer
-                id={id}
-                expiresAtUtc={secretMetadata ? new Date(secretMetadata.expiresAt).toISOString() : null}
-            />
+            <span className="eyebrow">
+                <span className="ember-dot" />
+                {tEyebrow('reveal')}
+            </span>
+            <h1 className="display">{t('title')}</h1>
+            <p className="lede">{t('lede')}</p>
+            <Viewer id={id} expiresAtUtc={new Date(secretMetadata.expiresAt).toISOString()} />
         </main>
     );
 }

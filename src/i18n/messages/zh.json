@@ -45,7 +45,10 @@
         "f2t": "自毁",
         "f2b": "秘密在被读取时立即从我们的数据库中删除 — 或在过期时删除。",
         "f3t": "开源",
-        "f3b": "审计代码,运行你自己的实例,或固定到特定提交。"
+        "f3b": "审计代码,运行你自己的实例,或固定到特定提交。",
+        "encrypting": "Encrypting…",
+        "charsLeft": "{count, number} characters left",
+        "formatLabel": "Format"
     },
     "generated": {
         "title": "链接已就绪。",
@@ -78,7 +81,8 @@
         "burnsOnRead": "阅后即焚",
         "decrypting": "正在解密…",
         "revealBtn": "显示并焚毁秘密",
-        "info": "通过显示,你确认现在已准备好阅读。我们将立即从数据库中删除加密的载荷 — 无法撤销。如果你怀疑此链接被截获,请关闭此标签页并请发送者发出新链接。"
+        "info": "通过显示,你确认现在已准备好阅读。我们将立即从数据库中删除加密的载荷 — 无法撤销。如果你怀疑此链接被截获,请关闭此标签页并请发送者发出新链接。",
+        "validating": "Validating secure link…"
     },
     "revealed": {
         "title1": "在这里。",
@@ -108,7 +112,13 @@
         "sendNew": "发送新秘密",
         "why": "为什么会这样?"
     },
-    "tabs": ["创建", "链接已生成", "接收者 · 已锁定", "接收者 · 已显示", "已焚毁"],
+    "tabs": {
+        "create": "创建",
+        "generated": "链接已生成",
+        "locked": "接收者 · 已锁定",
+        "revealed": "接收者 · 已显示",
+        "burned": "已焚毁"
+    },
     "tweaks": {
         "title": "调整",
         "flame": "火焰强调色",
@@ -124,5 +134,16 @@
         "privacy": "隐私",
         "terms": "条款",
         "status": "状态"
+    },
+    "tabsLegend": "Lifecycle of your secret",
+    "errors": {
+        "linkMissingKey": "This link is missing its decryption key.",
+        "linkKeyMismatch": "This decryption key does not match the secret link.",
+        "linkInvalidKey": "Invalid or corrupted decryption key.",
+        "secretNotFound": "Secret not found or expired.",
+        "secretExpired": "This secret expired before it was opened.",
+        "decryptFailed": "Could not decrypt the secret in this browser.",
+        "createFailed": "Failed to create the secret link.",
+        "copyFailed": "Could not copy to the clipboard."
     }
 }

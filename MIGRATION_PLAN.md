@@ -60,18 +60,19 @@ src/
 │   │   ├── site-header.tsx, site-footer.tsx
 │   │   ├── lang-picker.tsx, theme-switch.tsx
 │   ├── secret/
+│   │   ├── lifecycle-steps.tsx            ← NEW — пассивный 5-шаговый paginator
 │   │   ├── create-form.tsx                ← рефакторинг src/components/secret-form.tsx
 │   │   ├── secret-textarea.tsx            ← textarea + highlight overlay (выделить из form)
 │   │   ├── format-select.tsx              ← кастомный dropdown из дизайна
 │   │   ├── ttl-control.tsx                ← stepper + segmented [minutes|hours|days]
 │   │   ├── max-views-control.tsx          ← NEW — segmented [1|3|5|10|∞]
 │   │   ├── password-field.tsx             ← NEW — input + eye toggle
-│   │   ├── generated-link.tsx             ← пост-create экран со stats grid
-│   │   ├── viewer.tsx                     ← рефакторинг secret-viewer.tsx (контейнер с тремя state machines)
-│   │   ├── lock-screen.tsx                ← pre-reveal с countdown, опционально PasswordPrompt
+│   │   ├── generated-link.tsx             ← пост-create экран со stats grid (step 2 в lifecycle)
+│   │   ├── viewer.tsx                     ← рефакторинг secret-viewer.tsx; deriveStep → 3|4|5
+│   │   ├── lock-screen.tsx                ← step 3: pre-reveal с countdown, опционально PasswordPrompt
 │   │   ├── password-prompt.tsx            ← NEW
-│   │   ├── revealed-secret.tsx            ← post-reveal display с highlight + show/hide blur
-│   │   └── burned-screen.tsx              ← 404/used/locked-out состояние
+│   │   ├── revealed-secret.tsx            ← step 4: post-reveal display с highlight + show/hide blur
+│   │   └── burned-screen.tsx              ← step 5: 404/used/locked-out/expired
 │   ├── theme-provider.tsx                 ← обёртка next-themes
 │   └── copy-button.tsx                    ← оставляем (используется в нескольких местах)
 ├── i18n/
@@ -163,40 +164,144 @@ src/
 
 ---
 
-## Этап 2 — Component refactor + minutes (PR #2)
+## Этап 2 — Component refactor, lifecycle paginator, text migration (PR #2)
 
-**Цель:** разбить монолитные `secret-form.tsx` и `secret-viewer.tsx` на компоненты, готовые принять новые поля. Добавить minutes в TTL.
+**Цель:** разбить монолитные `secret-form.tsx` и `secret-viewer.tsx` на компоненты, добавить lifecycle paginator поверх обоих экранов, перевести весь UI-текст на `useTranslations`, добавить minutes в TTL. Все 5 шагов жизненного цикла из нового дизайна должны корректно отражаться при переходах.
 
-### 2.1 Декомпозиция формы создания
-`src/components/secret/create-form.tsx` (новый контейнер) композиция:
-- `<SecretTextarea format={format} value={secret} onChange={...} />` — текстарея + highlight overlay (вынести логику из `secret-form.tsx` строк 43-65, 158-184)
-- `<FormatSelect value={format} onChange={setFormat} />` — кастомный dropdown из дизайна на 14 форматов (вместо нативного `<select>`). Использовать `SECRET_FORMATS` и `SECRET_FORMAT_LABELS` из `src/lib/secret-formats.ts`.
-- `<TtlControl value={ttlValue} unit={ttlUnit} onChange={...} />` — stepper + segmented `[minutes | hours | days]`.
-- Submit button + результирующий `<GeneratedLink link={link} payload={...} />` (когда `link` присутствует).
+### 2.1 Lifecycle paginator (новый компонент)
 
-### 2.2 Декомпозиция viewer
-`src/components/secret/viewer.tsx` контейнер с тремя state machines (`LinkState`, `SecretState`, `ReshareState` — оставить как сейчас в `secret-viewer.tsx`). Подкомпоненты:
-- `<LockScreen secretMeta={...} onReveal={...} />` — иконка, countdown, кнопка "Reveal & burn secret". `<ExpiryCountdown />` уже есть, переносим внутрь.
-- `<RevealedSecret content={content} format={format} highlightedHtml={...} onReshare={...} />` — output box с blur-toggle, кнопкой Copy, секцией "Share something back".
-- `<BurnedScreen reason="not-found" | "used" | "locked-out" />` — flame icon, текст в зависимости от причины.
+`src/components/secret/lifecycle-steps.tsx`:
+- **Чисто презентационный, без onClick** — пользователь не может прыгать на произвольный шаг (это было только у демо в new_design). Активный шаг определяется состоянием родительского flow.
+- Props: `activeStep: 1 | 2 | 3 | 4 | 5`.
+- Лейблы шагов берёт из существующего ключа `tabs` (массив из 5 строк) в каждом messages.json. Заголовок "Lifecycle of your secret" над линией — новый ключ `tabsLegend`, добавить во все 7 локалей.
+- Структура из new_design (см. `ScreenTabs` строки 197-227):
+  ```
+  ┌──────────────────────────────────────────────────────────┐
+  │ LIFECYCLE OF YOUR SECRET ─────────────────────────────── │
+  │ [01 Create] [02 Link generated] [03 Recipient · locked]  │
+  │ [04 Recipient · revealed] [05 Already burned]            │
+  └──────────────────────────────────────────────────────────┘
+  ```
+- Стили — `.screen-tabs` уже частично есть в `globals.css` из new_design/styles.css (1116-1140 в исходнике), переиспользуем без `onClick` обработчика. Активный — через `data-active="true"` или класс `.active`.
 
-`SecretState.revealed` уже хранит `highlightedHtml`. Сохраняем эту логику. Подсветка после reveal — динамический import `@/lib/highlight-secret` (как сейчас).
+### 2.2 Переходы между шагами и кто их инициирует
 
-### 2.3 TTL: добавить minutes
-- `src/lib/expiration.ts`: `MIN_EXPIRATION_SECONDS = 1` уже валиден. Добавить `MINUTES_PRESET`, `HOURS_PRESET`, `DAYS_PRESET` константы для UI.
-- `src/components/secret/ttl-control.tsx`: TtlUnit = `'minutes' | 'hours' | 'days'`. Логика `unitSeconds`, `maxValueForUnit` — расширить.
-- Дефолт: `1 day` (текущий).
-- Серверная валидация в `/api/secrets/route.ts` использует уже существующий `isValidExpirationSeconds` — менять не нужно.
+В new_design (`new_design/app.jsx:914`) переходы через `goto(screen)` со state-машиной в `App()`. У нас аналог — клиентское состояние внутри `CreateForm` и `Viewer`. Карта переходов:
 
-### 2.4 Подготовка контракта под новые фичи (без активации)
-- В `src/lib/create-secret-link.ts` сигнатура `createSecretLink(secret, expiresInSeconds?, format?, options?)` — добавить опции `password?: string`, `maxViews?: number | null`, но пока no-op (бросают ошибку или игнорируются на сервере).
-- Это нужно только если в одном PR проще оставить пустые поля. Альтернатива: ввести их вместе с этапами 3 и 4. Я бы оставил на этапе 3 (`maxViews`) и 4 (`password`).
+| От | К | Триггер | Где живёт логика |
+|---|---|---|---|
+| 1 (Create) | 2 (Generated) | submit формы → успешный `POST /api/secrets` | `CreateForm`: после `setLink(nextLink)` |
+| 2 (Generated) | 1 (Create) | клик "Share another" (`t('generated.shareAnother')`) | `CreateForm`: reset `secret=''`, `link=''` |
+| 3 (Locked) | 4 (Revealed) | клик "Reveal & burn secret" → успешный `POST /api/secrets/[id]` | `Viewer`: переход `state` `loading → revealed` |
+| 3/4 | 5 (Burned) | API вернул 404 / `state.error` / SSR `getMetadata` вернул `null` | `Viewer`: ветка ошибки, либо SSR показывает `BurnedScreen` напрямую |
+| 4 (Revealed) | 1 (Create) | клик "Share something back" — НЕ `createReplacementLink` со старым контентом, а **переход на `/[locale]` с пустой формой** (рассмотреть `router.push`) | `Viewer`: navigation, не reshare |
+| 5 (Burned) | 1 (Create) | клик "Send a new secret" (`t('burned.sendNew')`) | `BurnedScreen`: navigation на `/[locale]` |
 
-### 2.5 Verification (этап 2)
-- Существующие тесты (`secret-crypto.test.ts`, `secret-store.test.ts`, `secret-store via routes.test.ts`) проходят без изменений.
-- Добавить визуальную проверку всех 5 экранов (create, generated, reveal, revealed, burned-as-not-found) с обоими темами и mobile viewport.
-- E2E: создать → кликнуть generated link → reveal → reshare. Проверить highlight на JSON и Python.
-- Проверить minutes: создать секрет на 5 минут → дождаться истечения → попытаться открыть → 404.
+**Правка относительно текущего поведения:** "Generate new link" из старого `secret-viewer.tsx` (создаёт новый секрет с тем же контентом через `createReplacementLink`) — это наша легаси-фича. В новом дизайне `revealed.shareBack` означает "share something back to the sender" — пустая форма. Нужно решить: оставляем legacy-поведение и переименовываем в i18n, либо принимаем семантику нового дизайна. Рекомендую второе (соответствие дизайну), legacy-логику `createReplacementLink` удаляем.
+
+### 2.3 Маппинг состояний на activeStep
+
+**`CreateForm` (steps 1-2):**
+```ts
+const activeStep = link ? 2 : 1;
+```
+
+**`Viewer` (steps 3-5), управляется композицией LinkState + SecretState:**
+```ts
+function deriveStep(link: LinkState, secret: SecretState, isExpired: boolean): 1|2|3|4|5 {
+  if (link.status === 'error') return 5;            // ключ кривой → burned UX
+  if (isExpired) return 5;
+  if (secret.status === 'revealed') return 4;
+  if (secret.status === 'error') return 5;
+  return 3;                                          // checking | ready | loading
+}
+```
+
+**SSR-кейс на `[locale]/s/[id]/page.tsx`:** если `secretStore.getMetadata(id)` вернул `null` (хеш протух / consumed / locked-out / никогда не существовал) → server-render сразу `<BurnedScreen />` без монтирования `Viewer` вообще. `LifecycleSteps activeStep={5}` рендерится прямо из server component.
+
+### 2.4 Декомпозиция формы создания
+
+`src/components/secret/create-form.tsx` (контейнер) композиция:
+- `<LifecycleSteps activeStep={link ? 2 : 1} />`
+- Если `link === ''`:
+  - `<SecretTextarea format={format} value={secret} onChange={...} />` — текстарея + highlight overlay (вынести из `secret-form.tsx:43-65, 158-184`)
+  - `<FormatSelect value={format} onChange={setFormat} />` — кастомный dropdown на 14 форматов (заменяет нативный `<select>`); использовать `SECRET_FORMATS` и `SECRET_FORMAT_LABELS` из `src/lib/secret-formats.ts`
+  - `<TtlControl value={ttlValue} unit={ttlUnit} onChange={...} />` — stepper + segmented `[minutes | hours | days]`
+  - Submit button (`t('create.submit')`)
+- Если `link !== ''`:
+  - `<GeneratedLink link={link} payload={...} />` — link-box + stats grid (Expires in / Reads remaining / Passphrase) + footer с "Share another" / "QR code" (заглушка, реализуется в этапе 5) / "Burn now"
+  - "Share another" вызывает обратный переход 2→1
+
+### 2.5 Декомпозиция viewer
+
+`src/components/secret/viewer.tsx` контейнер с двумя state machines (`LinkState`, `SecretState` — `ReshareState` удаляется вместе с `createReplacementLink`). Подкомпоненты:
+- `<LifecycleSteps activeStep={deriveStep(...)} />`
+- `<LockScreen onReveal={...} expiresAtUtc={...} />` (step 3) — иконка, countdown (`<ExpiryCountdown />` уже есть), кнопка `t('reveal.revealBtn')`, lede `t('reveal.lockedSub')`
+- `<RevealedSecret content={...} format={...} />` (step 4) — secret-output box с blur-toggle (eye icon), Copy, "Share something back" → router.push на `/[locale]`
+- `<BurnedScreen reason="not-found" | "consumed" | "locked-out" | "expired" />` (step 5) — flame icon + lede + `<Link href="/" t('burned.sendNew')>` 
+
+`SecretState.revealed` хранит `highlightedHtml` как сейчас. Подсветка после reveal — динамический import `@/lib/highlight-secret`.
+
+### 2.6 Перенос всего UI-текста на `useTranslations()`
+
+**Принцип:** в `src/components/secret/*.tsx` после рефакторинга не должно остаться захардкоженных английских UI-строк (кроме идентификаторов / atom'ов вроде "AES-GCM" / placeholder-токенов). `grep` по компонентам не находит UI-текста.
+
+**Маппинг существующих строк → ключи (используем уже извлечённые namespace'ы из new_design):**
+
+| Старая строка | Новый ключ |
+|---|---|
+| "Share secret" | `create.submit` ("Encrypt & generate link") |
+| "Creating..." | новый `create.encrypting` |
+| "Paste password, token, or any secret here" | `create.placeholder` |
+| "{N} characters left" | новый `create.charsLeft` (ICU plural) |
+| "Format" | новый `create.formatLabel` |
+| "Expires in" | `create.expiresIn` |
+| "Hours" / "Days" / "Minutes" | `create.units.hours/days/minutes` |
+| "Secret link copied to clipboard" | `toast.copied` |
+| "Reveal secret" | `reveal.revealBtn` ("Reveal & burn secret") |
+| "Validating secure link..." | новый `reveal.validating` |
+| "Loading encrypted secret..." | `reveal.decrypting` |
+| "Locked & sealed" | `reveal.lockedTitle` |
+| "Generate new link" / popover | удалить (см. 2.2) |
+| "decryption key extracted from URL fragment" | `reveal.lockedSub` |
+| "Burned." / "The encrypted payload has been wiped" | `revealed.burnedTitle` / `revealed.burnedBody` |
+| "Send a new secret" | `burned.sendNew` |
+
+**Новый namespace `errors`** — нужен для error messages, которых нет в new_design.i18n. Добавить во все 7 messages.json:
+```json
+"errors": {
+  "linkMissingKey": "This link is missing its decryption key",
+  "linkKeyMismatch": "This decryption key does not match the secret link",
+  "linkInvalidKey": "Invalid or corrupted decryption key",
+  "secretNotFound": "Secret not found or expired",
+  "secretExpired": "This secret has expired before it was opened",
+  "decryptFailed": "Could not load or decrypt the secret in this browser",
+  "createFailed": "Failed to create secret link",
+  "copyFailed": "Could not copy to clipboard"
+}
+```
+
+Для не-EN локалей на этапе 2 кладём английский fallback с `// TODO translate` пометкой в коммит-мессадже. Профессиональные переводы — отдельной задачей после ship'а stage 2 (можно scheduled-агентом).
+
+**Новые ключи в существующих namespace'ах:**
+- `tabsLegend`: "Lifecycle of your secret" (для подписи над `<LifecycleSteps>`)
+- `create.encrypting`, `create.charsLeft`, `create.formatLabel`
+- `reveal.validating`
+
+### 2.7 TTL: добавить minutes
+- `src/lib/expiration.ts`: `MIN_EXPIRATION_SECONDS = 1` уже валиден. Добавить `MINUTES_PER_*` константы + helper `unitSeconds(unit: 'minutes'|'hours'|'days')`.
+- `<TtlControl>`: `TtlUnit = 'minutes' | 'hours' | 'days'`. Лейблы из `t('create.units.*')`.
+- Дефолт: `1 day` (текущий, без изменений).
+- Серверная валидация в `/api/secrets/route.ts` через уже существующий `isValidExpirationSeconds` — без правок.
+
+### 2.8 Verification (этап 2)
+- `npm run check && npm test` — тесты `secret-crypto`, `secret-store`, API routes проходят без изменений (бизнес-логика не трогается).
+- **Lifecycle steps**: пройти весь сценарий руками: создать секрет → проверить активный 1, после submit → 2, кликнуть generated link → 3, reveal → 4, перезагрузить → 5. На каждом шаге убедиться, что paginator подсвечивает корректный.
+- **Text coverage**: `grep -nE '"[A-Z][a-zA-Z ]{8,}"' src/components/secret/*.tsx` не должна находить UI-строк (только идентификаторы типа `'AES-GCM'`).
+- **i18n smoke**: переключиться через LangPicker с en на ru → ВСЕ строки на странице (paginator, lock-screen, footer, ошибки если форсированы) меняются. Открыть кривую ссылку без fragment → ошибка тоже на ru.
+- **Minutes**: создать секрет на 5 минут → дождаться истечения → попытаться открыть → step 5 (burned).
+- **Highlight**: format=json, format=python — подсветка работает на create + reveal.
+- **Visual smoke**: тёмная и светлая темы × mobile viewport (480px) на всех 5 шагах.
 
 ---
 

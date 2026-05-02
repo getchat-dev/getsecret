@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { SecretForm } from '@/components/secret-form';
+import { CreateForm } from '@/components/secret/create-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,11 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     return {
         title,
         description: t('lede'),
-        openGraph: {
-            title,
-            description: t('lede'),
-            type: 'website',
-        },
+        openGraph: { title, description: t('lede'), type: 'website' },
     };
 }
 
@@ -23,16 +19,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     const { locale } = await params;
     setRequestLocale(locale);
     const t = await getTranslations('create');
+    const tEyebrow = await getTranslations('eyebrow');
 
     return (
         <main className="page">
-            <header className="hero">
-                <h1>
-                    {t('title1')} {t('title2')}
-                </h1>
-                <p>{t('lede')}</p>
-            </header>
-            <SecretForm />
+            <span className="eyebrow">
+                <span className="ember-dot" />
+                {tEyebrow('create')}
+            </span>
+            <h1 className="display">
+                {t('title1')} <span className="accent-word">{t('title2')}</span>
+            </h1>
+            <p className="lede">{t('lede')}</p>
+            <CreateForm />
         </main>
     );
 }

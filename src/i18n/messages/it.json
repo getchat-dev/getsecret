@@ -45,7 +45,10 @@
         "f2t": "Autodistruzione",
         "f2b": "Il segreto viene cancellato dal nostro database appena letto — o alla scadenza.",
         "f3t": "Open source",
-        "f3b": "Verifica il codice, esegui la tua istanza o blocca un commit specifico."
+        "f3b": "Verifica il codice, esegui la tua istanza o blocca un commit specifico.",
+        "encrypting": "Encrypting…",
+        "charsLeft": "{count, number} characters left",
+        "formatLabel": "Format"
     },
     "generated": {
         "title": "Il tuo link è pronto.",
@@ -78,7 +81,8 @@
         "burnsOnRead": "brucia alla lettura",
         "decrypting": "Decifratura in corso…",
         "revealBtn": "Rivela e brucia il segreto",
-        "info": "Rivelando, confermi di essere pronto a leggerlo ora. Cancelleremo immediatamente il payload cifrato — non c'è ritorno. Se sospetti un'intercettazione, chiudi questa scheda e chiedi al mittente un nuovo link."
+        "info": "Rivelando, confermi di essere pronto a leggerlo ora. Cancelleremo immediatamente il payload cifrato — non c'è ritorno. Se sospetti un'intercettazione, chiudi questa scheda e chiedi al mittente un nuovo link.",
+        "validating": "Validating secure link…"
     },
     "revealed": {
         "title1": "Eccolo.",
@@ -108,7 +112,13 @@
         "sendNew": "Invia un nuovo segreto",
         "why": "Perché è successo?"
     },
-    "tabs": ["Crea", "Link generato", "Destinatario · bloccato", "Destinatario · rivelato", "Già bruciato"],
+    "tabs": {
+        "create": "Crea",
+        "generated": "Link generato",
+        "locked": "Destinatario · bloccato",
+        "revealed": "Destinatario · rivelato",
+        "burned": "Già bruciato"
+    },
     "tweaks": {
         "title": "Tweaks",
         "flame": "Accenti brace/fiamma",
@@ -124,5 +134,16 @@
         "privacy": "Privacy",
         "terms": "Termini",
         "status": "Stato"
+    },
+    "tabsLegend": "Lifecycle of your secret",
+    "errors": {
+        "linkMissingKey": "This link is missing its decryption key.",
+        "linkKeyMismatch": "This decryption key does not match the secret link.",
+        "linkInvalidKey": "Invalid or corrupted decryption key.",
+        "secretNotFound": "Secret not found or expired.",
+        "secretExpired": "This secret expired before it was opened.",
+        "decryptFailed": "Could not decrypt the secret in this browser.",
+        "createFailed": "Failed to create the secret link.",
+        "copyFailed": "Could not copy to the clipboard."
     }
 }
