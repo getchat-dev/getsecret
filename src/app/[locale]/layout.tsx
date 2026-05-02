@@ -2,6 +2,8 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
+import { SiteFooter } from '@/components/layout/site-footer';
+import { SiteHeader } from '@/components/layout/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { routing } from '@/i18n/routing';
 import '../globals.css';
@@ -43,7 +45,12 @@ export default async function LocaleLayout({
         <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
             <body>
                 <NextIntlClientProvider locale={locale} messages={messages}>
-                    <ThemeProvider>{children}</ThemeProvider>
+                    <ThemeProvider>
+                        <div className="bg-grid" aria-hidden="true" />
+                        <SiteHeader />
+                        {children}
+                        <SiteFooter />
+                    </ThemeProvider>
                 </NextIntlClientProvider>
             </body>
         </html>
