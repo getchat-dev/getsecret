@@ -46,9 +46,9 @@
         "f2b": "Il segreto viene cancellato dal nostro database appena letto — o alla scadenza.",
         "f3t": "Open source",
         "f3b": "Verifica il codice, esegui la tua istanza o blocca un commit specifico.",
-        "encrypting": "Encrypting…",
-        "charsLeft": "{count, number} characters left",
-        "formatLabel": "Format"
+        "encrypting": "Crittografia in corso…",
+        "charsLeft": "{count, number} caratteri rimanenti",
+        "formatLabel": "Formato"
     },
     "generated": {
         "title": "Il tuo link è pronto.",
@@ -82,7 +82,7 @@
         "decrypting": "Decifratura in corso…",
         "revealBtn": "Rivela e brucia il segreto",
         "info": "Rivelando, confermi di essere pronto a leggerlo ora. Cancelleremo immediatamente il payload cifrato — non c'è ritorno. Se sospetti un'intercettazione, chiudi questa scheda e chiedi al mittente un nuovo link.",
-        "validating": "Validating secure link…"
+        "validating": "Verifica del link sicuro…"
     },
     "revealed": {
         "title1": "Eccolo.",
@@ -135,15 +135,15 @@
         "terms": "Termini",
         "status": "Stato"
     },
-    "tabsLegend": "Lifecycle of your secret",
+    "tabsLegend": "Ciclo di vita del tuo segreto",
     "errors": {
-        "linkMissingKey": "This link is missing its decryption key.",
-        "linkKeyMismatch": "This decryption key does not match the secret link.",
-        "linkInvalidKey": "Invalid or corrupted decryption key.",
-        "secretNotFound": "Secret not found or expired.",
-        "secretExpired": "This secret expired before it was opened.",
-        "decryptFailed": "Could not decrypt the secret in this browser.",
-        "createFailed": "Failed to create the secret link.",
-        "copyFailed": "Could not copy to the clipboard."
+        "linkMissingKey": "Manca la chiave di decifratura in questo link.",
+        "linkKeyMismatch": "Questa chiave di decifratura non corrisponde al link del segreto.",
+        "linkInvalidKey": "Chiave di decifratura non valida o danneggiata.",
+        "secretNotFound": "Segreto non trovato o scaduto.",
+        "secretExpired": "Questo segreto è scaduto prima di essere aperto.",
+        "decryptFailed": "Impossibile decifrare il segreto in questo browser.",
+        "createFailed": "Creazione del link del segreto fallita.",
+        "copyFailed": "Impossibile copiare negli appunti."
     }
 }

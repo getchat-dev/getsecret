@@ -46,8 +46,8 @@
         "f2b": "Le secret est effacé de notre base dès qu'il est lu — ou à expiration.",
         "f3t": "Open source",
         "f3b": "Auditez le code, lancez votre instance ou épinglez un commit précis.",
-        "encrypting": "Encrypting…",
-        "charsLeft": "{count, number} characters left",
+        "encrypting": "Chiffrement…",
+        "charsLeft": "{count, number} caractères restants",
         "formatLabel": "Format"
     },
     "generated": {
@@ -82,7 +82,7 @@
         "decrypting": "Déchiffrement…",
         "revealBtn": "Révéler et brûler le secret",
         "info": "En révélant, vous confirmez être prêt à le lire maintenant. Nous supprimerons immédiatement la charge — pas de retour en arrière. Si interception suspectée, fermez l'onglet et demandez un nouveau lien.",
-        "validating": "Validating secure link…"
+        "validating": "Validation du lien sécurisé…"
     },
     "revealed": {
         "title1": "Le voici.",
@@ -135,15 +135,15 @@
         "terms": "Conditions",
         "status": "Statut"
     },
-    "tabsLegend": "Lifecycle of your secret",
+    "tabsLegend": "Cycle de vie de votre secret",
     "errors": {
-        "linkMissingKey": "This link is missing its decryption key.",
-        "linkKeyMismatch": "This decryption key does not match the secret link.",
-        "linkInvalidKey": "Invalid or corrupted decryption key.",
-        "secretNotFound": "Secret not found or expired.",
-        "secretExpired": "This secret expired before it was opened.",
-        "decryptFailed": "Could not decrypt the secret in this browser.",
-        "createFailed": "Failed to create the secret link.",
-        "copyFailed": "Could not copy to the clipboard."
+        "linkMissingKey": "Il manque la clé de déchiffrement à ce lien.",
+        "linkKeyMismatch": "Cette clé de déchiffrement ne correspond pas au lien du secret.",
+        "linkInvalidKey": "Clé de déchiffrement invalide ou corrompue.",
+        "secretNotFound": "Secret introuvable ou expiré.",
+        "secretExpired": "Ce secret a expiré avant d'être ouvert.",
+        "decryptFailed": "Impossible de déchiffrer le secret dans ce navigateur.",
+        "createFailed": "Échec de la création du lien du secret.",
+        "copyFailed": "Impossible de copier dans le presse-papiers."
     }
 }

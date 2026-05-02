@@ -44,7 +44,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
     const parts = splitUrl(link);
     const isCopied = copyStatus === 'copied';
 
-    const readsLabel = maxReads === null || maxReads === undefined ? '∞' : String(maxReads);
+    const readsLabel = maxReads === null ? '∞' : String(maxReads ?? 1);
     const passphraseLabel = hasPassphrase ? t('required') : t('none');
 
     return (

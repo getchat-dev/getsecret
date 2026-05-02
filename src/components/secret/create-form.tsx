@@ -63,6 +63,8 @@ export function CreateForm() {
                 <GeneratedLink
                     link={link}
                     expiresIn={{ value: ttlValue, unit: ttlUnit }}
+                    maxReads={1}
+                    hasPassphrase={false}
                     onShareAnother={shareAnother}
                 />
             </>

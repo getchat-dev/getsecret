@@ -111,17 +111,18 @@ export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage,
     const { copyStatus, toast, copyText } = useClipboardCopy();
 
     const Icon = copyStatus === 'copied' ? CheckIcon : copyStatus === 'error' ? AlertIcon : CopyIcon;
-    const stateClass = copyStatus === 'copied' ? 'is-success' : copyStatus === 'error' ? 'is-error' : '';
+    const dataState = copyStatus === 'copied' ? 'success' : copyStatus === 'error' ? 'error' : undefined;
 
     return (
         <span className="toast-anchor">
             <button
-                className={`icon-button ${stateClass}`.trim()}
+                className="btn btn-ghost btn-icon"
+                data-state={dataState}
                 onClick={() => void copyText(textToCopy, { successMessage, errorMessage })}
                 type="button"
                 aria-label={copyStatus === 'copied' ? copiedLabel : copyLabel}
             >
-                <Icon size={16} />
+                <Icon size={14} />
             </button>
             <ToastMessage toast={toast} />
         </span>

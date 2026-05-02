@@ -46,8 +46,8 @@
         "f2b": "Geheimnis wird beim Lesen sofort aus unserer Datenbank gelöscht — oder bei Ablauf.",
         "f3t": "Open Source",
         "f3b": "Code prüfen, eigene Instanz betreiben oder auf einen Commit fixieren.",
-        "encrypting": "Encrypting…",
-        "charsLeft": "{count, number} characters left",
+        "encrypting": "Verschlüssle…",
+        "charsLeft": "{count, number} Zeichen übrig",
         "formatLabel": "Format"
     },
     "generated": {
@@ -82,7 +82,7 @@
         "decrypting": "Entschlüssle…",
         "revealBtn": "Geheimnis enthüllen & verbrennen",
         "info": "Mit dem Enthüllen bestätigst du, dass du jetzt bereit bist. Wir löschen die verschlüsselten Daten sofort aus der DB — kein Rückgängig. Bei Verdacht auf Abfangen, schließe den Tab und bitte um einen neuen Link.",
-        "validating": "Validating secure link…"
+        "validating": "Sicheren Link prüfen…"
     },
     "revealed": {
         "title1": "Hier ist es.",
@@ -135,15 +135,15 @@
         "terms": "AGB",
         "status": "Status"
     },
-    "tabsLegend": "Lifecycle of your secret",
+    "tabsLegend": "Lebenszyklus deines Geheimnisses",
     "errors": {
-        "linkMissingKey": "This link is missing its decryption key.",
-        "linkKeyMismatch": "This decryption key does not match the secret link.",
-        "linkInvalidKey": "Invalid or corrupted decryption key.",
-        "secretNotFound": "Secret not found or expired.",
-        "secretExpired": "This secret expired before it was opened.",
-        "decryptFailed": "Could not decrypt the secret in this browser.",
-        "createFailed": "Failed to create the secret link.",
-        "copyFailed": "Could not copy to the clipboard."
+        "linkMissingKey": "Diesem Link fehlt der Entschlüsselungsschlüssel.",
+        "linkKeyMismatch": "Dieser Entschlüsselungsschlüssel passt nicht zum Geheim-Link.",
+        "linkInvalidKey": "Ungültiger oder beschädigter Entschlüsselungsschlüssel.",
+        "secretNotFound": "Geheimnis nicht gefunden oder abgelaufen.",
+        "secretExpired": "Dieses Geheimnis ist abgelaufen, bevor es geöffnet wurde.",
+        "decryptFailed": "Geheimnis konnte in diesem Browser nicht entschlüsselt werden.",
+        "createFailed": "Erstellen des Geheim-Links fehlgeschlagen.",
+        "copyFailed": "Konnte nicht in die Zwischenablage kopieren."
     }
 }

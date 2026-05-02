@@ -46,9 +46,9 @@
         "f2b": "El secreto se borra de nuestra base de datos en el momento que se lee — o cuando expira.",
         "f3t": "Código abierto",
         "f3b": "Audita el código, ejecuta tu propia instancia o ánclate a un commit específico.",
-        "encrypting": "Encrypting…",
-        "charsLeft": "{count, number} characters left",
-        "formatLabel": "Format"
+        "encrypting": "Cifrando…",
+        "charsLeft": "{count, number} caracteres restantes",
+        "formatLabel": "Formato"
     },
     "generated": {
         "title": "Tu enlace está listo.",
@@ -82,7 +82,7 @@
         "decrypting": "Descifrando…",
         "revealBtn": "Revelar y quemar secreto",
         "info": "Al revelar, confirmas que estás listo para leerlo ahora. Eliminaremos la carga cifrada de nuestra base inmediatamente — no hay deshacer. Si sospechas interceptación, cierra esta pestaña y pide al remitente un nuevo enlace.",
-        "validating": "Validating secure link…"
+        "validating": "Validando enlace seguro…"
     },
     "revealed": {
         "title1": "Aquí está.",
@@ -135,15 +135,15 @@
         "terms": "Términos",
         "status": "Estado"
     },
-    "tabsLegend": "Lifecycle of your secret",
+    "tabsLegend": "Ciclo de vida de tu secreto",
     "errors": {
-        "linkMissingKey": "This link is missing its decryption key.",
-        "linkKeyMismatch": "This decryption key does not match the secret link.",
-        "linkInvalidKey": "Invalid or corrupted decryption key.",
-        "secretNotFound": "Secret not found or expired.",
-        "secretExpired": "This secret expired before it was opened.",
-        "decryptFailed": "Could not decrypt the secret in this browser.",
-        "createFailed": "Failed to create the secret link.",
-        "copyFailed": "Could not copy to the clipboard."
+        "linkMissingKey": "A este enlace le falta la clave de descifrado.",
+        "linkKeyMismatch": "Esta clave de descifrado no coincide con el enlace del secreto.",
+        "linkInvalidKey": "Clave de descifrado inválida o corrupta.",
+        "secretNotFound": "Secreto no encontrado o caducado.",
+        "secretExpired": "Este secreto caducó antes de ser abierto.",
+        "decryptFailed": "No se pudo descifrar el secreto en este navegador.",
+        "createFailed": "No se pudo crear el enlace del secreto.",
+        "copyFailed": "No se pudo copiar al portapapeles."
     }
 }
