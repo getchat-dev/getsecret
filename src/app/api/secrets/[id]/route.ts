@@ -51,5 +51,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return jsonNoStore({ error: 'Secret not found or expired' }, 404);
     }
 
-    return jsonNoStore({ encryptedSecret: consumed.encryptedSecret, format: consumed.format }, 200);
+    return jsonNoStore(
+        {
+            encryptedSecret: consumed.encryptedSecret,
+            format: consumed.format,
+            viewsRemaining: consumed.viewsRemaining,
+        },
+        200,
+    );
 }

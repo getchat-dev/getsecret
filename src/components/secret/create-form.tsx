@@ -5,11 +5,13 @@ import { type FormEvent, useState } from 'react';
 import { FormatSelect } from '@/components/secret/format-select';
 import { GeneratedLink } from '@/components/secret/generated-link';
 import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
+import { MaxViewsControl } from '@/components/secret/max-views-control';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
 import { FileIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
+import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, SECRET_FORMAT_EXTENSIONS, type SecretFormat } from '@/lib/secret-formats';
 
@@ -24,6 +26,7 @@ export function CreateForm() {
     const [ttlValue, setTtlValue] = useState('1');
     const [ttlUnit, setTtlUnit] = useState<TtlUnit>('days');
     const [format, setFormat] = useState<SecretFormat>(DEFAULT_SECRET_FORMAT);
+    const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
 
     const remaining = MAX_SECRET_LENGTH - secret.length;
     const activeStep = link ? 2 : 1;
@@ -41,7 +44,7 @@ export function CreateForm() {
 
         setIsSubmitting(true);
         try {
-            const next = await createSecretLink(secret, expiresInSeconds, format);
+            const next = await createSecretLink(secret, { expiresInSeconds, format, maxViews });
             setLink(next);
         } catch (err) {
             setError(err instanceof Error ? err.message : tErrors('createFailed'));
@@ -63,7 +66,7 @@ export function CreateForm() {
                 <GeneratedLink
                     link={link}
                     expiresIn={{ value: ttlValue, unit: ttlUnit }}
-                    maxReads={1}
+                    maxReads={maxViews}
                     hasPassphrase={false}
                     onShareAnother={shareAnother}
                 />
@@ -97,6 +100,7 @@ export function CreateForm() {
                             setTtlUnit(unit);
                         }}
                     />
+                    <MaxViewsControl value={maxViews} onChange={setMaxViews} />
                 </div>
                 <footer className="card-footer">
                     <button

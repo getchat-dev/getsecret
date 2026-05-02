@@ -82,7 +82,8 @@
         "decrypting": "Descifrando…",
         "revealBtn": "Revelar y quemar secreto",
         "info": "Al revelar, confirmas que estás listo para leerlo ahora. Eliminaremos la carga cifrada de nuestra base inmediatamente — no hay deshacer. Si sospechas interceptación, cierra esta pestaña y pide al remitente un nuevo enlace.",
-        "validating": "Validando enlace seguro…"
+        "validating": "Validando enlace seguro…",
+        "readsRemaining": "{count, plural, one {# lectura restante} other {# lecturas restantes}}"
     },
     "revealed": {
         "title1": "Aquí está.",
@@ -95,6 +96,9 @@
         "plaintext": "Texto plano",
         "burnedTitle": "Quemado.",
         "burnedBody": "La carga cifrada ha sido borrada de nuestra base. Recargar esta página no la traerá de vuelta.",
+        "multiReadTitle": "Descifrado.",
+        "multiReadBody": "{count, plural, one {Queda # lectura antes de que el secreto se queme.} other {Quedan # lecturas antes de que el secreto se queme.}}",
+        "multiReadBodyUnlimited": "Este enlace tiene lecturas ilimitadas hasta que caduque.",
         "copyClip": "Copiar al portapapeles",
         "shareBack": "Compartir de vuelta",
         "footnote": "descifrado localmente · nunca registrado",

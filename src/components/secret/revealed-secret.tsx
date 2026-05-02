@@ -10,9 +10,10 @@ import type { SecretFormat } from '@/lib/secret-formats';
 type Props = {
     content: string;
     format: SecretFormat;
+    viewsRemaining: number | null;
 };
 
-export function RevealedSecret({ content, format }: Props) {
+export function RevealedSecret({ content, format, viewsRemaining }: Props) {
     const t = useTranslations('revealed');
     const router = useRouter();
     const [hidden, setHidden] = useState(false);
@@ -78,7 +79,19 @@ export function RevealedSecret({ content, format }: Props) {
                 <div className="banner banner-success">
                     <FlameIcon size={16} className="icon" />
                     <span>
-                        <strong>{t('burnedTitle')}</strong> {t('burnedBody')}
+                        {viewsRemaining === null ? (
+                            <>
+                                <strong>{t('multiReadTitle')}</strong> {t('multiReadBodyUnlimited')}
+                            </>
+                        ) : viewsRemaining > 0 ? (
+                            <>
+                                <strong>{t('multiReadTitle')}</strong> {t('multiReadBody', { count: viewsRemaining })}
+                            </>
+                        ) : (
+                            <>
+                                <strong>{t('burnedTitle')}</strong> {t('burnedBody')}
+                            </>
+                        )}
                     </span>
                 </div>
             </div>

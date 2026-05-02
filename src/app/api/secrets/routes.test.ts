@@ -212,6 +212,118 @@ describe('secret API routes', () => {
         expect(response.status).toBe(400);
     });
 
+    it('honours maxViews and burns the secret after the limit is reached', async () => {
+        const prepared = await prepareSecretUpload('multi-read payload');
+
+        const createResponse = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    maxViews: 3,
+                }),
+            }),
+        );
+        expect(createResponse.status).toBe(201);
+        const createData = (await createResponse.json()) as { maxViews: number };
+        expect(createData.maxViews).toBe(3);
+
+        for (let i = 2; i >= 0; i -= 1) {
+            const consume = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'x-forwarded-for': '127.0.0.1',
+                    },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(consume.status).toBe(200);
+            const data = (await consume.json()) as { viewsRemaining: number };
+            expect(data.viewsRemaining).toBe(i);
+        }
+
+        const fourth = await consumeSecret(
+            new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({ accessToken: prepared.accessToken }),
+            }),
+            { params: Promise.resolve({ id: prepared.id }) },
+        );
+        expect(fourth.status).toBe(404);
+    });
+
+    it('treats maxViews=null as unlimited and reports viewsRemaining as null', async () => {
+        const prepared = await prepareSecretUpload('unlimited payload');
+
+        const createResponse = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    maxViews: null,
+                }),
+            }),
+        );
+        expect(createResponse.status).toBe(201);
+
+        for (let i = 0; i < 4; i += 1) {
+            const consume = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'x-forwarded-for': '127.0.0.1',
+                    },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(consume.status).toBe(200);
+            const data = (await consume.json()) as { viewsRemaining: number | null };
+            expect(data.viewsRemaining).toBeNull();
+        }
+    });
+
+    it('rejects an out-of-range maxViews', async () => {
+        const prepared = await prepareSecretUpload('bad views');
+
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    maxViews: 50,
+                }),
+            }),
+        );
+        expect(response.status).toBe(400);
+    });
+
     it('rejects consume requests with oversized bodies', async () => {
         const validId = 'a'.repeat(43);
         const response = await consumeSecret(

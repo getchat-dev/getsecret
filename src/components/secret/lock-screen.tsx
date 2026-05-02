@@ -36,10 +36,11 @@ type Props = {
     isLoading: boolean;
     isExpired: boolean;
     isValidating: boolean;
+    readsRemaining: number | null;
     onReveal: () => void;
 };
 
-export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, onReveal }: Props) {
+export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, readsRemaining, onReveal }: Props) {
     const t = useTranslations('reveal');
 
     const expiresAtMs = useMemo(() => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN), [expiresAtUtc]);
@@ -47,6 +48,8 @@ export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, o
     const remainingMs = Number.isFinite(expiresAtMs) ? Math.max(0, expiresAtMs - now) : 0;
 
     const buttonLabel = isLoading ? t('decrypting') : t('revealBtn');
+
+    const showReadsPill = readsRemaining !== null && readsRemaining > 1;
 
     return (
         <section className="card reveal-card fade-up">
@@ -58,7 +61,11 @@ export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, o
             <div className="reveal-meta">
                 <span className="pill pill-accent">AES-256-GCM</span>
                 <span className="pill pill-muted">{t('key256')}</span>
-                <span className="pill pill-ember">{t('burnsOnRead')}</span>
+                {showReadsPill ? (
+                    <span className="pill pill-accent">{t('readsRemaining', { count: readsRemaining })}</span>
+                ) : (
+                    <span className="pill pill-ember">{t('burnsOnRead')}</span>
+                )}
             </div>
             <div className="reveal-actions">
                 <button

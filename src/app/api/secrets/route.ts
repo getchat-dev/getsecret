@@ -1,5 +1,6 @@
 import { DEFAULT_EXPIRATION_SECONDS, isValidExpirationSeconds } from '@/lib/expiration';
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
+import { DEFAULT_MAX_VIEWS, isValidMaxViews } from '@/lib/max-views';
 import { rateLimiter } from '@/lib/rate-limit';
 import { hashAccessToken, isValidAccessToken, isValidEncryptedSecret, isValidSecretId } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, isSecretFormat } from '@/lib/secret-formats';
@@ -18,6 +19,7 @@ type CreateSecretBody = {
     accessToken?: unknown;
     expiresInSeconds?: unknown;
     format?: unknown;
+    maxViews?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -66,6 +68,14 @@ export async function POST(request: Request) {
         format = body.format;
     }
 
+    let maxViews: number | null = DEFAULT_MAX_VIEWS;
+    if (body.maxViews !== undefined) {
+        if (!isValidMaxViews(body.maxViews)) {
+            return jsonNoStore({ error: 'Invalid max views' }, 400);
+        }
+        maxViews = body.maxViews;
+    }
+
     const accessTokenHash = await hashAccessToken(body.accessToken);
     const createdSecret = await secretStore.create(
         body.id,
@@ -73,6 +83,7 @@ export async function POST(request: Request) {
         accessTokenHash,
         expiresInSeconds,
         format,
+        maxViews,
     );
     if (!createdSecret) {
         return jsonNoStore({ error: 'Secret id already exists' }, 409);
@@ -84,6 +95,7 @@ export async function POST(request: Request) {
             path: `/s/${body.id}`,
             expiresAt: createdSecret.expiresAt,
             expiresInSeconds,
+            maxViews,
         },
         201,
     );

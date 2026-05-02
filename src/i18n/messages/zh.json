@@ -82,7 +82,8 @@
         "decrypting": "正在解密…",
         "revealBtn": "显示并焚毁秘密",
         "info": "通过显示,你确认现在已准备好阅读。我们将立即从数据库中删除加密的载荷 — 无法撤销。如果你怀疑此链接被截获,请关闭此标签页并请发送者发出新链接。",
-        "validating": "正在验证安全链接…"
+        "validating": "正在验证安全链接…",
+        "readsRemaining": "剩余 {count, number} 次阅读"
     },
     "revealed": {
         "title1": "在这里。",
@@ -95,6 +96,9 @@
         "plaintext": "明文",
         "burnedTitle": "已焚毁。",
         "burnedBody": "加密的载荷已从我们的数据库中清除。重新加载此页面不会恢复它。",
+        "multiReadTitle": "已解密。",
+        "multiReadBody": "在秘密被销毁前还剩 {count, number} 次阅读。",
+        "multiReadBodyUnlimited": "此链接在过期前可无限次阅读。",
         "copyClip": "复制到剪贴板",
         "shareBack": "回赠分享",
         "footnote": "本地解密 · 从不记录",

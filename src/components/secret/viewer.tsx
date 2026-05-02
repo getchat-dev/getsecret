@@ -23,20 +23,24 @@ type LinkState =
 type SecretState =
     | { status: 'idle' }
     | { status: 'loading' }
-    | { status: 'revealed'; content: string; format: SecretFormat }
+    | { status: 'revealed'; content: string; format: SecretFormat; viewsRemaining: number | null }
     | { status: 'error' };
 
 type Props = {
     id: string;
     expiresAtUtc: string | null;
+    maxViews: number | null;
+    viewsUsed: number;
 };
 
-export function Viewer({ id, expiresAtUtc }: Props) {
+export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed }: Props) {
     const t = useTranslations('reveal');
 
     const [linkState, setLinkState] = useState<LinkState>({ status: 'checking' });
     const [secretState, setSecretState] = useState<SecretState>({ status: 'idle' });
     const requestedRef = useRef(false);
+
+    const readsRemainingBeforeOpen = maxViews === null ? null : Math.max(0, maxViews - viewsUsed);
 
     const expiresAtMs = useMemo(() => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN), [expiresAtUtc]);
     const isExpired = Number.isFinite(expiresAtMs) ? expiresAtMs <= Date.now() : true;
@@ -93,6 +97,7 @@ export function Viewer({ id, expiresAtUtc }: Props) {
             const data = (await response.json()) as {
                 encryptedSecret?: EncryptedSecret;
                 format?: unknown;
+                viewsRemaining?: unknown;
             };
             if (!response.ok || !data.encryptedSecret) {
                 setSecretState({ status: 'error' });
@@ -100,7 +105,13 @@ export function Viewer({ id, expiresAtUtc }: Props) {
             }
             const content = await decryptSecret(linkState.secretKey, data.encryptedSecret);
             const format: SecretFormat = isSecretFormat(data.format) ? data.format : DEFAULT_SECRET_FORMAT;
-            setSecretState({ status: 'revealed', content, format });
+            const viewsRemaining: number | null =
+                typeof data.viewsRemaining === 'number' &&
+                Number.isInteger(data.viewsRemaining) &&
+                data.viewsRemaining >= 0
+                    ? data.viewsRemaining
+                    : null;
+            setSecretState({ status: 'revealed', content, format, viewsRemaining });
         } catch {
             setSecretState({ status: 'error' });
         } finally {
@@ -129,7 +140,11 @@ export function Viewer({ id, expiresAtUtc }: Props) {
         return (
             <>
                 <LifecycleSteps activeStep={deriveStep()} />
-                <RevealedSecret content={secretState.content} format={secretState.format} />
+                <RevealedSecret
+                    content={secretState.content}
+                    format={secretState.format}
+                    viewsRemaining={secretState.viewsRemaining}
+                />
             </>
         );
     }
@@ -155,6 +170,7 @@ export function Viewer({ id, expiresAtUtc }: Props) {
                 isLoading={secretState.status === 'loading'}
                 isExpired={isExpired}
                 isValidating={false}
+                readsRemaining={readsRemainingBeforeOpen}
                 onReveal={() => void revealSecret()}
             />
         </>

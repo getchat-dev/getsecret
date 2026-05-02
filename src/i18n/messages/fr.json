@@ -82,7 +82,8 @@
         "decrypting": "Déchiffrement…",
         "revealBtn": "Révéler et brûler le secret",
         "info": "En révélant, vous confirmez être prêt à le lire maintenant. Nous supprimerons immédiatement la charge — pas de retour en arrière. Si interception suspectée, fermez l'onglet et demandez un nouveau lien.",
-        "validating": "Validation du lien sécurisé…"
+        "validating": "Validation du lien sécurisé…",
+        "readsRemaining": "{count, plural, one {# lecture restante} other {# lectures restantes}}"
     },
     "revealed": {
         "title1": "Le voici.",
@@ -95,6 +96,9 @@
         "plaintext": "Texte clair",
         "burnedTitle": "Brûlé.",
         "burnedBody": "La charge chiffrée a été supprimée de notre base. Recharger ne la ramènera pas.",
+        "multiReadTitle": "Déchiffré.",
+        "multiReadBody": "{count, plural, one {Il reste # lecture avant que le secret ne brûle.} other {Il reste # lectures avant que le secret ne brûle.}}",
+        "multiReadBodyUnlimited": "Ce lien permet un nombre illimité de lectures jusqu'à expiration.",
         "copyClip": "Copier dans le presse-papiers",
         "shareBack": "Partager en retour",
         "footnote": "déchiffré localement · jamais journalisé",

@@ -82,7 +82,8 @@
         "decrypting": "Decrypting…",
         "revealBtn": "Reveal & burn secret",
         "info": "By revealing, you confirm you're ready to read this now. We will delete the encrypted payload from our database immediately after — there is no undo. If you suspect this link was intercepted, close this tab and ask the sender to issue a new one.",
-        "validating": "Validating secure link…"
+        "validating": "Validating secure link…",
+        "readsRemaining": "{count, plural, one {# read remaining} other {# reads remaining}}"
     },
     "revealed": {
         "title1": "Here it is.",
@@ -95,6 +96,9 @@
         "plaintext": "Plaintext",
         "burnedTitle": "Burned.",
         "burnedBody": "The encrypted payload has been wiped from our database. Reloading this page will not bring it back.",
+        "multiReadTitle": "Decrypted.",
+        "multiReadBody": "{count, plural, one {# more read remains before this secret burns.} other {# more reads remain before this secret burns.}}",
+        "multiReadBodyUnlimited": "This link has unlimited reads until it expires.",
         "copyClip": "Copy to clipboard",
         "shareBack": "Share something back",
         "footnote": "decrypted locally · never logged",

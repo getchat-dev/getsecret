@@ -82,7 +82,8 @@
         "decrypting": "Entschlüssle…",
         "revealBtn": "Geheimnis enthüllen & verbrennen",
         "info": "Mit dem Enthüllen bestätigst du, dass du jetzt bereit bist. Wir löschen die verschlüsselten Daten sofort aus der DB — kein Rückgängig. Bei Verdacht auf Abfangen, schließe den Tab und bitte um einen neuen Link.",
-        "validating": "Sicheren Link prüfen…"
+        "validating": "Sicheren Link prüfen…",
+        "readsRemaining": "{count, plural, one {# Aufruf übrig} other {# Aufrufe übrig}}"
     },
     "revealed": {
         "title1": "Hier ist es.",
@@ -95,6 +96,9 @@
         "plaintext": "Klartext",
         "burnedTitle": "Verbrannt.",
         "burnedBody": "Die verschlüsselten Daten wurden aus unserer DB entfernt. Neuladen bringt sie nicht zurück.",
+        "multiReadTitle": "Entschlüsselt.",
+        "multiReadBody": "{count, plural, one {Noch # Aufruf, dann verbrennt das Geheimnis.} other {Noch # Aufrufe, dann verbrennt das Geheimnis.}}",
+        "multiReadBodyUnlimited": "Dieser Link erlaubt unbegrenzte Aufrufe bis zum Ablauf.",
         "copyClip": "In Zwischenablage",
         "shareBack": "Etwas zurückschicken",
         "footnote": "lokal entschlüsselt · nie geloggt",

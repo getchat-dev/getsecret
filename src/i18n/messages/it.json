@@ -82,7 +82,8 @@
         "decrypting": "Decifratura in corso…",
         "revealBtn": "Rivela e brucia il segreto",
         "info": "Rivelando, confermi di essere pronto a leggerlo ora. Cancelleremo immediatamente il payload cifrato — non c'è ritorno. Se sospetti un'intercettazione, chiudi questa scheda e chiedi al mittente un nuovo link.",
-        "validating": "Verifica del link sicuro…"
+        "validating": "Verifica del link sicuro…",
+        "readsRemaining": "{count, plural, one {# lettura rimanente} other {# letture rimanenti}}"
     },
     "revealed": {
         "title1": "Eccolo.",
@@ -95,6 +96,9 @@
         "plaintext": "Testo in chiaro",
         "burnedTitle": "Bruciato.",
         "burnedBody": "Il payload cifrato è stato cancellato dal nostro database. Ricaricare la pagina non lo riporterà.",
+        "multiReadTitle": "Decifrato.",
+        "multiReadBody": "{count, plural, one {Rimane # lettura prima che il segreto bruci.} other {Rimangono # letture prima che il segreto bruci.}}",
+        "multiReadBodyUnlimited": "Questo link consente letture illimitate fino alla scadenza.",
         "copyClip": "Copia negli appunti",
         "shareBack": "Condividi qualcosa in risposta",
         "footnote": "decifrato localmente · mai registrato",
