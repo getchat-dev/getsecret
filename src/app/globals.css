@@ -83,6 +83,48 @@ body {
     border-color: var(--accent);
 }
 
+.textarea-wrap {
+    position: relative;
+}
+
+.textarea-wrap .textarea {
+    position: relative;
+    z-index: 2;
+    display: block;
+}
+
+.textarea-overlay-base {
+    color: transparent;
+    caret-color: var(--text-main);
+    background: transparent;
+}
+
+.textarea-overlay {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+    padding: 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #f8fafc;
+    font: inherit;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    word-break: normal;
+    color: var(--text-main);
+}
+
+.textarea-overlay code.hljs {
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    display: block;
+}
+
 .meta-row {
     display: flex;
     justify-content: space-between;
@@ -208,6 +250,43 @@ body {
     background: #f8fafc;
     padding: 0.75rem 4rem 0.75rem 0.75rem;
     font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+.secret-value code.hljs {
+    background: transparent;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    display: block;
+}
+
+.format-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.format-label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.format-select {
+    padding: 0.4rem 0.6rem;
+    font: inherit;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    border: 1px solid #c7d2e0;
+    background: #f8fafc;
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.format-select:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--accent), white 30%);
+    outline-offset: 2px;
+    border-color: var(--accent);
 }
 
 .secret-value-copy {

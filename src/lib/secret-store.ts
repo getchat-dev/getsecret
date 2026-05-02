@@ -1,6 +1,7 @@
 import type { Redis } from 'ioredis';
 import { DEFAULT_EXPIRATION_SECONDS } from '@/lib/expiration';
 import type { EncryptedSecret } from '@/lib/secret-crypto';
+import { DEFAULT_SECRET_FORMAT, isSecretFormat, type SecretFormat } from '@/lib/secret-formats';
 import { getValkey, SECRET_KEY_PREFIX } from '@/lib/valkey-client';
 
 const MAX_FAILED_ATTEMPTS = 5;
@@ -13,7 +14,8 @@ redis.call('HSET', KEYS[1],
     'encryptedSecret', ARGV[1],
     'accessTokenHash', ARGV[2],
     'expiresAt', ARGV[3],
-    'failedAttempts', '0')
+    'failedAttempts', '0',
+    'format', ARGV[5])
 redis.call('PEXPIRE', KEYS[1], ARGV[4])
 return 1
 `;
@@ -45,13 +47,14 @@ if diff > 0 then
     return {'mismatch'}
 end
 local encrypted = redis.call('HGET', KEYS[1], 'encryptedSecret')
+local format = redis.call('HGET', KEYS[1], 'format')
 redis.call('DEL', KEYS[1])
-return {'ok', encrypted}
+return {'ok', encrypted, format or ''}
 `;
 
 type BurnotesCommands = {
     burnotesCreate: (...args: (string | number)[]) => Promise<number>;
-    burnotesConsume: (...args: (string | number)[]) => Promise<[string] | [string, string]>;
+    burnotesConsume: (...args: (string | number)[]) => Promise<[string] | [string, string] | [string, string, string]>;
 };
 
 const registered = new WeakSet<Redis>();
@@ -70,12 +73,18 @@ function secretKey(id: string): string {
     return `${SECRET_KEY_PREFIX}${id}`;
 }
 
+export type ConsumedSecret = {
+    encryptedSecret: EncryptedSecret;
+    format: SecretFormat;
+};
+
 class SecretStore {
     async create(
         id: string,
         encryptedSecret: EncryptedSecret,
         accessTokenHash: string,
         ttlSeconds: number = DEFAULT_EXPIRATION_SECONDS,
+        format: SecretFormat = DEFAULT_SECRET_FORMAT,
     ): Promise<{ expiresAt: number } | null> {
         const client = getClient();
         const ttlMs = ttlSeconds * 1000;
@@ -86,6 +95,7 @@ class SecretStore {
             accessTokenHash,
             String(expiresAt),
             String(ttlMs),
+            format,
         );
         if (result !== 1) {
             return null;
@@ -102,17 +112,21 @@ class SecretStore {
         return { expiresAt: Number(expiresAt) };
     }
 
-    async consume(id: string, accessTokenHash: string): Promise<EncryptedSecret | null> {
+    async consume(id: string, accessTokenHash: string): Promise<ConsumedSecret | null> {
         const client = getClient();
         const result = await client.burnotesConsume(secretKey(id), accessTokenHash, String(MAX_FAILED_ATTEMPTS));
         if (!Array.isArray(result) || result[0] !== 'ok' || typeof result[1] !== 'string') {
             return null;
         }
+        let encryptedSecret: EncryptedSecret;
         try {
-            return JSON.parse(result[1]) as EncryptedSecret;
+            encryptedSecret = JSON.parse(result[1]) as EncryptedSecret;
         } catch {
             return null;
         }
+        const rawFormat = result[2];
+        const format: SecretFormat = isSecretFormat(rawFormat) ? rawFormat : DEFAULT_SECRET_FORMAT;
+        return { encryptedSecret, format };
     }
 }
 

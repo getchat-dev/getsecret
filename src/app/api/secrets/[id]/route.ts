@@ -46,10 +46,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const accessTokenHash = await hashAccessToken(body.accessToken);
-    const encryptedSecret = await secretStore.consume(id, accessTokenHash);
-    if (!encryptedSecret) {
+    const consumed = await secretStore.consume(id, accessTokenHash);
+    if (!consumed) {
         return jsonNoStore({ error: 'Secret not found or expired' }, 404);
     }
 
-    return jsonNoStore({ encryptedSecret }, 200);
+    return jsonNoStore({ encryptedSecret: consumed.encryptedSecret, format: consumed.format }, 200);
 }

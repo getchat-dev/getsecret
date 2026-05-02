@@ -29,7 +29,10 @@ describe('secret-store', () => {
         expect(await secretStore.getMetadata('secret-id')).toEqual({ expiresAt: created?.expiresAt });
         expect(await secretStore.consume('secret-id', 'wrong-token-hash')).toBeNull();
         expect(await secretStore.getMetadata('secret-id')).toEqual({ expiresAt: created?.expiresAt });
-        expect(await secretStore.consume('secret-id', 'token-hash')).toEqual(sampleEncryptedSecret());
+        expect(await secretStore.consume('secret-id', 'token-hash')).toEqual({
+            encryptedSecret: sampleEncryptedSecret(),
+            format: 'plain',
+        });
         expect(await secretStore.consume('secret-id', 'token-hash')).toBeNull();
     });
 
@@ -59,7 +62,10 @@ describe('secret-store', () => {
             expect(await secretStore.consume('grace-secret', 'wrong-token-hash')).toBeNull();
         }
 
-        expect(await secretStore.consume('grace-secret', 'right-token-hash')).toEqual(sampleEncryptedSecret());
+        expect(await secretStore.consume('grace-secret', 'right-token-hash')).toEqual({
+            encryptedSecret: sampleEncryptedSecret(),
+            format: 'plain',
+        });
     });
 
     it('rejects consume when the stored hash has a different length', async () => {
@@ -76,6 +82,45 @@ describe('secret-store', () => {
         expect(pttl).toBeGreaterThan(0);
         expect(pttl).toBeLessThanOrEqual(customTtl * 1000);
         expect(pttl).toBeGreaterThan(customTtl * 1000 - 5000);
+    });
+
+    it('round-trips a non-default format on consume', async () => {
+        await secretStore.create('fmt-secret', sampleEncryptedSecret(), 'token-hash', undefined, 'json');
+        expect(await secretStore.consume('fmt-secret', 'token-hash')).toEqual({
+            encryptedSecret: sampleEncryptedSecret(),
+            format: 'json',
+        });
+    });
+
+    it('falls back to plain format for legacy records without a format field', async () => {
+        const client = getValkey();
+        const key = `${SECRET_KEY_PREFIX}legacy-secret`;
+        await client.hset(key, {
+            encryptedSecret: JSON.stringify(sampleEncryptedSecret()),
+            accessTokenHash: 'token-hash',
+            expiresAt: String(Date.now() + 60_000),
+            failedAttempts: '0',
+        });
+        expect(await secretStore.consume('legacy-secret', 'token-hash')).toEqual({
+            encryptedSecret: sampleEncryptedSecret(),
+            format: 'plain',
+        });
+    });
+
+    it('falls back to plain format when the stored format is not in the allowlist', async () => {
+        const client = getValkey();
+        const key = `${SECRET_KEY_PREFIX}weird-secret`;
+        await client.hset(key, {
+            encryptedSecret: JSON.stringify(sampleEncryptedSecret()),
+            accessTokenHash: 'token-hash',
+            expiresAt: String(Date.now() + 60_000),
+            failedAttempts: '0',
+            format: 'cobol',
+        });
+        expect(await secretStore.consume('weird-secret', 'token-hash')).toEqual({
+            encryptedSecret: sampleEncryptedSecret(),
+            format: 'plain',
+        });
     });
 
     it('exposes MAX_EXPIRATION_SECONDS as a positive integer', () => {

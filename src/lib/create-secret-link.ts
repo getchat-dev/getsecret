@@ -1,4 +1,5 @@
 import { MAX_SECRET_LENGTH, type PreparedSecretUpload, prepareSecretUpload } from '@/lib/secret-crypto';
+import { DEFAULT_SECRET_FORMAT, type SecretFormat } from '@/lib/secret-formats';
 
 type CreateResponse = {
     path: string;
@@ -8,7 +9,11 @@ type ErrorResponse = {
     error?: string;
 };
 
-export async function createSecretLink(secret: string, expiresInSeconds?: number): Promise<string> {
+export async function createSecretLink(
+    secret: string,
+    expiresInSeconds?: number,
+    format: SecretFormat = DEFAULT_SECRET_FORMAT,
+): Promise<string> {
     if (secret.length === 0 || secret.length > MAX_SECRET_LENGTH) {
         throw new Error(`Secret length must be between 1 and ${MAX_SECRET_LENGTH} characters.`);
     }
@@ -32,6 +37,7 @@ export async function createSecretLink(secret: string, expiresInSeconds?: number
                 id: preparedSecret.id,
                 encryptedSecret: preparedSecret.encryptedSecret,
                 accessToken: preparedSecret.accessToken,
+                format,
                 ...(typeof expiresInSeconds === 'number' ? { expiresInSeconds } : {}),
             }),
         });

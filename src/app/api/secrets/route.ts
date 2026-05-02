@@ -2,6 +2,7 @@ import { DEFAULT_EXPIRATION_SECONDS, isValidExpirationSeconds } from '@/lib/expi
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { rateLimiter } from '@/lib/rate-limit';
 import { hashAccessToken, isValidAccessToken, isValidEncryptedSecret, isValidSecretId } from '@/lib/secret-crypto';
+import { DEFAULT_SECRET_FORMAT, isSecretFormat } from '@/lib/secret-formats';
 import { secretStore } from '@/lib/secret-store';
 
 export const runtime = 'nodejs';
@@ -16,6 +17,7 @@ type CreateSecretBody = {
     encryptedSecret?: unknown;
     accessToken?: unknown;
     expiresInSeconds?: unknown;
+    format?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -56,8 +58,22 @@ export async function POST(request: Request) {
         return jsonNoStore({ error: 'Invalid expiration' }, 400);
     }
 
+    let format = DEFAULT_SECRET_FORMAT;
+    if (body.format !== undefined) {
+        if (!isSecretFormat(body.format)) {
+            return jsonNoStore({ error: 'Invalid format' }, 400);
+        }
+        format = body.format;
+    }
+
     const accessTokenHash = await hashAccessToken(body.accessToken);
-    const createdSecret = await secretStore.create(body.id, body.encryptedSecret, accessTokenHash, expiresInSeconds);
+    const createdSecret = await secretStore.create(
+        body.id,
+        body.encryptedSecret,
+        accessTokenHash,
+        expiresInSeconds,
+        format,
+    );
     if (!createdSecret) {
         return jsonNoStore({ error: 'Secret id already exists' }, 409);
     }

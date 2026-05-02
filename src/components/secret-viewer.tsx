@@ -10,11 +10,12 @@ import {
     type EncryptedSecret,
     readSecretKeyFromHash,
 } from '@/lib/secret-crypto';
+import { DEFAULT_SECRET_FORMAT, isSecretFormat, type SecretFormat } from '@/lib/secret-formats';
 
 type SecretState =
     | { status: 'idle' }
     | { status: 'loading' }
-    | { status: 'revealed'; secret: string }
+    | { status: 'revealed'; content: string; format: SecretFormat; highlightedHtml: string | null }
     | { status: 'error'; message: string };
 
 type LinkState =
@@ -180,6 +181,45 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         };
     }, [isInfoPinned]);
 
+    useEffect(() => {
+        if (state.status !== 'revealed') {
+            return;
+        }
+        if (state.format === 'plain' || state.highlightedHtml !== null) {
+            return;
+        }
+
+        let cancelled = false;
+        const content = state.content;
+        const format = state.format;
+
+        void (async () => {
+            try {
+                const { highlight } = await import('@/lib/highlight-secret');
+                const html = highlight(content, format);
+                if (!cancelled) {
+                    setState((prev) =>
+                        prev.status === 'revealed' && prev.highlightedHtml === null
+                            ? { ...prev, highlightedHtml: html }
+                            : prev,
+                    );
+                }
+            } catch {
+                if (!cancelled) {
+                    setState((prev) =>
+                        prev.status === 'revealed' && prev.highlightedHtml === null
+                            ? { ...prev, highlightedHtml: '' }
+                            : prev,
+                    );
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [state]);
+
     async function revealSecret() {
         if (requestedRef.current || !expiresAtUtc || isExpired || linkState.status !== 'ready') {
             return;
@@ -200,6 +240,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
 
             const data = (await response.json()) as {
                 encryptedSecret?: EncryptedSecret;
+                format?: unknown;
                 error?: string;
             };
 
@@ -211,8 +252,9 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
                 return;
             }
 
-            const secret = await decryptSecret(linkState.secretKey, data.encryptedSecret);
-            setState({ status: 'revealed', secret });
+            const content = await decryptSecret(linkState.secretKey, data.encryptedSecret);
+            const format: SecretFormat = isSecretFormat(data.format) ? data.format : DEFAULT_SECRET_FORMAT;
+            setState({ status: 'revealed', content, format, highlightedHtml: null });
         } catch {
             setState({
                 status: 'error',
@@ -223,7 +265,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         }
     }
 
-    async function createReplacementLink(secret: string) {
+    async function createReplacementLink(content: string, format: SecretFormat) {
         if (reshareState.status === 'creating') {
             return;
         }
@@ -231,7 +273,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         setReshareState({ status: 'creating' });
 
         try {
-            const nextLink = await createSecretLink(secret);
+            const nextLink = await createSecretLink(content, undefined, format);
             setReshareState({ status: 'ready', link: nextLink });
             await copyText(
                 nextLink,
@@ -299,14 +341,27 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
         );
     }
 
+    const showHighlighted =
+        state.format !== 'plain' && typeof state.highlightedHtml === 'string' && state.highlightedHtml.length > 0;
+
     return (
         <section className="card" aria-live="polite">
             <h2 className="subtitle">Secret</h2>
             <div className="secret-value-wrap">
-                <pre className="secret-value">{state.secret}</pre>
+                <pre className="secret-value">
+                    {showHighlighted ? (
+                        <code
+                            className={`hljs language-${state.format}`}
+                            // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight.js escapes content; only span tags are injected.
+                            dangerouslySetInnerHTML={{ __html: state.highlightedHtml as string }}
+                        />
+                    ) : (
+                        state.content
+                    )}
+                </pre>
                 <div className="secret-value-copy">
                     <CopyButton
-                        textToCopy={state.secret}
+                        textToCopy={state.content}
                         copyLabel="Copy secret"
                         copiedLabel="Secret copied"
                         successMessage="Secret copied to clipboard"
@@ -318,7 +373,7 @@ export function SecretViewer({ id, expiresAtUtc }: { id: string; expiresAtUtc: s
                 <div className="toast-anchor toast-anchor-start">
                     <button
                         className="button"
-                        onClick={() => void createReplacementLink(state.secret)}
+                        onClick={() => void createReplacementLink(state.content, state.format)}
                         type="button"
                         disabled={reshareState.status === 'creating'}
                     >

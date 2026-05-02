@@ -5,6 +5,7 @@ import { CopyButton, ToastMessage, useClipboardCopy } from '@/components/copy-bu
 import { createSecretLink } from '@/lib/create-secret-link';
 import { MAX_EXPIRATION_SECONDS } from '@/lib/expiration';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
+import { DEFAULT_SECRET_FORMAT, SECRET_FORMAT_LABELS, SECRET_FORMATS, type SecretFormat } from '@/lib/secret-formats';
 
 type TtlUnit = 'hours' | 'days';
 
@@ -26,7 +27,10 @@ export function SecretForm() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [ttlValue, setTtlValue] = useState('1');
     const [ttlUnit, setTtlUnit] = useState<TtlUnit>('days');
+    const [format, setFormat] = useState<SecretFormat>(DEFAULT_SECRET_FORMAT);
+    const [highlightedHtml, setHighlightedHtml] = useState('');
     const secretInputRef = useRef<HTMLTextAreaElement | null>(null);
+    const overlayRef = useRef<HTMLPreElement | null>(null);
     const { copyText, toast } = useClipboardCopy();
 
     const remaining = useMemo(() => MAX_SECRET_LENGTH - secret.length, [secret.length]);
@@ -35,6 +39,39 @@ export function SecretForm() {
     useEffect(() => {
         secretInputRef.current?.focus();
     }, []);
+
+    useEffect(() => {
+        if (format === 'plain' || secret.length === 0) {
+            setHighlightedHtml('');
+            return;
+        }
+        let cancelled = false;
+        void (async () => {
+            try {
+                const { highlight } = await import('@/lib/highlight-secret');
+                if (cancelled) {
+                    return;
+                }
+                setHighlightedHtml(highlight(secret, format));
+            } catch {
+                if (!cancelled) {
+                    setHighlightedHtml('');
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [secret, format]);
+
+    function handleTextareaScroll() {
+        const textarea = secretInputRef.current;
+        const overlay = overlayRef.current;
+        if (textarea && overlay) {
+            overlay.scrollTop = textarea.scrollTop;
+            overlay.scrollLeft = textarea.scrollLeft;
+        }
+    }
 
     function handleTtlValueChange(raw: string) {
         // Only digits allowed; empty string is OK while typing.
@@ -76,7 +113,7 @@ export function SecretForm() {
         setIsSubmitting(true);
 
         try {
-            const nextLink = await createSecretLink(secret, expiresInSeconds);
+            const nextLink = await createSecretLink(secret, expiresInSeconds, format);
             setLink(nextLink);
             setSecret('');
             await copyText(
@@ -97,22 +134,54 @@ export function SecretForm() {
     return (
         <section className="card" aria-live="polite">
             <form onSubmit={handleSubmit} className="secret-form" noValidate>
+                <div className="format-row">
+                    <label htmlFor="secret-format" className="format-label">
+                        Format
+                    </label>
+                    <select
+                        id="secret-format"
+                        className="format-select"
+                        value={format}
+                        onChange={(event) => setFormat(event.target.value as SecretFormat)}
+                    >
+                        {SECRET_FORMATS.map((value) => (
+                            <option key={value} value={value}>
+                                {SECRET_FORMAT_LABELS[value]}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
                 <label htmlFor="secret" className="label">
                     Secret text
                 </label>
-                <textarea
-                    ref={secretInputRef}
-                    id="secret"
-                    name="secret"
-                    className="textarea"
-                    value={secret}
-                    onChange={(event) => setSecret(event.target.value)}
-                    maxLength={MAX_SECRET_LENGTH}
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder="Paste password, token, or any secret here"
-                    required
-                />
+                <div className="textarea-wrap">
+                    <textarea
+                        ref={secretInputRef}
+                        id="secret"
+                        name="secret"
+                        className={
+                            format !== 'plain' && highlightedHtml ? 'textarea textarea-overlay-base' : 'textarea'
+                        }
+                        value={secret}
+                        onChange={(event) => setSecret(event.target.value)}
+                        onScroll={handleTextareaScroll}
+                        maxLength={MAX_SECRET_LENGTH}
+                        autoComplete="off"
+                        spellCheck={false}
+                        placeholder="Paste password, token, or any secret here"
+                        required
+                    />
+                    {format !== 'plain' && highlightedHtml ? (
+                        <pre ref={overlayRef} className="textarea-overlay" aria-hidden="true">
+                            <code
+                                className={`hljs language-${format}`}
+                                // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight.js escapes content; only span tags are injected.
+                                dangerouslySetInnerHTML={{ __html: `${highlightedHtml}\n` }}
+                            />
+                        </pre>
+                    ) : null}
+                </div>
 
                 <div className="meta-row">
                     <small className="hint">{remaining} characters left</small>
