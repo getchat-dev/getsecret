@@ -1,0 +1,128 @@
+{
+    "label": "Deutsch",
+    "flag": "🇩🇪",
+    "nav": {
+        "docs": "Doku",
+        "security": "Sicherheit",
+        "api": "API",
+        "source": "Quellcode",
+        "status": "Alle Systeme funktionsbereit"
+    },
+    "eyebrow": {
+        "create": "Ende-zu-Ende verschlüsselt · Zero-Knowledge",
+        "generated": "Verschlüsselt & gespeichert",
+        "reveal": "Empfängeransicht",
+        "revealed": "Im Browser entschlüsselt",
+        "burned": "Empfängeransicht · abgelaufen"
+    },
+    "create": {
+        "title1": "Teile Geheimnisse, die",
+        "title2": "beim Lesen verschwinden.",
+        "lede": "Füge ein Passwort, Token oder einen sensiblen String ein. Wir verschlüsseln es in deinem Browser und geben dir einen Einmal-Link zurück. Der Entschlüsselungsschlüssel berührt nie unsere Server — er lebt nach dem # in der URL.",
+        "filename": "secret.txt",
+        "untitled": "ohne Titel",
+        "placeholder": "# Füge dein Geheimnis hier ein\n\nAPI_KEY=sk_live_••••••••••••••••\nDB_PASSWORD=••••••••••\n\nText, JSON, .env — alles geht.",
+        "ready": "▍ bereit",
+        "encryptOnSend": "▍ beim Senden verschlüsselt",
+        "expiresIn": "Läuft ab in",
+        "maxReads": "Max. Aufrufe",
+        "burn": "verbrennen",
+        "passphrase": "Optionale Passphrase",
+        "passphraseHint": "— Empfänger muss sie zum Entsperren eingeben",
+        "passphrasePh": "leer lassen für reinen Link-Zugang",
+        "submit": "Verschlüsseln & Link erzeugen",
+        "clear": "Leeren",
+        "shortcut": "⌘ + Enter",
+        "info": "Dein Geheimnis wird in diesem Browser verschlüsselt, bevor es ihn verlässt. Der Schlüssel wird nach dem # im Link angehängt — Fragmente werden nie an unsere Server gesendet.",
+        "howItWorks": "Wie es funktioniert ↗",
+        "units": {
+            "minutes": "Minuten",
+            "hours": "Stunden",
+            "days": "Tage"
+        },
+        "f1t": "Zero-Knowledge",
+        "f1b": "Wir sehen deinen Klartext nie. Verschlüsselung erfolgt im Browser über WebCrypto.",
+        "f2t": "Selbstzerstörung",
+        "f2b": "Geheimnis wird beim Lesen sofort aus unserer Datenbank gelöscht — oder bei Ablauf.",
+        "f3t": "Open Source",
+        "f3b": "Code prüfen, eigene Instanz betreiben oder auf einen Commit fixieren."
+    },
+    "generated": {
+        "title": "Dein Link ist bereit.",
+        "lede": "Sende diese URL über einen beliebigen Kanal. Der Schlüssel lebt im Fragment — wir können ihn nicht lesen, loggen oder wiederherstellen. Einmal gelesen, ist das Geheimnis für immer weg.",
+        "cardTitle": "Einmal-Link",
+        "ready": "bereit",
+        "copy": "Link kopieren",
+        "copied": "Kopiert",
+        "warnTitle": "Einmaliger Aufruf.",
+        "warnBody": "Wer auch immer diesen Link öffnet, verbrennt ihn. Schau ihn nicht selbst an, und warne Link-Vorschauen (Slack/iMessage) — auto-erweiterte URLs können das Geheimnis verbrauchen.",
+        "expiresIn": "Läuft ab in",
+        "readsLeft": "Verbleibende Aufrufe",
+        "passphrase": "Passphrase",
+        "required": "erforderlich",
+        "none": "keine",
+        "shareAnother": "Weiteres teilen",
+        "qr": "QR-Code",
+        "burnNow": "Jetzt verbrennen"
+    },
+    "reveal": {
+        "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
+        "title": "Jemand hat ein Geheimnis mit dir geteilt.",
+        "lede": "Lesen wird die verschlüsselten Daten dauerhaft zerstören. Du hast nur einen Versuch — sei privat und bereit zu kopieren.",
+        "filename": "encrypted_payload",
+        "oneTime": "einmalig",
+        "expiresIn": "läuft ab in",
+        "lockedTitle": "Gesperrt & versiegelt",
+        "lockedSub": "Der Schlüssel wurde aus dem URL-Fragment extrahiert und ist lokal bereit. Das verschlüsselte Blob liegt auf unserem Server und wartet auf einen Aufruf — deinen.",
+        "key256": "256-Bit-Schlüssel",
+        "burnsOnRead": "verbrennt beim Lesen",
+        "decrypting": "Entschlüssle…",
+        "revealBtn": "Geheimnis enthüllen & verbrennen",
+        "info": "Mit dem Enthüllen bestätigst du, dass du jetzt bereit bist. Wir löschen die verschlüsselten Daten sofort aus der DB — kein Rückgängig. Bei Verdacht auf Abfangen, schließe den Tab und bitte um einen neuen Link."
+    },
+    "revealed": {
+        "title1": "Hier ist es.",
+        "title2": "Verlier es nicht.",
+        "lede": "Die verschlüsselten Daten wurden von unseren Servern gelöscht. Diese Seite ist der einzige Ort, wo das Geheimnis jetzt existiert — kopiere es in deinen Passwort-Manager.",
+        "filename": "decrypted_secret",
+        "clean": "sauber",
+        "chars": "Zeichen",
+        "lines": "1 Zeile",
+        "plaintext": "Klartext",
+        "burnedTitle": "Verbrannt.",
+        "burnedBody": "Die verschlüsselten Daten wurden aus unserer DB entfernt. Neuladen bringt sie nicht zurück.",
+        "copyClip": "In Zwischenablage",
+        "shareBack": "Etwas zurückschicken",
+        "footnote": "lokal entschlüsselt · nie geloggt",
+        "copiedToast": "Geheimnis kopiert — jetzt einfügen"
+    },
+    "burned": {
+        "title1": "Dieses Geheimnis",
+        "title2": "ist schon weg.",
+        "lede": "Der geöffnete Link wurde entweder schon gelesen, oder die Frist ist abgelaufen. Wir behalten keine Kopien — bitte den Sender um einen neuen Link.",
+        "filename": "payload_burned",
+        "gone": "404 · weg",
+        "lastSeen": "vor 12m zuletzt gesehen",
+        "heading": "Hier gibt's nichts zu sehen",
+        "body": "Entweder hat es jemand vor dir gelesen, oder der Timer ist abgelaufen. Das verschlüsselte Blob wurde dauerhaft aus der DB entfernt.",
+        "sendNew": "Neues Geheimnis senden",
+        "why": "Warum?"
+    },
+    "tabs": ["Erstellen", "Link erzeugt", "Empfänger · gesperrt", "Empfänger · enthüllt", "Bereits verbrannt"],
+    "tweaks": {
+        "title": "Tweaks",
+        "flame": "Glut-/Flammen-Akzente",
+        "status": "Status-Pill in der Nav",
+        "footer": "Footer zeigen",
+        "language": "Sprache"
+    },
+    "toast": {
+        "copied": "Link in Zwischenablage"
+    },
+    "foot": {
+        "version": "v0.4.2 · Open Source MIT",
+        "privacy": "Datenschutz",
+        "terms": "AGB",
+        "status": "Status"
+    }
+}

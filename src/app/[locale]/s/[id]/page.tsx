@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { SecretViewer } from '@/components/secret-viewer';
 import { secretStore } from '@/lib/secret-store';
 
@@ -10,15 +11,17 @@ export const metadata: Metadata = {
     },
 };
 
-export default async function SecretPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export default async function SecretPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+    const { locale, id } = await params;
+    setRequestLocale(locale);
+    const t = await getTranslations('reveal');
     const secretMetadata = await secretStore.getMetadata(id);
 
     return (
         <main className="page">
             <header className="hero">
-                <h1>Burnotes</h1>
-                <p>This page is for one-time secret reading.</p>
+                <h1>{t('title')}</h1>
+                <p>{t('lede')}</p>
             </header>
             <SecretViewer
                 id={id}

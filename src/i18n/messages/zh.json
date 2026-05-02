@@ -1,0 +1,128 @@
+{
+    "label": "中文",
+    "flag": "🇨🇳",
+    "nav": {
+        "docs": "文档",
+        "security": "安全",
+        "api": "API",
+        "source": "源代码",
+        "status": "所有系统正常运行"
+    },
+    "eyebrow": {
+        "create": "端到端加密 · 零知识",
+        "generated": "已加密并存储",
+        "reveal": "接收者视图",
+        "revealed": "已在你的浏览器解密",
+        "burned": "接收者视图 · 已过期"
+    },
+    "create": {
+        "title1": "分享秘密,",
+        "title2": "阅后即焚。",
+        "lede": "粘贴密码、令牌或任何敏感字符串。我们会在你的浏览器中加密,并返回一个一次性链接。解密密钥永不接触我们的服务器 — 它保存在 URL 中 # 之后。",
+        "filename": "secret.txt",
+        "untitled": "未命名",
+        "placeholder": "# 在此粘贴你的秘密\n\nAPI_KEY=sk_live_••••••••••••••••\nDB_PASSWORD=••••••••••\n\n纯文本、JSON、.env — 任何内容都可以。",
+        "ready": "▍ 就绪",
+        "encryptOnSend": "▍ 发送时加密",
+        "expiresIn": "过期时间",
+        "maxReads": "最大阅读次数",
+        "burn": "焚毁",
+        "passphrase": "可选密码短语",
+        "passphraseHint": "— 接收者必须输入才能解锁",
+        "passphrasePh": "留空表示仅链接访问",
+        "submit": "加密并生成链接",
+        "clear": "清除",
+        "shortcut": "⌘ + Enter",
+        "info": "你的秘密在离开浏览器前已加密。解密密钥附加在链接的 # 之后 — 片段永远不会发送到我们的服务器。",
+        "howItWorks": "工作原理 ↗",
+        "units": {
+            "minutes": "分钟",
+            "hours": "小时",
+            "days": "天"
+        },
+        "f1t": "零知识",
+        "f1b": "我们从未见过你的明文。加密通过 WebCrypto 在你的浏览器中进行。",
+        "f2t": "自毁",
+        "f2b": "秘密在被读取时立即从我们的数据库中删除 — 或在过期时删除。",
+        "f3t": "开源",
+        "f3b": "审计代码,运行你自己的实例,或固定到特定提交。"
+    },
+    "generated": {
+        "title": "链接已就绪。",
+        "lede": "通过任何渠道将此 URL 发送给接收者。解密密钥保存在片段中 — 我们无法读取、记录或恢复它。一旦被读取,秘密将永远消失。",
+        "cardTitle": "一次性链接",
+        "ready": "就绪",
+        "copy": "复制链接",
+        "copied": "已复制",
+        "warnTitle": "一次性阅读。",
+        "warnBody": "任何打开此链接的人都会焚毁它。不要自己预览,并警告链接预览程序(Slack/iMessage)自动展开的 URL 可能会消耗秘密。",
+        "expiresIn": "过期时间",
+        "readsLeft": "剩余阅读次数",
+        "passphrase": "密码短语",
+        "required": "需要",
+        "none": "无",
+        "shareAnother": "分享另一个",
+        "qr": "二维码",
+        "burnNow": "立即焚毁"
+    },
+    "reveal": {
+        "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
+        "title": "有人与你分享了一个秘密。",
+        "lede": "阅读它将永久销毁加密的载荷。你只有一次机会,请确保你在私密的地方,并准备好复制所需内容。",
+        "filename": "encrypted_payload",
+        "oneTime": "一次性",
+        "expiresIn": "过期于",
+        "lockedTitle": "已锁定 & 密封",
+        "lockedSub": "解密密钥已从你的 URL 片段中提取,并在本地准备就绪。加密的二进制文件位于我们的服务器上,等待一次读取 — 你的读取。",
+        "key256": "256 位密钥",
+        "burnsOnRead": "阅后即焚",
+        "decrypting": "正在解密…",
+        "revealBtn": "显示并焚毁秘密",
+        "info": "通过显示,你确认现在已准备好阅读。我们将立即从数据库中删除加密的载荷 — 无法撤销。如果你怀疑此链接被截获,请关闭此标签页并请发送者发出新链接。"
+    },
+    "revealed": {
+        "title1": "在这里。",
+        "title2": "别弄丢了。",
+        "lede": "加密的载荷已从我们的服务器删除。此页面是该秘密目前唯一存在的地方 — 在关闭标签页之前,请将其复制到密码管理器或它应该所在的位置。",
+        "filename": "decrypted_secret",
+        "clean": "干净",
+        "chars": "字符",
+        "lines": "1 行",
+        "plaintext": "明文",
+        "burnedTitle": "已焚毁。",
+        "burnedBody": "加密的载荷已从我们的数据库中清除。重新加载此页面不会恢复它。",
+        "copyClip": "复制到剪贴板",
+        "shareBack": "回赠分享",
+        "footnote": "本地解密 · 从不记录",
+        "copiedToast": "秘密已复制 — 立即粘贴"
+    },
+    "burned": {
+        "title1": "这个秘密",
+        "title2": "已经消失了。",
+        "lede": "你打开的链接要么已经被读取过,要么过期窗口已关闭。我们不保留副本,因此无法为你恢复 — 请要求发送者发出新链接。",
+        "filename": "payload_burned",
+        "gone": "404 · 已消失",
+        "lastSeen": "12 分钟前最后一次见到",
+        "heading": "这里没什么可看的",
+        "body": "要么有人在你之前读过这个,要么过期计时器已用完。加密的二进制文件已从我们的数据库中永久删除。",
+        "sendNew": "发送新秘密",
+        "why": "为什么会这样?"
+    },
+    "tabs": ["创建", "链接已生成", "接收者 · 已锁定", "接收者 · 已显示", "已焚毁"],
+    "tweaks": {
+        "title": "调整",
+        "flame": "火焰强调色",
+        "status": "导航中的状态徽章",
+        "footer": "显示页脚",
+        "language": "语言"
+    },
+    "toast": {
+        "copied": "链接已复制到剪贴板"
+    },
+    "foot": {
+        "version": "v0.4.2 · MIT 开源",
+        "privacy": "隐私",
+        "terms": "条款",
+        "status": "状态"
+    }
+}

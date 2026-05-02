@@ -1,0 +1,128 @@
+{
+    "label": "English",
+    "flag": "🇬🇧",
+    "nav": {
+        "docs": "Docs",
+        "security": "Security",
+        "api": "API",
+        "source": "Source",
+        "status": "All systems operational"
+    },
+    "eyebrow": {
+        "create": "End-to-end encrypted · zero-knowledge",
+        "generated": "Encrypted & stored",
+        "reveal": "Recipient view",
+        "revealed": "Decrypted in your browser",
+        "burned": "Recipient view · expired"
+    },
+    "create": {
+        "title1": "Share secrets that",
+        "title2": "vanish on read.",
+        "lede": "Paste a password, token, or any sensitive string. We encrypt it in your browser and hand back a single-use link. The decryption key never touches our servers — it lives after the # in the URL.",
+        "filename": "secret.txt",
+        "untitled": "untitled",
+        "placeholder": "# Paste your secret here\n\nAPI_KEY=sk_live_••••••••••••••••\nDB_PASSWORD=••••••••••\n\nPlain text, JSON, .env — anything works.",
+        "ready": "▍ ready",
+        "encryptOnSend": "▍ encrypted on send",
+        "expiresIn": "Expires in",
+        "maxReads": "Max reads",
+        "burn": "burn",
+        "passphrase": "Optional passphrase",
+        "passphraseHint": "— recipient must enter to unlock",
+        "passphrasePh": "leave empty for link-only access",
+        "submit": "Encrypt & generate link",
+        "clear": "Clear",
+        "shortcut": "⌘ + Enter",
+        "info": "Your secret is encrypted in this browser before it leaves. The decryption key is appended after the # in the link — fragments are never sent to our servers.",
+        "howItWorks": "How it works ↗",
+        "units": {
+            "minutes": "minutes",
+            "hours": "hours",
+            "days": "days"
+        },
+        "f1t": "Zero-knowledge",
+        "f1b": "We never see your plaintext. Encryption happens in your browser using WebCrypto.",
+        "f2t": "Self-destructs",
+        "f2b": "Secret is wiped from our database the moment it's read — or when it expires.",
+        "f3t": "Open source",
+        "f3b": "Audit the code, run your own instance, or pin to a specific commit."
+    },
+    "generated": {
+        "title": "Your link is ready.",
+        "lede": "Send this URL to the recipient over any channel. The decryption key lives in the fragment — we can't read it, log it, or recover it. Once read, the secret is gone forever.",
+        "cardTitle": "Single-use link",
+        "ready": "ready",
+        "copy": "Copy link",
+        "copied": "Copied",
+        "warnTitle": "One-time read.",
+        "warnBody": "Anyone who opens this link will burn it. Don't preview it yourself, and warn link previewers (Slack/iMessage) that auto-expand URLs may consume the secret.",
+        "expiresIn": "Expires in",
+        "readsLeft": "Reads remaining",
+        "passphrase": "Passphrase",
+        "required": "required",
+        "none": "none",
+        "shareAnother": "Share another",
+        "qr": "QR code",
+        "burnNow": "Burn now"
+    },
+    "reveal": {
+        "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
+        "title": "Someone shared a secret with you.",
+        "lede": "Reading it will permanently destroy the encrypted payload. You only get one shot, so make sure you're somewhere private and ready to copy what you need.",
+        "filename": "encrypted_payload",
+        "oneTime": "one-time",
+        "expiresIn": "expires in",
+        "lockedTitle": "Locked & sealed",
+        "lockedSub": "The decryption key was extracted from your URL fragment and is ready locally. The encrypted blob is sitting on our server, waiting for one read — yours.",
+        "key256": "256-bit key",
+        "burnsOnRead": "burns on read",
+        "decrypting": "Decrypting…",
+        "revealBtn": "Reveal & burn secret",
+        "info": "By revealing, you confirm you're ready to read this now. We will delete the encrypted payload from our database immediately after — there is no undo. If you suspect this link was intercepted, close this tab and ask the sender to issue a new one."
+    },
+    "revealed": {
+        "title1": "Here it is.",
+        "title2": "Don't lose it.",
+        "lede": "The encrypted payload has been deleted from our servers. This page is the only place this secret exists right now — copy it into your password manager or wherever it belongs before closing the tab.",
+        "filename": "decrypted_secret",
+        "clean": "clean",
+        "chars": "chars",
+        "lines": "1 line",
+        "plaintext": "Plaintext",
+        "burnedTitle": "Burned.",
+        "burnedBody": "The encrypted payload has been wiped from our database. Reloading this page will not bring it back.",
+        "copyClip": "Copy to clipboard",
+        "shareBack": "Share something back",
+        "footnote": "decrypted locally · never logged",
+        "copiedToast": "Secret copied — paste it now"
+    },
+    "burned": {
+        "title1": "This secret is",
+        "title2": "already gone.",
+        "lede": "The link you opened has either been read once already, or the expiration window has closed. We don't keep copies, so we can't recover it for you — please ask the sender to issue a new link.",
+        "filename": "payload_burned",
+        "gone": "404 · gone",
+        "lastSeen": "last seen 12m ago",
+        "heading": "Nothing to see here",
+        "body": "Either someone read this before you, or the expiration timer ran out. The encrypted blob has been permanently removed from our database.",
+        "sendNew": "Send a new secret",
+        "why": "Why did this happen?"
+    },
+    "tabs": ["Create", "Link generated", "Recipient · locked", "Recipient · revealed", "Already burned"],
+    "tweaks": {
+        "title": "Tweaks",
+        "flame": "Ember/flame accents",
+        "status": "Status pill in nav",
+        "footer": "Show footer",
+        "language": "Language"
+    },
+    "toast": {
+        "copied": "Link copied to clipboard"
+    },
+    "foot": {
+        "version": "v0.4.2 · open source under MIT",
+        "privacy": "Privacy",
+        "terms": "Terms",
+        "status": "Status"
+    }
+}

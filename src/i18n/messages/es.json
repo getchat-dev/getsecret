@@ -1,0 +1,128 @@
+{
+    "label": "Español",
+    "flag": "🇪🇸",
+    "nav": {
+        "docs": "Documentación",
+        "security": "Seguridad",
+        "api": "API",
+        "source": "Código fuente",
+        "status": "Todos los sistemas operativos"
+    },
+    "eyebrow": {
+        "create": "Cifrado de extremo a extremo · zero-knowledge",
+        "generated": "Cifrado y almacenado",
+        "reveal": "Vista del destinatario",
+        "revealed": "Descifrado en tu navegador",
+        "burned": "Vista del destinatario · expirado"
+    },
+    "create": {
+        "title1": "Comparte secretos que",
+        "title2": "se desvanecen al leerse.",
+        "lede": "Pega una contraseña, token o cualquier cadena sensible. La ciframos en tu navegador y te devolvemos un enlace de un solo uso. La clave de descifrado nunca toca nuestros servidores — vive después del # en la URL.",
+        "filename": "secret.txt",
+        "untitled": "sin título",
+        "placeholder": "# Pega tu secreto aquí\n\nAPI_KEY=sk_live_••••••••••••••••\nDB_PASSWORD=••••••••••\n\nTexto plano, JSON, .env — cualquier cosa funciona.",
+        "ready": "▍ listo",
+        "encryptOnSend": "▍ cifrado al enviar",
+        "expiresIn": "Expira en",
+        "maxReads": "Lecturas máx.",
+        "burn": "quemar",
+        "passphrase": "Frase de paso opcional",
+        "passphraseHint": "— el destinatario debe ingresarla para desbloquear",
+        "passphrasePh": "déjalo vacío para acceso solo por enlace",
+        "submit": "Cifrar y generar enlace",
+        "clear": "Limpiar",
+        "shortcut": "⌘ + Enter",
+        "info": "Tu secreto se cifra en este navegador antes de salir. La clave de descifrado se añade después del # en el enlace — los fragmentos nunca se envían a nuestros servidores.",
+        "howItWorks": "Cómo funciona ↗",
+        "units": {
+            "minutes": "minutos",
+            "hours": "horas",
+            "days": "días"
+        },
+        "f1t": "Zero-knowledge",
+        "f1b": "Nunca vemos tu texto plano. El cifrado ocurre en tu navegador con WebCrypto.",
+        "f2t": "Autodestrucción",
+        "f2b": "El secreto se borra de nuestra base de datos en el momento que se lee — o cuando expira.",
+        "f3t": "Código abierto",
+        "f3b": "Audita el código, ejecuta tu propia instancia o ánclate a un commit específico."
+    },
+    "generated": {
+        "title": "Tu enlace está listo.",
+        "lede": "Envía esta URL al destinatario por cualquier canal. La clave de descifrado vive en el fragmento — no podemos leerla, registrarla ni recuperarla. Una vez leída, el secreto desaparece para siempre.",
+        "cardTitle": "Enlace de un solo uso",
+        "ready": "listo",
+        "copy": "Copiar enlace",
+        "copied": "Copiado",
+        "warnTitle": "Lectura única.",
+        "warnBody": "Cualquiera que abra este enlace lo quemará. No lo previsualices tú mismo y advierte a los previsualizadores de enlaces (Slack/iMessage) que las URL autoexpandidas pueden consumir el secreto.",
+        "expiresIn": "Expira en",
+        "readsLeft": "Lecturas restantes",
+        "passphrase": "Frase de paso",
+        "required": "requerida",
+        "none": "ninguna",
+        "shareAnother": "Compartir otro",
+        "qr": "Código QR",
+        "burnNow": "Quemar ahora"
+    },
+    "reveal": {
+        "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
+        "title": "Alguien compartió un secreto contigo.",
+        "lede": "Leerlo destruirá permanentemente la carga cifrada. Solo tienes una oportunidad, así que asegúrate de estar en privado y listo para copiar lo que necesites.",
+        "filename": "encrypted_payload",
+        "oneTime": "un solo uso",
+        "expiresIn": "expira en",
+        "lockedTitle": "Bloqueado y sellado",
+        "lockedSub": "La clave de descifrado se extrajo del fragmento de tu URL y está lista localmente. El blob cifrado está en nuestro servidor, esperando una lectura — la tuya.",
+        "key256": "clave de 256 bits",
+        "burnsOnRead": "se quema al leer",
+        "decrypting": "Descifrando…",
+        "revealBtn": "Revelar y quemar secreto",
+        "info": "Al revelar, confirmas que estás listo para leerlo ahora. Eliminaremos la carga cifrada de nuestra base inmediatamente — no hay deshacer. Si sospechas interceptación, cierra esta pestaña y pide al remitente un nuevo enlace."
+    },
+    "revealed": {
+        "title1": "Aquí está.",
+        "title2": "No lo pierdas.",
+        "lede": "La carga cifrada ha sido eliminada de nuestros servidores. Esta página es el único lugar donde existe este secreto ahora — cópialo a tu gestor de contraseñas antes de cerrar la pestaña.",
+        "filename": "decrypted_secret",
+        "clean": "limpio",
+        "chars": "carac.",
+        "lines": "1 línea",
+        "plaintext": "Texto plano",
+        "burnedTitle": "Quemado.",
+        "burnedBody": "La carga cifrada ha sido borrada de nuestra base. Recargar esta página no la traerá de vuelta.",
+        "copyClip": "Copiar al portapapeles",
+        "shareBack": "Compartir de vuelta",
+        "footnote": "descifrado localmente · nunca registrado",
+        "copiedToast": "Secreto copiado — pégalo ahora"
+    },
+    "burned": {
+        "title1": "Este secreto",
+        "title2": "ya no está.",
+        "lede": "El enlace que abriste o ya fue leído, o la ventana de expiración se cerró. No guardamos copias, así que no podemos recuperarlo — pide al remitente un nuevo enlace.",
+        "filename": "payload_burned",
+        "gone": "404 · ido",
+        "lastSeen": "visto hace 12m",
+        "heading": "Nada que ver aquí",
+        "body": "O alguien lo leyó antes que tú, o el temporizador se acabó. El blob cifrado fue removido permanentemente de nuestra base.",
+        "sendNew": "Enviar un nuevo secreto",
+        "why": "¿Por qué pasó esto?"
+    },
+    "tabs": ["Crear", "Enlace generado", "Destinatario · bloqueado", "Destinatario · revelado", "Ya quemado"],
+    "tweaks": {
+        "title": "Ajustes",
+        "flame": "Acentos de brasa/llama",
+        "status": "Estado en la nav",
+        "footer": "Mostrar pie",
+        "language": "Idioma"
+    },
+    "toast": {
+        "copied": "Enlace copiado al portapapeles"
+    },
+    "foot": {
+        "version": "v0.4.2 · código abierto bajo MIT",
+        "privacy": "Privacidad",
+        "terms": "Términos",
+        "status": "Estado"
+    }
+}

@@ -1,0 +1,128 @@
+{
+    "label": "Français",
+    "flag": "🇫🇷",
+    "nav": {
+        "docs": "Docs",
+        "security": "Sécurité",
+        "api": "API",
+        "source": "Source",
+        "status": "Tous les systèmes opérationnels"
+    },
+    "eyebrow": {
+        "create": "Chiffré de bout en bout · zero-knowledge",
+        "generated": "Chiffré et stocké",
+        "reveal": "Vue destinataire",
+        "revealed": "Déchiffré dans votre navigateur",
+        "burned": "Vue destinataire · expiré"
+    },
+    "create": {
+        "title1": "Partagez des secrets qui",
+        "title2": "s'effacent à la lecture.",
+        "lede": "Collez un mot de passe, un jeton ou toute chaîne sensible. Nous le chiffrons dans votre navigateur et renvoyons un lien à usage unique. La clé de déchiffrement ne touche jamais nos serveurs — elle vit après le # dans l'URL.",
+        "filename": "secret.txt",
+        "untitled": "sans titre",
+        "placeholder": "# Collez votre secret ici\n\nAPI_KEY=sk_live_••••••••••••••••\nDB_PASSWORD=••••••••••\n\nTexte, JSON, .env — tout fonctionne.",
+        "ready": "▍ prêt",
+        "encryptOnSend": "▍ chiffré à l'envoi",
+        "expiresIn": "Expire dans",
+        "maxReads": "Lectures max",
+        "burn": "brûler",
+        "passphrase": "Phrase de passe optionnelle",
+        "passphraseHint": "— le destinataire doit la saisir pour déverrouiller",
+        "passphrasePh": "laissez vide pour accès lien uniquement",
+        "submit": "Chiffrer et générer le lien",
+        "clear": "Effacer",
+        "shortcut": "⌘ + Enter",
+        "info": "Votre secret est chiffré dans ce navigateur avant de partir. La clé est ajoutée après le # — les fragments ne sont jamais envoyés à nos serveurs.",
+        "howItWorks": "Comment ça marche ↗",
+        "units": {
+            "minutes": "minutes",
+            "hours": "heures",
+            "days": "jours"
+        },
+        "f1t": "Zero-knowledge",
+        "f1b": "Nous ne voyons jamais votre texte clair. Chiffrement dans le navigateur via WebCrypto.",
+        "f2t": "Auto-destruction",
+        "f2b": "Le secret est effacé de notre base dès qu'il est lu — ou à expiration.",
+        "f3t": "Open source",
+        "f3b": "Auditez le code, lancez votre instance ou épinglez un commit précis."
+    },
+    "generated": {
+        "title": "Votre lien est prêt.",
+        "lede": "Envoyez cette URL au destinataire par n'importe quel canal. La clé vit dans le fragment — impossible pour nous de la lire, journaliser ou récupérer. Une fois lu, le secret disparaît à jamais.",
+        "cardTitle": "Lien à usage unique",
+        "ready": "prêt",
+        "copy": "Copier le lien",
+        "copied": "Copié",
+        "warnTitle": "Lecture unique.",
+        "warnBody": "Toute personne qui ouvre ce lien le brûle. Ne le prévisualisez pas vous-même, et attention aux aperçus (Slack/iMessage) qui peuvent consommer le secret.",
+        "expiresIn": "Expire dans",
+        "readsLeft": "Lectures restantes",
+        "passphrase": "Phrase de passe",
+        "required": "requise",
+        "none": "aucune",
+        "shareAnother": "Partager un autre",
+        "qr": "QR code",
+        "burnNow": "Brûler maintenant"
+    },
+    "reveal": {
+        "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
+        "title": "Quelqu'un a partagé un secret avec vous.",
+        "lede": "Le lire détruira définitivement la charge chiffrée. Vous n'avez qu'une chance, soyez au calme et prêt à copier.",
+        "filename": "encrypted_payload",
+        "oneTime": "usage unique",
+        "expiresIn": "expire dans",
+        "lockedTitle": "Verrouillé & scellé",
+        "lockedSub": "La clé a été extraite du fragment d'URL et est prête localement. Le blob chiffré est sur notre serveur, en attente d'une lecture — la vôtre.",
+        "key256": "clé 256 bits",
+        "burnsOnRead": "brûle à la lecture",
+        "decrypting": "Déchiffrement…",
+        "revealBtn": "Révéler et brûler le secret",
+        "info": "En révélant, vous confirmez être prêt à le lire maintenant. Nous supprimerons immédiatement la charge — pas de retour en arrière. Si interception suspectée, fermez l'onglet et demandez un nouveau lien."
+    },
+    "revealed": {
+        "title1": "Le voici.",
+        "title2": "Ne le perdez pas.",
+        "lede": "La charge chiffrée a été supprimée de nos serveurs. Cette page est le seul endroit où ce secret existe — copiez-le dans votre gestionnaire avant de fermer l'onglet.",
+        "filename": "decrypted_secret",
+        "clean": "propre",
+        "chars": "carac.",
+        "lines": "1 ligne",
+        "plaintext": "Texte clair",
+        "burnedTitle": "Brûlé.",
+        "burnedBody": "La charge chiffrée a été supprimée de notre base. Recharger ne la ramènera pas.",
+        "copyClip": "Copier dans le presse-papiers",
+        "shareBack": "Partager en retour",
+        "footnote": "déchiffré localement · jamais journalisé",
+        "copiedToast": "Secret copié — collez maintenant"
+    },
+    "burned": {
+        "title1": "Ce secret",
+        "title2": "n'est plus là.",
+        "lede": "Le lien que vous avez ouvert a déjà été lu, ou la fenêtre d'expiration est close. Nous ne gardons pas de copies — demandez un nouveau lien à l'expéditeur.",
+        "filename": "payload_burned",
+        "gone": "404 · parti",
+        "lastSeen": "vu il y a 12m",
+        "heading": "Rien à voir ici",
+        "body": "Soit quelqu'un l'a lu avant vous, soit le minuteur est terminé. Le blob chiffré a été retiré définitivement.",
+        "sendNew": "Envoyer un nouveau secret",
+        "why": "Pourquoi ?"
+    },
+    "tabs": ["Créer", "Lien généré", "Destinataire · verrouillé", "Destinataire · révélé", "Déjà brûlé"],
+    "tweaks": {
+        "title": "Réglages",
+        "flame": "Accents braise/flamme",
+        "status": "Pastille de statut",
+        "footer": "Afficher le pied",
+        "language": "Langue"
+    },
+    "toast": {
+        "copied": "Lien copié dans le presse-papiers"
+    },
+    "foot": {
+        "version": "v0.4.2 · open source MIT",
+        "privacy": "Confidentialité",
+        "terms": "Conditions",
+        "status": "Statut"
+    }
+}
