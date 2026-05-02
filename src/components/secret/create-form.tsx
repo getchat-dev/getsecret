@@ -15,7 +15,11 @@ import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, SECRET_FORMAT_EXTENSIONS, type SecretFormat } from '@/lib/secret-formats';
 
-export function CreateForm() {
+type Props = {
+    enableMultiRead?: boolean;
+};
+
+export function CreateForm({ enableMultiRead = false }: Props) {
     const t = useTranslations('create');
     const tErrors = useTranslations('errors');
 
@@ -27,6 +31,8 @@ export function CreateForm() {
     const [ttlUnit, setTtlUnit] = useState<TtlUnit>('days');
     const [format, setFormat] = useState<SecretFormat>(DEFAULT_SECRET_FORMAT);
     const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
+
+    const effectiveMaxViews = enableMultiRead ? maxViews : DEFAULT_MAX_VIEWS;
 
     const remaining = MAX_SECRET_LENGTH - secret.length;
     const activeStep = link ? 2 : 1;
@@ -44,7 +50,11 @@ export function CreateForm() {
 
         setIsSubmitting(true);
         try {
-            const next = await createSecretLink(secret, { expiresInSeconds, format, maxViews });
+            const next = await createSecretLink(secret, {
+                expiresInSeconds,
+                format,
+                maxViews: effectiveMaxViews,
+            });
             setLink(next);
         } catch (err) {
             setError(err instanceof Error ? err.message : tErrors('createFailed'));
@@ -66,7 +76,7 @@ export function CreateForm() {
                 <GeneratedLink
                     link={link}
                     expiresIn={{ value: ttlValue, unit: ttlUnit }}
-                    maxReads={maxViews}
+                    maxReads={effectiveMaxViews}
                     hasPassphrase={false}
                     onShareAnother={shareAnother}
                 />
@@ -100,7 +110,7 @@ export function CreateForm() {
                             setTtlUnit(unit);
                         }}
                     />
-                    <MaxViewsControl value={maxViews} onChange={setMaxViews} />
+                    {enableMultiRead ? <MaxViewsControl value={maxViews} onChange={setMaxViews} /> : null}
                 </div>
                 <footer className="card-footer">
                     <button

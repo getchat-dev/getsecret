@@ -83,7 +83,8 @@
         "revealBtn": "Reveal & burn secret",
         "info": "By revealing, you confirm you're ready to read this now. We will delete the encrypted payload from our database immediately after — there is no undo. If you suspect this link was intercepted, close this tab and ask the sender to issue a new one.",
         "validating": "Validating secure link…",
-        "readsRemaining": "{count, plural, one {# read remaining} other {# reads remaining}}"
+        "readsRemaining": "{count, plural, one {# read remaining} other {# reads remaining}}",
+        "unlimitedReads": "unlimited reads"
     },
     "revealed": {
         "title1": "Here it is.",

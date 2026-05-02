@@ -83,7 +83,8 @@
         "revealBtn": "Révéler et brûler le secret",
         "info": "En révélant, vous confirmez être prêt à le lire maintenant. Nous supprimerons immédiatement la charge — pas de retour en arrière. Si interception suspectée, fermez l'onglet et demandez un nouveau lien.",
         "validating": "Validation du lien sécurisé…",
-        "readsRemaining": "{count, plural, one {# lecture restante} other {# lectures restantes}}"
+        "readsRemaining": "{count, plural, one {# lecture restante} other {# lectures restantes}}",
+        "unlimitedReads": "lectures illimitées"
     },
     "revealed": {
         "title1": "Le voici.",

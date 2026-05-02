@@ -83,7 +83,8 @@
         "revealBtn": "Rivela e brucia il segreto",
         "info": "Rivelando, confermi di essere pronto a leggerlo ora. Cancelleremo immediatamente il payload cifrato — non c'è ritorno. Se sospetti un'intercettazione, chiudi questa scheda e chiedi al mittente un nuovo link.",
         "validating": "Verifica del link sicuro…",
-        "readsRemaining": "{count, plural, one {# lettura rimanente} other {# letture rimanenti}}"
+        "readsRemaining": "{count, plural, one {# lettura rimanente} other {# letture rimanenti}}",
+        "unlimitedReads": "letture illimitate"
     },
     "revealed": {
         "title1": "Eccolo.",

@@ -83,7 +83,8 @@
         "revealBtn": "Revelar y quemar secreto",
         "info": "Al revelar, confirmas que estás listo para leerlo ahora. Eliminaremos la carga cifrada de nuestra base inmediatamente — no hay deshacer. Si sospechas interceptación, cierra esta pestaña y pide al remitente un nuevo enlace.",
         "validating": "Validando enlace seguro…",
-        "readsRemaining": "{count, plural, one {# lectura restante} other {# lecturas restantes}}"
+        "readsRemaining": "{count, plural, one {# lectura restante} other {# lecturas restantes}}",
+        "unlimitedReads": "lecturas ilimitadas"
     },
     "revealed": {
         "title1": "Aquí está.",

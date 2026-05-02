@@ -24,7 +24,9 @@ Burnotes is a **client-side-encryption** one-time secret relay built on Next.js 
 
 **Trust boundary.** The browser generates a random key, encrypts the secret with AES-GCM, and derives two values from the key: an `id` (used in the URL path) and an `accessToken` (sent in the body). The server stores `{ encryptedSecret, accessTokenHash, expiresAt }` only. The key itself lives in the URL fragment (`/s/:id#<key>`) and never reaches the server. All crypto and derivations live in `src/lib/secret-crypto.ts` — treat it as security-critical.
 
-**Storage.** `src/lib/secret-store.ts` and `src/lib/rate-limit.ts` are Valkey-backed through `src/lib/valkey-client.ts` (lazy `ioredis` singleton pinned to `globalThis`). Secrets are stored as Redis Hashes with `PEXPIRE 24h`; consume is an atomic Lua script that constant-time compares the access-token hash, deletes on success, and locks out after 5 wrong attempts. Rate limiting uses a sorted-set sliding window. Valkey runs in its own Compose stack (`docker-compose.infra.yml`) so application restarts (and `./start.sh --down/--purge`) do not erase state. `VALKEY_URL` is required.
+**Storage.** `src/lib/secret-store.ts` and `src/lib/rate-limit.ts` are Valkey-backed through `src/lib/valkey-client.ts` (lazy `ioredis` singleton pinned to `globalThis`). Secrets are stored as Redis Hashes with `PEXPIRE 24h`; the open Lua script constant-time compares the access-token hash, locks out after 5 wrong attempts, increments `viewsUsed`, and deletes the record once `viewsUsed >= maxViews` (or stays alive when `maxViews = '-1'` for unlimited; missing field falls back to `1` for v1 backward-compat). Rate limiting uses a sorted-set sliding window. Valkey runs in its own Compose stack (`docker-compose.infra.yml`) so application restarts (and `./start.sh --down/--purge`) do not erase state. `VALKEY_URL` is required.
+
+**Feature flags.** `BURNOTES_MULTIREAD_ENABLED` (default `false`) gates the multi-view UI and the API: when off, the create endpoint coerces any client-supplied `maxViews` back to `1` and `<CreateForm>` hides the `<MaxViewsControl>`. This is the rolling-deploy guardrail — keep the flag off across the cluster until every instance is on the multi-read code path, then flip to `true` (env-var only, no rebuild needed for server-side reads).
 
 **Request path.**
 - `POST /api/secrets` (`src/app/api/secrets/route.ts`) — validate, rate-limit (await), hash token, store (await).
@@ -39,11 +41,12 @@ Burnotes is a **client-side-encryption** one-time secret relay built on Next.js 
 
 - The decryption key stays in the URL fragment. Never put it in path, query, body, logs, or analytics.
 - The server never sees plaintext and never needs to.
-- Consume is destructive and one-time; TTL is 24h regardless of read (enforced by Valkey `PEXPIRE`).
-- Access-token comparison is constant-time (inside the `consume` Lua script); brute-force lockout deletes the record after 5 misses.
+- TTL is enforced by Valkey `PEXPIRE`, regardless of read. Consume is destructive once `viewsUsed` reaches `maxViews`; for `maxViews=1` (default and the only path under `BURNOTES_MULTIREAD_ENABLED=false`) that's the first read.
+- Access-token comparison is constant-time (inside the `OPEN_SCRIPT` Lua script); brute-force lockout deletes the record after 5 misses (this is independent of `maxViews` — wrong tokens never decrement `viewsUsed`).
 - State lives in Valkey; `VALKEY_URL` is mandatory. Do not reintroduce an in-memory fallback — it masks outages and breaks durability.
 - API routes stay on the Node runtime (Web Crypto + `ioredis` socket).
 - `MAX_SECRET_LENGTH = 10_000`; IDs/tokens/IVs/ciphertext are base64url with explicit validators in `secret-crypto.ts`.
+- `maxViews` storage encoding: positive integer = limit; `'-1'` = unlimited; field absent = v1 backward-compat → treat as `1`. The TS layer maps `null ↔ '-1'` at the boundary (`encodeMaxViews` / `decodeStoredMaxViews`).
 
 ## Conventions
 

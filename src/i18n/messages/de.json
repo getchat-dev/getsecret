@@ -83,7 +83,8 @@
         "revealBtn": "Geheimnis enthüllen & verbrennen",
         "info": "Mit dem Enthüllen bestätigst du, dass du jetzt bereit bist. Wir löschen die verschlüsselten Daten sofort aus der DB — kein Rückgängig. Bei Verdacht auf Abfangen, schließe den Tab und bitte um einen neuen Link.",
         "validating": "Sicheren Link prüfen…",
-        "readsRemaining": "{count, plural, one {# Aufruf übrig} other {# Aufrufe übrig}}"
+        "readsRemaining": "{count, plural, one {# Aufruf übrig} other {# Aufrufe übrig}}",
+        "unlimitedReads": "unbegrenzte Aufrufe"
     },
     "revealed": {
         "title1": "Hier ist es.",

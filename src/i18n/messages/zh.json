@@ -83,7 +83,8 @@
         "revealBtn": "显示并焚毁秘密",
         "info": "通过显示,你确认现在已准备好阅读。我们将立即从数据库中删除加密的载荷 — 无法撤销。如果你怀疑此链接被截获,请关闭此标签页并请发送者发出新链接。",
         "validating": "正在验证安全链接…",
-        "readsRemaining": "剩余 {count, number} 次阅读"
+        "readsRemaining": "剩余 {count, number} 次阅读",
+        "unlimitedReads": "不限次数"
     },
     "revealed": {
         "title1": "在这里。",

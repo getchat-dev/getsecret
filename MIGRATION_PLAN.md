@@ -311,8 +311,10 @@ function deriveStep(link: LinkState, secret: SecretState, isExpired: boolean): 1
 
 ### 3.1 Изменения в Valkey-хранилище
 В Hash дополнительные поля:
-- `maxViews` — integer >= 1 или отсутствует/пусто = unlimited.
+- `maxViews` — integer >= 1, либо `'-1'` для unlimited. Поле отсутствует у v1-записей (см. backward-compat ниже) — трактуется как `1` (single-use).
 - `viewsUsed` — integer, default `0`.
+
+> **Реализация (commit b8676fc):** ушли от планируемого `'' = unlimited` в пользу `'-1' = unlimited` потому что ioredis-mock в нашей тестовой среде не различает empty-string и nil из `redis.call('HGET')` стабильно. Числовая sentinel-схема даёт один общий путь парсинга (`tonumber`), не требует специальной ветки для пустой строки и тривиально тестируется.
 
 `CREATE_SCRIPT` в `src/lib/secret-store.ts`:
 ```lua
@@ -322,21 +324,21 @@ redis.call('HSET', KEYS[1],
     'expiresAt', ARGV[3],
     'failedAttempts', '0',
     'format', ARGV[5],
-    'maxViews', ARGV[6],          -- '' если unlimited
+    'maxViews', ARGV[6],          -- '-1' если unlimited, иначе положительное число
     'viewsUsed', '0')
 redis.call('PEXPIRE', KEYS[1], ARGV[4])
 ```
 
 `CONSUME_SCRIPT` (переименовать в `OPEN_SCRIPT`):
 - После constant-time match — `HINCRBY viewsUsed 1`.
-- Если `maxViews` не пустая И `viewsUsed >= maxViews` → `DEL`.
+- Если `maxViews` не равно `-1` И `viewsUsed >= maxViews` → `DEL`.
 - Возвращать `{'ok', encryptedSecret, format, viewsRemaining}` где `viewsRemaining = maxViews - viewsUsed`, или `'-1'` для unlimited.
 
 `getMetadata` расширить: возвращать `{ expiresAt, maxViews, viewsUsed }` (для SSR на /s/[id]).
 
 **Backward-compat для in-flight v1 секретов:** на момент деплоя этапа 3 в Valkey могут жить hashes без полей `maxViews` и `viewsUsed` (TTL до 30 дней). `OPEN_SCRIPT` должен явно обрабатывать missing fields в Lua:
-- `local maxViewsRaw = redis.call('HGET', KEYS[1], 'maxViews')` → если `false` (Redis nil) или пусто, использовать `'1'` (сохраняет burn-after-read семантику старых секретов).
-- `local viewsUsedRaw = redis.call('HGET', KEYS[1], 'viewsUsed')` → если `false`, использовать `'0'`.
+- `local maxViewsRaw = redis.call('HGET', KEYS[1], 'maxViews')` → если `false` (Redis nil), использовать `1` (сохраняет burn-after-read семантику старых секретов).
+- `local viewsUsedRaw = redis.call('HGET', KEYS[1], 'viewsUsed')` → если `false`, использовать `'0'` через `HINCRBY` (Redis сам инициализирует).
 
 Это безопаснее, чем миграционный скрипт, проставляющий defaults на существующие keys: фолбэк в Lua не требует деплой-координации и работает на любых in-flight данных.
 

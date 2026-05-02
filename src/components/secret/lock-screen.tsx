@@ -49,7 +49,15 @@ export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, r
 
     const buttonLabel = isLoading ? t('decrypting') : t('revealBtn');
 
-    const showReadsPill = readsRemaining !== null && readsRemaining > 1;
+    function readsPill() {
+        if (readsRemaining === null) {
+            return <span className="pill pill-accent">{t('unlimitedReads')}</span>;
+        }
+        if (readsRemaining > 1) {
+            return <span className="pill pill-accent">{t('readsRemaining', { count: readsRemaining })}</span>;
+        }
+        return <span className="pill pill-ember">{t('burnsOnRead')}</span>;
+    }
 
     return (
         <section className="card reveal-card fade-up">
@@ -61,11 +69,7 @@ export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, r
             <div className="reveal-meta">
                 <span className="pill pill-accent">AES-256-GCM</span>
                 <span className="pill pill-muted">{t('key256')}</span>
-                {showReadsPill ? (
-                    <span className="pill pill-accent">{t('readsRemaining', { count: readsRemaining })}</span>
-                ) : (
-                    <span className="pill pill-ember">{t('burnsOnRead')}</span>
-                )}
+                {readsPill()}
             </div>
             <div className="reveal-actions">
                 <button

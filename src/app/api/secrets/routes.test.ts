@@ -303,6 +303,64 @@ describe('secret API routes', () => {
         }
     });
 
+    it('coerces maxViews to single-read when the multi-read feature flag is off', async () => {
+        const original = process.env.BURNOTES_MULTIREAD_ENABLED;
+        process.env.BURNOTES_MULTIREAD_ENABLED = 'false';
+        try {
+            const prepared = await prepareSecretUpload('flag-off payload');
+            const response = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'x-forwarded-for': '127.0.0.1',
+                    },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        maxViews: 5,
+                    }),
+                }),
+            );
+            expect(response.status).toBe(201);
+            const data = (await response.json()) as { maxViews: number | null };
+            expect(data.maxViews).toBe(1);
+
+            // First consume succeeds, viewsRemaining=0 (single-read enforced).
+            const first = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'x-forwarded-for': '127.0.0.1',
+                    },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(first.status).toBe(200);
+            const firstData = (await first.json()) as { viewsRemaining: number | null };
+            expect(firstData.viewsRemaining).toBe(0);
+
+            // Second is gone — the feature flag did not silently enable multi-read.
+            const second = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json',
+                        'x-forwarded-for': '127.0.0.1',
+                    },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(second.status).toBe(404);
+        } finally {
+            process.env.BURNOTES_MULTIREAD_ENABLED = original;
+        }
+    });
+
     it('rejects an out-of-range maxViews', async () => {
         const prepared = await prepareSecretUpload('bad views');
 

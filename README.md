@@ -7,9 +7,16 @@ One-time secret sharing app on Node.js + Next.js.
 - No accounts or authentication.
 - User can create a link with a secret text.
 - Ciphertext and rate-limit state are stored in Valkey (Redis-compatible) with a 24h TTL.
-- Secret is deleted after first read.
+- By default, the secret is destroyed on first read. With `BURNOTES_MULTIREAD_ENABLED=true` the sender can pick `1`, `3`, `5`, `10`, or `∞` reads per link.
 - Secret is deleted automatically after 24 hours.
 - Basic hardening: strict input validation, no-store responses, CSP and security headers, sliding-window rate limiting.
+
+## Environment variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VALKEY_URL` | _(required)_ | Connection string for Valkey/Redis. The app refuses to start without it. |
+| `BURNOTES_MULTIREAD_ENABLED` | `false` | When `true`, exposes the multi-view UI control and lets the API persist `maxViews ∈ {1,3,5,10,null}`. When `false`, the server forces every link to single-read regardless of what the client sent — keep it `false` during a rolling deploy until every instance is on the new code, then flip to `true` (env-only, no rebuild). |
 
 ## Local run
 

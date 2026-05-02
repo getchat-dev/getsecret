@@ -1,4 +1,5 @@
 import { DEFAULT_EXPIRATION_SECONDS, isValidExpirationSeconds } from '@/lib/expiration';
+import { isMultiReadEnabled } from '@/lib/feature-flags';
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { DEFAULT_MAX_VIEWS, isValidMaxViews } from '@/lib/max-views';
 import { rateLimiter } from '@/lib/rate-limit';
@@ -74,6 +75,13 @@ export async function POST(request: Request) {
             return jsonNoStore({ error: 'Invalid max views' }, 400);
         }
         maxViews = body.maxViews;
+    }
+    // Feature gate: while multi-read is disabled (default during a rolling
+    // deploy until every instance is on this version), coerce any non-default
+    // request back to single-read so old instances reading these records
+    // through the legacy CONSUME_SCRIPT still match the stored semantics.
+    if (!isMultiReadEnabled()) {
+        maxViews = DEFAULT_MAX_VIEWS;
     }
 
     const accessTokenHash = await hashAccessToken(body.accessToken);
