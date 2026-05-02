@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { AlertIcon, CheckIcon, CopyIcon } from '@/components/ui/icons';
 
 export type CopyStatus = 'idle' | 'copied' | 'error';
 export type ToastState = {
@@ -100,7 +101,8 @@ export function ToastMessage({ toast }: { toast: ToastState | null }) {
             className={`toast ${toast.kind === 'success' ? 'toast-success' : 'toast-error'}`}
             role={toast.kind === 'success' ? 'status' : 'alert'}
         >
-            {toast.message}
+            {toast.kind === 'success' ? <CheckIcon size={14} className="check" /> : <AlertIcon size={14} />}
+            <span>{toast.message}</span>
         </div>
     );
 }
@@ -108,23 +110,18 @@ export function ToastMessage({ toast }: { toast: ToastState | null }) {
 export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage, errorMessage }: CopyButtonProps) {
     const { copyStatus, toast, copyText } = useClipboardCopy();
 
+    const Icon = copyStatus === 'copied' ? CheckIcon : copyStatus === 'error' ? AlertIcon : CopyIcon;
+    const stateClass = copyStatus === 'copied' ? 'is-success' : copyStatus === 'error' ? 'is-error' : '';
+
     return (
         <span className="toast-anchor">
             <button
-                className={`icon-button ${copyStatus === 'copied' ? 'is-success' : ''} ${copyStatus === 'error' ? 'is-error' : ''}`.trim()}
+                className={`icon-button ${stateClass}`.trim()}
                 onClick={() => void copyText(textToCopy, { successMessage, errorMessage })}
                 type="button"
                 aria-label={copyStatus === 'copied' ? copiedLabel : copyLabel}
             >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                    {copyStatus === 'copied' ? (
-                        <path d="M9.55 18.2 4.8 13.45l1.4-1.4 3.35 3.35 8.25-8.25 1.4 1.4-9.65 9.65z" />
-                    ) : copyStatus === 'error' ? (
-                        <path d="M18.3 7.1 16.9 5.7 12 10.6 7.1 5.7 5.7 7.1l4.9 4.9-4.9 4.9 1.4 1.4 4.9-4.9 4.9 4.9 1.4-1.4-4.9-4.9 4.9-4.9z" />
-                    ) : (
-                        <path d="M16 1H4a2 2 0 0 0-2 2v12h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z" />
-                    )}
-                </svg>
+                <Icon size={16} />
             </button>
             <ToastMessage toast={toast} />
         </span>
