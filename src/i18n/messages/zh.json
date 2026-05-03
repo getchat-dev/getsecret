@@ -68,7 +68,12 @@
         "none": "无",
         "shareAnother": "分享另一个",
         "qr": "二维码",
-        "burnNow": "立即焚毁"
+        "burnNow": "立即焚毁",
+        "qrTitle": "扫码打开",
+        "qrSubtitle": "任何持有此二维码的人都能打开此密文，请像对待链接一样保管它。",
+        "qrDownloadSvg": "下载 SVG",
+        "qrDownloadPng": "下载 PNG",
+        "qrClose": "关闭"
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",

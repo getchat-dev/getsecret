@@ -68,7 +68,12 @@
         "none": "нет",
         "shareAnother": "Поделиться ещё",
         "qr": "QR-код",
-        "burnNow": "Сжечь сейчас"
+        "burnNow": "Сжечь сейчас",
+        "qrTitle": "Отсканируйте, чтобы открыть",
+        "qrSubtitle": "Любой, у кого есть этот код, сможет открыть секрет. Обращайтесь с ним как со ссылкой.",
+        "qrDownloadSvg": "Скачать SVG",
+        "qrDownloadPng": "Скачать PNG",
+        "qrClose": "Закрыть"
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",

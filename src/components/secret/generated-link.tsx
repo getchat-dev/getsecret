@@ -1,7 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { useClipboardCopy } from '@/components/copy-button';
+import { QrModal } from '@/components/secret/qr-modal';
 import {
     CheckIcon,
     ClockIcon,
@@ -40,6 +42,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
     const tCreate = useTranslations('create');
     const tUnits = useTranslations('create.units');
     const { copyStatus, copyText } = useClipboardCopy();
+    const [qrOpen, setQrOpen] = useState(false);
 
     const parts = splitUrl(link);
     const isCopied = copyStatus === 'copied';
@@ -105,13 +108,14 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                 <button type="button" className="btn btn-secondary" onClick={onShareAnother}>
                     <PlusIcon size={14} /> {t('shareAnother')}
                 </button>
-                <button type="button" className="btn btn-ghost" disabled aria-disabled="true">
+                <button type="button" className="btn btn-ghost" onClick={() => setQrOpen(true)}>
                     <QrCodeIcon size={14} /> {t('qr')}
                 </button>
                 <button type="button" className="btn btn-danger" disabled aria-disabled="true">
                     <TrashIcon size={14} /> {t('burnNow')}
                 </button>
             </div>
+            <QrModal link={link} open={qrOpen} onClose={() => setQrOpen(false)} />
         </section>
     );
 }

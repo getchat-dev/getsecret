@@ -68,7 +68,12 @@
         "none": "keine",
         "shareAnother": "Weiteres teilen",
         "qr": "QR-Code",
-        "burnNow": "Jetzt verbrennen"
+        "burnNow": "Jetzt verbrennen",
+        "qrTitle": "Zum Öffnen scannen",
+        "qrSubtitle": "Wer diesen Code hat, kann das Geheimnis öffnen. Behandle ihn wie den Link selbst.",
+        "qrDownloadSvg": "SVG herunterladen",
+        "qrDownloadPng": "PNG herunterladen",
+        "qrClose": "Schließen"
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
