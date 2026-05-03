@@ -1,6 +1,6 @@
 {
     "name": "burnotes",
-    "version": "2.12.3",
+    "version": "2.12.4",
     "private": true,
     "scripts": {
         "dev": "next dev",
@@ -15,7 +15,8 @@
         "check": "biome check",
         "fix": "biome check --write",
         "lint:ci": "biome check",
-        "clean": "rm -rf .next"
+        "clean": "rm -rf .next",
+        "setup:bindings": "npm install --include=optional --no-save"
     },
     "dependencies": {
         "highlight.js": "^11.11.1",

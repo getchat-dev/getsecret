@@ -15,6 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run a single test file: `npx vitest run src/lib/secret-crypto.test.ts`
 - Run a single test by name: `npx vitest run -t "partial test name"`
 - `npm run hooks:install` — point git at `.githooks/` (pre-commit runs `npm run check` then `npm test`)
+- `npm run setup:bindings` — non-destructive recovery for npm's optionalDependencies bug (npm/cli#4828). If `npm run check` / `npm test` fails with `Cannot find module '@biomejs/cli-darwin-arm64/biome'` or `'@rolldown/binding-darwin-*'`/`'-linux-*'`, run this once. **Do not** delete `package-lock.json` and reinstall — the lockfile is fine; only platform-specific binaries failed to install. Works on host *and* inside Docker dev/build containers.
 - Dev in Docker: `docker compose -f docker-compose.dev.yml up` or `./start.sh --dev` (uses `werf compose`)
 - Valkey infra (once per host): `docker compose -f docker-compose.infra.yml up -d` — outlives `./start.sh --down/--purge`
 

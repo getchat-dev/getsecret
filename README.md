@@ -30,6 +30,8 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+If `npm run check` or `npm test` later fails with `Cannot find module '@biomejs/cli-…'` or `'@rolldown/binding-…'`, that's the npm optionalDependencies bug ([npm/cli#4828](https://github.com/npm/cli/issues/4828)) — platform-specific native binaries occasionally fail to install. Recover with `npm run setup:bindings` (works on host or inside the Docker container). Do **not** delete `package-lock.json`; the lockfile is fine.
+
 ## Git hooks
 
 Install repository hooks once per clone:
