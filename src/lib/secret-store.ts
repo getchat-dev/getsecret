@@ -1,6 +1,7 @@
 import type { Redis } from 'ioredis';
 import { DEFAULT_EXPIRATION_SECONDS } from '@/lib/expiration';
 import { DEFAULT_MAX_VIEWS, isValidMaxViews } from '@/lib/max-views';
+import { isValidPasswordIterations, isValidPasswordSalt, type PasswordParams } from '@/lib/password-derive';
 import type { EncryptedSecret } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, isSecretFormat, type SecretFormat } from '@/lib/secret-formats';
 import { getValkey, SECRET_KEY_PREFIX } from '@/lib/valkey-client';
@@ -18,7 +19,10 @@ redis.call('HSET', KEYS[1],
     'failedAttempts', '0',
     'format', ARGV[5],
     'maxViews', ARGV[6],
-    'viewsUsed', '0')
+    'viewsUsed', '0',
+    'passwordSalt', ARGV[7],
+    'passwordIterations', ARGV[8],
+    'passwordVerifierHash', ARGV[9])
 redis.call('PEXPIRE', KEYS[1], ARGV[4])
 return 1
 `;
@@ -28,25 +32,48 @@ return 1
 // attacker cannot distinguish "missing" from "wrong token" from "wrong length"
 // through a timing oracle on the Valkey round trip.
 //
-// On match we bump viewsUsed and DEL the record once it reaches maxViews.
-// maxViews encoding in the hash: positive integer = that limit; '-1' = unlimited;
-// missing field (v1 backward-compat for secrets created before stage 3) = 1.
+// Stage 4 extension: if the secret was created with a password, the hash also
+// holds passwordVerifierHash. When non-empty, the script does a SECOND
+// constant-time compare against ARGV[3] (the verifier hash sent by the
+// client, hashed once more by the route handler) — same lockout counter, no
+// timing distinction between wrong-token and wrong-password. View counter is
+// only bumped after BOTH checks pass.
+//
+// On the success path we bump viewsUsed and DEL the record once it reaches
+// maxViews. maxViews encoding in the hash: positive integer = that limit;
+// '-1' = unlimited; missing field (v1 backward-compat for secrets created
+// before stage 3) = 1. passwordVerifierHash empty/missing = no password
+// required (v1 secrets and stage-3 secrets without password).
 const OPEN_SCRIPT = `
 local stored = redis.call('HGET', KEYS[1], 'accessTokenHash')
 if not stored then
     return {'missing'}
 end
-local diff = 0
+local tokenDiff = 0
 if #stored == #ARGV[1] then
     for i = 1, #stored do
         local a = string.byte(stored, i)
         local b = string.byte(ARGV[1], i)
-        diff = diff + (a - b) * (a - b)
+        tokenDiff = tokenDiff + (a - b) * (a - b)
     end
 else
-    diff = 1
+    tokenDiff = 1
 end
-if diff > 0 then
+local storedPwHash = redis.call('HGET', KEYS[1], 'passwordVerifierHash')
+local pwDiff = 0
+if storedPwHash and storedPwHash ~= '' then
+    local providedPwHash = ARGV[3] or ''
+    if #storedPwHash == #providedPwHash and #providedPwHash > 0 then
+        for i = 1, #storedPwHash do
+            local a = string.byte(storedPwHash, i)
+            local b = string.byte(providedPwHash, i)
+            pwDiff = pwDiff + (a - b) * (a - b)
+        end
+    else
+        pwDiff = 1
+    end
+end
+if tokenDiff + pwDiff > 0 then
     local failed = redis.call('HINCRBY', KEYS[1], 'failedAttempts', 1)
     if failed >= tonumber(ARGV[2]) then
         redis.call('DEL', KEYS[1])
@@ -119,10 +146,18 @@ function decodeStoredMaxViews(raw: string | null): number | null {
     return parsed;
 }
 
+function decodeStoredPasswordParams(saltRaw: string | null, iterationsRaw: string | null): PasswordParams | null {
+    if (!saltRaw || !iterationsRaw) return null;
+    const iterations = Number.parseInt(iterationsRaw, 10);
+    if (!isValidPasswordSalt(saltRaw) || !isValidPasswordIterations(iterations)) return null;
+    return { salt: saltRaw, iterations };
+}
+
 export type SecretMetadata = {
     expiresAt: number;
     maxViews: number | null;
     viewsUsed: number;
+    passwordParams: PasswordParams | null;
 };
 
 export type ConsumedSecret = {
@@ -139,10 +174,24 @@ class SecretStore {
         ttlSeconds: number = DEFAULT_EXPIRATION_SECONDS,
         format: SecretFormat = DEFAULT_SECRET_FORMAT,
         maxViews: number | null = DEFAULT_MAX_VIEWS,
+        passwordParams: PasswordParams | null = null,
+        passwordVerifierHash: string | null = null,
     ): Promise<{ expiresAt: number } | null> {
-        if (!isValidMaxViews(maxViews)) {
-            return null;
+        if (!isValidMaxViews(maxViews)) return null;
+        // passwordParams and passwordVerifierHash must be set together or both omitted.
+        if (passwordParams === null) {
+            if (passwordVerifierHash) return null;
+        } else {
+            if (
+                !isValidPasswordSalt(passwordParams.salt) ||
+                !isValidPasswordIterations(passwordParams.iterations) ||
+                typeof passwordVerifierHash !== 'string' ||
+                passwordVerifierHash.length === 0
+            ) {
+                return null;
+            }
         }
+
         const client = getClient();
         const ttlMs = ttlSeconds * 1000;
         const expiresAt = Date.now() + ttlMs;
@@ -154,6 +203,9 @@ class SecretStore {
             String(ttlMs),
             format,
             encodeMaxViews(maxViews),
+            passwordParams ? passwordParams.salt : '',
+            passwordParams ? String(passwordParams.iterations) : '',
+            passwordVerifierHash ?? '',
         );
         if (result !== 1) {
             return null;
@@ -163,8 +215,15 @@ class SecretStore {
 
     async getMetadata(id: string): Promise<SecretMetadata | null> {
         const client = getClient();
-        const fields = await client.hmget(secretKey(id), 'expiresAt', 'maxViews', 'viewsUsed');
-        const [expiresAtRaw, maxViewsRaw, viewsUsedRaw] = fields;
+        const fields = await client.hmget(
+            secretKey(id),
+            'expiresAt',
+            'maxViews',
+            'viewsUsed',
+            'passwordSalt',
+            'passwordIterations',
+        );
+        const [expiresAtRaw, maxViewsRaw, viewsUsedRaw, passwordSaltRaw, passwordIterationsRaw] = fields;
         if (!expiresAtRaw) {
             return null;
         }
@@ -173,12 +232,22 @@ class SecretStore {
             expiresAt: Number(expiresAtRaw),
             maxViews: decodeStoredMaxViews(maxViewsRaw),
             viewsUsed: Number.isFinite(viewsUsed) ? viewsUsed : 0,
+            passwordParams: decodeStoredPasswordParams(passwordSaltRaw, passwordIterationsRaw),
         };
     }
 
-    async consume(id: string, accessTokenHash: string): Promise<ConsumedSecret | null> {
+    async consume(
+        id: string,
+        accessTokenHash: string,
+        passwordVerifierHash: string | null = null,
+    ): Promise<ConsumedSecret | null> {
         const client = getClient();
-        const result = await client.burnotesOpen(secretKey(id), accessTokenHash, String(MAX_FAILED_ATTEMPTS));
+        const result = await client.burnotesOpen(
+            secretKey(id),
+            accessTokenHash,
+            String(MAX_FAILED_ATTEMPTS),
+            passwordVerifierHash ?? '',
+        );
         if (!Array.isArray(result) || result[0] !== 'ok' || typeof result[1] !== 'string') {
             return null;
         }

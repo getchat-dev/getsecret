@@ -1,4 +1,5 @@
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
+import { hashPasswordVerifier, isValidPasswordVerifier } from '@/lib/password-derive';
 import { rateLimiter } from '@/lib/rate-limit';
 import { hashAccessToken, isValidAccessToken, isValidSecretId } from '@/lib/secret-crypto';
 import { secretStore } from '@/lib/secret-store';
@@ -12,6 +13,7 @@ const CONSUME_MAX_BODY_BYTES = 1024;
 
 type ConsumeSecretBody = {
     accessToken?: unknown;
+    passwordVerifier?: unknown;
 };
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -45,8 +47,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return jsonNoStore({ error: 'Invalid secret access token' }, 400);
     }
 
+    let passwordVerifierHash: string | null = null;
+    if (body.passwordVerifier !== undefined) {
+        if (!isValidPasswordVerifier(body.passwordVerifier)) {
+            return jsonNoStore({ error: 'Invalid password verifier' }, 400);
+        }
+        passwordVerifierHash = await hashPasswordVerifier(body.passwordVerifier);
+    }
+
     const accessTokenHash = await hashAccessToken(body.accessToken);
-    const consumed = await secretStore.consume(id, accessTokenHash);
+    const consumed = await secretStore.consume(id, accessTokenHash, passwordVerifierHash);
     if (!consumed) {
         return jsonNoStore({ error: 'Secret not found or expired' }, 404);
     }

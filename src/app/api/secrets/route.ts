@@ -1,9 +1,16 @@
 import { DEFAULT_EXPIRATION_SECONDS, isValidExpirationSeconds } from '@/lib/expiration';
-import { isMultiReadEnabled } from '@/lib/feature-flags';
+import { isMultiReadEnabled, isPasswordEnabled } from '@/lib/feature-flags';
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { DEFAULT_MAX_VIEWS, isValidMaxViews } from '@/lib/max-views';
+import { isValidPasswordParams, isValidPasswordVerifierHash } from '@/lib/password-derive';
 import { rateLimiter } from '@/lib/rate-limit';
-import { hashAccessToken, isValidAccessToken, isValidEncryptedSecret, isValidSecretId } from '@/lib/secret-crypto';
+import {
+    hashAccessToken,
+    isValidAccessToken,
+    isValidEncryptedSecret,
+    isValidSecretId,
+    SECRET_VERSION_V2,
+} from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, isSecretFormat } from '@/lib/secret-formats';
 import { secretStore } from '@/lib/secret-store';
 
@@ -21,6 +28,8 @@ type CreateSecretBody = {
     expiresInSeconds?: unknown;
     format?: unknown;
     maxViews?: unknown;
+    passwordParams?: unknown;
+    passwordVerifierHash?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -84,6 +93,25 @@ export async function POST(request: Request) {
         maxViews = DEFAULT_MAX_VIEWS;
     }
 
+    // Password params and verifier hash come together or not at all. The v2
+    // secret payload (double-layer ciphertext with an inner IV) is only valid
+    // alongside password params; a plain v2 envelope from the client is a
+    // contract violation we reject.
+    const hasPasswordRequest = body.passwordParams !== undefined || body.passwordVerifierHash !== undefined;
+    if (hasPasswordRequest) {
+        if (!isPasswordEnabled()) {
+            return jsonNoStore({ error: 'Password protection is disabled' }, 400);
+        }
+        if (!isValidPasswordParams(body.passwordParams) || !isValidPasswordVerifierHash(body.passwordVerifierHash)) {
+            return jsonNoStore({ error: 'Invalid password params' }, 400);
+        }
+        if (body.encryptedSecret.version !== SECRET_VERSION_V2) {
+            return jsonNoStore({ error: 'Password-protected payload must be v2' }, 400);
+        }
+    } else if (body.encryptedSecret.version === SECRET_VERSION_V2) {
+        return jsonNoStore({ error: 'v2 payload requires password params' }, 400);
+    }
+
     const accessTokenHash = await hashAccessToken(body.accessToken);
     const createdSecret = await secretStore.create(
         body.id,
@@ -92,6 +120,8 @@ export async function POST(request: Request) {
         expiresInSeconds,
         format,
         maxViews,
+        hasPasswordRequest && isValidPasswordParams(body.passwordParams) ? body.passwordParams : null,
+        hasPasswordRequest && isValidPasswordVerifierHash(body.passwordVerifierHash) ? body.passwordVerifierHash : null,
     );
     if (!createdSecret) {
         return jsonNoStore({ error: 'Secret id already exists' }, 409);

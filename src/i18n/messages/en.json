@@ -48,7 +48,9 @@
         "f3b": "Audit the code, run your own instance, or pin to a specific commit.",
         "encrypting": "Encrypting…",
         "charsLeft": "{count, number} characters left",
-        "formatLabel": "Format"
+        "formatLabel": "Format",
+        "hidePassword": "Hide passphrase",
+        "showPassword": "Show passphrase"
     },
     "generated": {
         "title": "Your link is ready.",
@@ -84,7 +86,15 @@
         "info": "By revealing, you confirm you're ready to read this now. We will delete the encrypted payload from our database immediately after — there is no undo. If you suspect this link was intercepted, close this tab and ask the sender to issue a new one.",
         "validating": "Validating secure link…",
         "readsRemaining": "{count, plural, one {# read remaining} other {# reads remaining}}",
-        "unlimitedReads": "unlimited reads"
+        "unlimitedReads": "unlimited reads",
+        "passwordPromptSub": "This secret is locked with a passphrase. Enter it to unlock and burn.",
+        "passwordPromptLabel": "Passphrase",
+        "passwordPromptPlaceholder": "Enter passphrase to unlock",
+        "passwordPromptHint": "Minimum {min, number} characters. After five wrong attempts the secret is destroyed.",
+        "passwordWrong": "Wrong passphrase. The secret is destroyed after five misses.",
+        "passwordPill": "passphrase required",
+        "hidePassword": "Hide passphrase",
+        "showPassword": "Show passphrase"
     },
     "revealed": {
         "title1": "Here it is.",
@@ -149,6 +159,7 @@
         "secretExpired": "This secret expired before it was opened.",
         "decryptFailed": "Could not decrypt the secret in this browser.",
         "createFailed": "Failed to create the secret link.",
-        "copyFailed": "Could not copy to the clipboard."
+        "copyFailed": "Could not copy to the clipboard.",
+        "passwordTooShort": "Passphrase must be at least {min, number} characters."
     }
 }

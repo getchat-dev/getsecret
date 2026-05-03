@@ -30,12 +30,14 @@ describe('secret-store', () => {
             expiresAt: created?.expiresAt,
             maxViews: 1,
             viewsUsed: 0,
+            passwordParams: null,
         });
         expect(await secretStore.consume('secret-id', 'wrong-token-hash')).toBeNull();
         expect(await secretStore.getMetadata('secret-id')).toEqual({
             expiresAt: created?.expiresAt,
             maxViews: 1,
             viewsUsed: 0,
+            passwordParams: null,
         });
         expect(await secretStore.consume('secret-id', 'token-hash')).toEqual({
             encryptedSecret: sampleEncryptedSecret(),
@@ -215,5 +217,114 @@ describe('secret-store', () => {
     it('exposes MAX_EXPIRATION_SECONDS as a positive integer', () => {
         expect(Number.isInteger(MAX_EXPIRATION_SECONDS)).toBe(true);
         expect(MAX_EXPIRATION_SECONDS).toBeGreaterThan(0);
+    });
+
+    it('requires the verifier hash to consume a password-protected secret', async () => {
+        const passwordParams = { salt: 'a'.repeat(22), iterations: 200_000 };
+        const verifierHash = 'b'.repeat(43);
+        const created = await secretStore.create(
+            'pw-secret',
+            sampleEncryptedSecret(),
+            'token-hash',
+            undefined,
+            'plain',
+            1,
+            passwordParams,
+            verifierHash,
+        );
+        expect(created).not.toBeNull();
+
+        const meta = await secretStore.getMetadata('pw-secret');
+        expect(meta?.passwordParams).toEqual(passwordParams);
+
+        // Right token, no verifier → mismatch (counts toward lockout).
+        expect(await secretStore.consume('pw-secret', 'token-hash')).toBeNull();
+        // Right token, wrong verifier → mismatch.
+        expect(await secretStore.consume('pw-secret', 'token-hash', 'c'.repeat(43))).toBeNull();
+        // Right token + right verifier → success and DEL.
+        const consumed = await secretStore.consume('pw-secret', 'token-hash', verifierHash);
+        expect(consumed).not.toBeNull();
+        expect(await secretStore.getMetadata('pw-secret')).toBeNull();
+    });
+
+    it('counts wrong-password attempts toward the same lockout as wrong-token', async () => {
+        const passwordParams = { salt: 'a'.repeat(22), iterations: 200_000 };
+        const verifierHash = 'b'.repeat(43);
+        await secretStore.create(
+            'pw-lockout',
+            sampleEncryptedSecret(),
+            'token-hash',
+            undefined,
+            'plain',
+            1,
+            passwordParams,
+            verifierHash,
+        );
+        // Five wrong verifier attempts in a row → secret deleted.
+        for (let i = 0; i < 5; i += 1) {
+            expect(await secretStore.consume('pw-lockout', 'token-hash', 'c'.repeat(43))).toBeNull();
+        }
+        expect(await secretStore.getMetadata('pw-lockout')).toBeNull();
+        expect(await secretStore.consume('pw-lockout', 'token-hash', verifierHash)).toBeNull();
+    });
+
+    it('combines password protection with multi-view counting', async () => {
+        const passwordParams = { salt: 'a'.repeat(22), iterations: 200_000 };
+        const verifierHash = 'b'.repeat(43);
+        await secretStore.create(
+            'pw-multi',
+            sampleEncryptedSecret(),
+            'token-hash',
+            undefined,
+            'plain',
+            3,
+            passwordParams,
+            verifierHash,
+        );
+
+        for (const expected of [2, 1, 0]) {
+            const consumed = await secretStore.consume('pw-multi', 'token-hash', verifierHash);
+            expect(consumed?.viewsRemaining).toBe(expected);
+        }
+        expect(await secretStore.consume('pw-multi', 'token-hash', verifierHash)).toBeNull();
+    });
+
+    it('does not require a verifier for non-password secrets even if one is sent', async () => {
+        // v1-style behavior: backwards-compat for clients that send an empty
+        // string verifier or a stray value. The Lua script only enforces the
+        // verifier when the stored hash is non-empty.
+        await secretStore.create('plain-secret', sampleEncryptedSecret(), 'token-hash');
+        const consumed = await secretStore.consume('plain-secret', 'token-hash', 'unused-verifier');
+        expect(consumed).not.toBeNull();
+    });
+
+    it('rejects mixed password params (params without verifier hash, or vice versa)', async () => {
+        const passwordParams = { salt: 'a'.repeat(22), iterations: 200_000 };
+        // Params without verifierHash.
+        expect(
+            await secretStore.create(
+                'bad-mix-1',
+                sampleEncryptedSecret(),
+                'token-hash',
+                undefined,
+                'plain',
+                1,
+                passwordParams,
+                null,
+            ),
+        ).toBeNull();
+        // verifierHash without params.
+        expect(
+            await secretStore.create(
+                'bad-mix-2',
+                sampleEncryptedSecret(),
+                'token-hash',
+                undefined,
+                'plain',
+                1,
+                null,
+                'b'.repeat(43),
+            ),
+        ).toBeNull();
     });
 });

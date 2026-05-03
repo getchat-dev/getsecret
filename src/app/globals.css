@@ -1705,6 +1705,66 @@ h1.display .accent-word {
     line-height: 1.5;
 }
 
+.hint-error {
+    color: var(--danger);
+}
+
+/* ============================================================
+   PASSWORD INPUT
+============================================================ */
+
+.field-label-hint {
+    color: var(--fg-muted);
+    font-weight: 400;
+    font-size: 12px;
+}
+
+.password-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.password-input {
+    width: 100%;
+    padding: 9px 44px 9px 14px;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--fg-default);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    outline: 0;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+
+.password-input::placeholder {
+    color: var(--fg-faint);
+}
+
+.password-input:focus-visible {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg-soft);
+}
+
+.password-input.has-error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.password-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+}
+
 .viewer-actions {
     margin-top: 0.75rem;
     display: flex;

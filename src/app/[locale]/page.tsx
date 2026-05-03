@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CreateForm } from '@/components/secret/create-form';
-import { isMultiReadEnabled } from '@/lib/feature-flags';
+import { isMultiReadEnabled, isPasswordEnabled } from '@/lib/feature-flags';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +32,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 {t('title1')} <span className="accent-word">{t('title2')}</span>
             </h1>
             <p className="lede">{t('lede')}</p>
-            <CreateForm enableMultiRead={isMultiReadEnabled()} />
+            <CreateForm enableMultiRead={isMultiReadEnabled()} enablePassword={isPasswordEnabled()} />
         </main>
     );
 }

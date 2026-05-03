@@ -48,7 +48,9 @@
         "f3b": "Audita el código, ejecuta tu propia instancia o ánclate a un commit específico.",
         "encrypting": "Cifrando…",
         "charsLeft": "{count, number} caracteres restantes",
-        "formatLabel": "Formato"
+        "formatLabel": "Formato",
+        "hidePassword": "Ocultar contraseña",
+        "showPassword": "Mostrar contraseña"
     },
     "generated": {
         "title": "Tu enlace está listo.",
@@ -84,7 +86,15 @@
         "info": "Al revelar, confirmas que estás listo para leerlo ahora. Eliminaremos la carga cifrada de nuestra base inmediatamente — no hay deshacer. Si sospechas interceptación, cierra esta pestaña y pide al remitente un nuevo enlace.",
         "validating": "Validando enlace seguro…",
         "readsRemaining": "{count, plural, one {# lectura restante} other {# lecturas restantes}}",
-        "unlimitedReads": "lecturas ilimitadas"
+        "unlimitedReads": "lecturas ilimitadas",
+        "passwordPromptSub": "Este secreto está protegido con una contraseña. Ingrésala para desbloquear y quemar.",
+        "passwordPromptLabel": "Contraseña",
+        "passwordPromptPlaceholder": "Ingresa la contraseña para desbloquear",
+        "passwordPromptHint": "Mínimo {min, number} caracteres. Tras cinco intentos fallidos el secreto se destruye.",
+        "passwordWrong": "Contraseña incorrecta. Tras cinco fallos el secreto se destruye.",
+        "passwordPill": "contraseña requerida",
+        "hidePassword": "Ocultar contraseña",
+        "showPassword": "Mostrar contraseña"
     },
     "revealed": {
         "title1": "Aquí está.",
@@ -149,6 +159,7 @@
         "secretExpired": "Este secreto caducó antes de ser abierto.",
         "decryptFailed": "No se pudo descifrar el secreto en este navegador.",
         "createFailed": "No se pudo crear el enlace del secreto.",
-        "copyFailed": "No se pudo copiar al portapapeles."
+        "copyFailed": "No se pudo copiar al portapapeles.",
+        "passwordTooShort": "La contraseña debe tener al menos {min, number} caracteres."
     }
 }

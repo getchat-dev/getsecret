@@ -48,7 +48,9 @@
         "f3b": "Auditez le code, lancez votre instance ou épinglez un commit précis.",
         "encrypting": "Chiffrement…",
         "charsLeft": "{count, number} caractères restants",
-        "formatLabel": "Format"
+        "formatLabel": "Format",
+        "hidePassword": "Masquer la phrase secrète",
+        "showPassword": "Afficher la phrase secrète"
     },
     "generated": {
         "title": "Votre lien est prêt.",
@@ -84,7 +86,15 @@
         "info": "En révélant, vous confirmez être prêt à le lire maintenant. Nous supprimerons immédiatement la charge — pas de retour en arrière. Si interception suspectée, fermez l'onglet et demandez un nouveau lien.",
         "validating": "Validation du lien sécurisé…",
         "readsRemaining": "{count, plural, one {# lecture restante} other {# lectures restantes}}",
-        "unlimitedReads": "lectures illimitées"
+        "unlimitedReads": "lectures illimitées",
+        "passwordPromptSub": "Ce secret est protégé par une phrase secrète. Entrez-la pour déverrouiller et brûler.",
+        "passwordPromptLabel": "Phrase secrète",
+        "passwordPromptPlaceholder": "Entrez la phrase secrète pour déverrouiller",
+        "passwordPromptHint": "Au moins {min, number} caractères. Après cinq erreurs, le secret est détruit.",
+        "passwordWrong": "Mauvaise phrase secrète. Après cinq erreurs, le secret est détruit.",
+        "passwordPill": "phrase secrète requise",
+        "hidePassword": "Masquer la phrase secrète",
+        "showPassword": "Afficher la phrase secrète"
     },
     "revealed": {
         "title1": "Le voici.",
@@ -149,6 +159,7 @@
         "secretExpired": "Ce secret a expiré avant d'être ouvert.",
         "decryptFailed": "Impossible de déchiffrer le secret dans ce navigateur.",
         "createFailed": "Échec de la création du lien du secret.",
-        "copyFailed": "Impossible de copier dans le presse-papiers."
+        "copyFailed": "Impossible de copier dans le presse-papiers.",
+        "passwordTooShort": "La phrase secrète doit comporter au moins {min, number} caractères."
     }
 }

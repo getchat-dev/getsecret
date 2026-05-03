@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
-import { LockIcon, ZapIcon } from '@/components/ui/icons';
+import { EyeIcon, EyeOffIcon, KeyIcon, LockIcon, ZapIcon } from '@/components/ui/icons';
+import { isValidPassword, MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 function useUtcNow(intervalMs = 1000) {
     const [now, setNow] = useState(() => Date.now());
@@ -37,17 +38,36 @@ type Props = {
     isExpired: boolean;
     isValidating: boolean;
     readsRemaining: number | null;
+    passwordRequired: boolean;
+    password: string;
+    passwordError: boolean;
+    onPasswordChange: (next: string) => void;
     onReveal: () => void;
 };
 
-export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, readsRemaining, onReveal }: Props) {
+export function LockScreen({
+    expiresAtUtc,
+    isLoading,
+    isExpired,
+    isValidating,
+    readsRemaining,
+    passwordRequired,
+    password,
+    passwordError,
+    onPasswordChange,
+    onReveal,
+}: Props) {
     const t = useTranslations('reveal');
 
     const expiresAtMs = useMemo(() => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN), [expiresAtUtc]);
     const now = useUtcNow();
     const remainingMs = Number.isFinite(expiresAtMs) ? Math.max(0, expiresAtMs - now) : 0;
 
+    const [showPassword, setShowPassword] = useState(false);
+
     const buttonLabel = isLoading ? t('decrypting') : t('revealBtn');
+    const passwordValid = !passwordRequired || isValidPassword(password);
+    const disabled = isLoading || isExpired || isValidating || !passwordValid;
 
     function readsPill() {
         if (readsRemaining === null) {
@@ -65,19 +85,56 @@ export function LockScreen({ expiresAtUtc, isLoading, isExpired, isValidating, r
                 <LockIcon size={28} />
             </div>
             <h2 className="reveal-title">{t('lockedTitle')}</h2>
-            <p className="reveal-sub">{t('lockedSub')}</p>
+            <p className="reveal-sub">{passwordRequired ? t('passwordPromptSub') : t('lockedSub')}</p>
             <div className="reveal-meta">
                 <span className="pill pill-accent">AES-256-GCM</span>
                 <span className="pill pill-muted">{t('key256')}</span>
+                {passwordRequired ? <span className="pill pill-accent">{t('passwordPill')}</span> : null}
                 {readsPill()}
             </div>
+            {passwordRequired ? (
+                <div className="field">
+                    <label className="field-label" htmlFor="reveal-password">
+                        <KeyIcon size={12} /> {t('passwordPromptLabel')}
+                    </label>
+                    <div className="field-row">
+                        <div className="password-wrap">
+                            <input
+                                id="reveal-password"
+                                type={showPassword ? 'text' : 'password'}
+                                autoComplete="off"
+                                spellCheck={false}
+                                value={password}
+                                maxLength={MAX_PASSWORD_LENGTH}
+                                onChange={(event) => onPasswordChange(event.target.value)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' && passwordValid && !disabled) {
+                                        event.preventDefault();
+                                        onReveal();
+                                    }
+                                }}
+                                placeholder={t('passwordPromptPlaceholder')}
+                                className={`password-input ${passwordError ? 'has-error' : ''}`.trim()}
+                            />
+                            <button
+                                type="button"
+                                className="btn btn-ghost btn-icon password-toggle"
+                                onClick={() => setShowPassword((v) => !v)}
+                                aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                            >
+                                {showPassword ? <EyeOffIcon size={14} /> : <EyeIcon size={14} />}
+                            </button>
+                        </div>
+                    </div>
+                    {passwordError ? (
+                        <p className="hint hint-error">{t('passwordWrong')}</p>
+                    ) : (
+                        <p className="hint">{t('passwordPromptHint', { min: MIN_PASSWORD_LENGTH })}</p>
+                    )}
+                </div>
+            ) : null}
             <div className="reveal-actions">
-                <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={onReveal}
-                    disabled={isLoading || isExpired || isValidating}
-                >
+                <button type="button" className="btn btn-primary" onClick={onReveal} disabled={disabled}>
                     <ZapIcon size={14} />
                     {buttonLabel}
                 </button>

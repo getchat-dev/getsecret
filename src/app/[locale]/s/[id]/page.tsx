@@ -41,6 +41,7 @@ export default async function SecretPage({ params }: { params: Promise<{ locale:
                 expiresAtUtc={new Date(secretMetadata.expiresAt).toISOString()}
                 maxViews={secretMetadata.maxViews}
                 viewsUsed={secretMetadata.viewsUsed}
+                passwordParams={secretMetadata.passwordParams}
             />
         </main>
     );

@@ -1,3 +1,14 @@
+import {
+    computePasswordVerifier,
+    decodePasswordSalt,
+    derivePasswordKey,
+    encodePasswordSalt,
+    generatePasswordSalt,
+    hashPasswordVerifier,
+    PASSWORD_PBKDF2_ITERATIONS,
+    type PasswordParams,
+} from '@/lib/password-derive';
+
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
 const SECRET_ID_LABEL = 'burnotes:secret-id:v1:';
 const SECRET_ACCESS_TOKEN_LABEL = 'burnotes:access-token:v1:';
@@ -6,7 +17,9 @@ const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
 export const MAX_SECRET_LENGTH = 10_000;
-export const SECRET_VERSION = 1;
+export const SECRET_VERSION_V1 = 1;
+export const SECRET_VERSION_V2 = 2;
+export const SECRET_VERSION = SECRET_VERSION_V1;
 export const SECRET_KEY_BYTES = 32;
 export const SECRET_IV_BYTES = 12;
 export const SECRET_DIGEST_BYTES = 32;
@@ -15,10 +28,14 @@ export const MAX_SECRET_BYTES = MAX_SECRET_LENGTH * 4;
 export const SECRET_ID_LENGTH = base64UrlLengthForBytes(SECRET_DIGEST_BYTES);
 export const SECRET_ACCESS_TOKEN_LENGTH = base64UrlLengthForBytes(SECRET_DIGEST_BYTES);
 export const SECRET_IV_LENGTH = base64UrlLengthForBytes(SECRET_IV_BYTES);
-export const MAX_CIPHERTEXT_LENGTH = base64UrlLengthForBytes(MAX_SECRET_BYTES + AES_GCM_TAG_BYTES);
+// v2 ciphertext wraps an inner IV (12 bytes) + inner ciphertext (≤ MAX_SECRET_BYTES + tag) + outer tag.
+const MAX_V2_INNER_BYTES = SECRET_IV_BYTES + MAX_SECRET_BYTES + AES_GCM_TAG_BYTES;
+export const MAX_CIPHERTEXT_LENGTH = base64UrlLengthForBytes(
+    Math.max(MAX_SECRET_BYTES + AES_GCM_TAG_BYTES, MAX_V2_INNER_BYTES + AES_GCM_TAG_BYTES),
+);
 
 export type EncryptedSecret = {
-    version: number;
+    version: 1 | 2;
     iv: string;
     ciphertext: string;
 };
@@ -28,6 +45,11 @@ export type PreparedSecretUpload = {
     key: string;
     accessToken: string;
     encryptedSecret: EncryptedSecret;
+};
+
+export type PreparedSecretUploadWithPassword = PreparedSecretUpload & {
+    passwordParams: PasswordParams;
+    passwordVerifierHash: string;
 };
 
 function base64UrlLengthForBytes(byteLength: number): number {
@@ -123,7 +145,7 @@ export function isValidEncryptedSecret(value: unknown): value is EncryptedSecret
 
     const candidate = value as Partial<EncryptedSecret>;
     return (
-        candidate.version === SECRET_VERSION &&
+        (candidate.version === SECRET_VERSION_V1 || candidate.version === SECRET_VERSION_V2) &&
         typeof candidate.iv === 'string' &&
         candidate.iv.length === SECRET_IV_LENGTH &&
         BASE64URL_PATTERN.test(candidate.iv) &&
@@ -177,6 +199,9 @@ export async function decryptSecret(secretKey: string, encryptedSecret: Encrypte
     if (!isValidEncryptedSecret(encryptedSecret)) {
         throw new Error('Unsupported secret payload');
     }
+    if (encryptedSecret.version !== SECRET_VERSION_V1) {
+        throw new Error('This secret requires a password to decrypt');
+    }
 
     const keyBytes = decodeSecretKey(secretKey);
     const ciphertextBytes = decodeBase64Url(encryptedSecret.ciphertext);
@@ -188,4 +213,95 @@ export async function decryptSecret(secretKey: string, encryptedSecret: Encrypte
     );
 
     return textDecoder.decode(plaintext);
+}
+
+// Password-protected upload: inner AES-GCM(plaintext) under PBKDF2-derived key,
+// outer AES-GCM(iv_inner || inner) under the URL-fragment key. The server
+// learns neither plaintext nor password — only salt, iterations, and a hash
+// of a hash of the derived key (verifierHash). Compromising the database
+// alone yields nothing actionable; an attacker still has to brute-force the
+// password against PBKDF2 (600k iterations) AND survive the 5-attempt lockout.
+export async function prepareSecretUploadWithPassword(
+    secret: string,
+    password: string,
+    iterations: number = PASSWORD_PBKDF2_ITERATIONS,
+): Promise<PreparedSecretUploadWithPassword> {
+    const outerKeyBytes = crypto.getRandomValues(new Uint8Array(SECRET_KEY_BYTES));
+    const outerIvBytes = crypto.getRandomValues(new Uint8Array(SECRET_IV_BYTES));
+    const innerIvBytes = crypto.getRandomValues(new Uint8Array(SECRET_IV_BYTES));
+    const saltBytes = generatePasswordSalt();
+    const innerKeyBytes = await derivePasswordKey(password, saltBytes, iterations);
+
+    const innerKey = await importAesKey(innerKeyBytes, ['encrypt']);
+    const innerCiphertext = new Uint8Array(
+        await crypto.subtle.encrypt({ name: 'AES-GCM', iv: innerIvBytes }, innerKey, textEncoder.encode(secret)),
+    );
+    const bundle = concatBytes(innerIvBytes, innerCiphertext);
+
+    const outerKey = await importAesKey(outerKeyBytes, ['encrypt']);
+    const outerCiphertext = new Uint8Array(
+        await crypto.subtle.encrypt({ name: 'AES-GCM', iv: outerIvBytes }, outerKey, bundle),
+    );
+
+    const verifier = await computePasswordVerifier(innerKeyBytes);
+    const passwordVerifierHash = await hashPasswordVerifier(verifier);
+
+    return {
+        id: await deriveToken(SECRET_ID_LABEL, outerKeyBytes),
+        key: encodeBase64Url(outerKeyBytes),
+        accessToken: await deriveToken(SECRET_ACCESS_TOKEN_LABEL, outerKeyBytes),
+        encryptedSecret: {
+            version: SECRET_VERSION_V2,
+            iv: encodeBase64Url(outerIvBytes),
+            ciphertext: encodeBase64Url(outerCiphertext),
+        },
+        passwordParams: {
+            salt: encodePasswordSalt(saltBytes),
+            iterations,
+        },
+        passwordVerifierHash,
+    };
+}
+
+export async function decryptSecretWithPassword(
+    secretKey: string,
+    encryptedSecret: EncryptedSecret,
+    password: string,
+    passwordParams: PasswordParams,
+): Promise<string> {
+    if (!isValidEncryptedSecret(encryptedSecret)) {
+        throw new Error('Unsupported secret payload');
+    }
+    if (encryptedSecret.version !== SECRET_VERSION_V2) {
+        throw new Error('Secret payload is not password-protected');
+    }
+
+    const outerKeyBytes = decodeSecretKey(secretKey);
+    const outerKey = await importAesKey(outerKeyBytes, ['decrypt']);
+    const bundleBuffer = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: decodeIv(encryptedSecret.iv) },
+        outerKey,
+        decodeBase64Url(encryptedSecret.ciphertext),
+    );
+    const bundle = new Uint8Array(bundleBuffer);
+    if (bundle.length < SECRET_IV_BYTES + AES_GCM_TAG_BYTES) {
+        throw new Error('Malformed inner bundle');
+    }
+    const innerIvBytes = bundle.subarray(0, SECRET_IV_BYTES);
+    const innerCiphertext = bundle.subarray(SECRET_IV_BYTES);
+
+    const saltBytes = decodePasswordSalt(passwordParams.salt);
+    const innerKeyBytes = await derivePasswordKey(password, saltBytes, passwordParams.iterations);
+    const innerKey = await importAesKey(innerKeyBytes, ['decrypt']);
+    const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: innerIvBytes }, innerKey, innerCiphertext);
+
+    return textDecoder.decode(plaintext);
+}
+
+// Helper for the open path: derive the verifier client-side from password +
+// stored params so the API can hash it and pass to the constant-time compare.
+export async function deriveVerifierForOpen(password: string, passwordParams: PasswordParams): Promise<string> {
+    const saltBytes = decodePasswordSalt(passwordParams.salt);
+    const innerKeyBytes = await derivePasswordKey(password, saltBytes, passwordParams.iterations);
+    return computePasswordVerifier(innerKeyBytes);
 }

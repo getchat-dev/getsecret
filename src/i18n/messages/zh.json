@@ -48,7 +48,9 @@
         "f3b": "审计代码,运行你自己的实例,或固定到特定提交。",
         "encrypting": "加密中…",
         "charsLeft": "剩余 {count, number} 个字符",
-        "formatLabel": "格式"
+        "formatLabel": "格式",
+        "hidePassword": "隐藏密码",
+        "showPassword": "显示密码"
     },
     "generated": {
         "title": "链接已就绪。",
@@ -84,7 +86,15 @@
         "info": "通过显示,你确认现在已准备好阅读。我们将立即从数据库中删除加密的载荷 — 无法撤销。如果你怀疑此链接被截获,请关闭此标签页并请发送者发出新链接。",
         "validating": "正在验证安全链接…",
         "readsRemaining": "剩余 {count, number} 次阅读",
-        "unlimitedReads": "不限次数"
+        "unlimitedReads": "不限次数",
+        "passwordPromptSub": "此秘密已用密码加密。请输入密码以解锁并销毁。",
+        "passwordPromptLabel": "密码",
+        "passwordPromptPlaceholder": "输入密码以解锁",
+        "passwordPromptHint": "最少 {min, number} 个字符。输错五次后秘密将被销毁。",
+        "passwordWrong": "密码错误。输错五次后秘密将被销毁。",
+        "passwordPill": "需要密码",
+        "hidePassword": "隐藏密码",
+        "showPassword": "显示密码"
     },
     "revealed": {
         "title1": "在这里。",
@@ -149,6 +159,7 @@
         "secretExpired": "此秘密在被打开之前已过期。",
         "decryptFailed": "无法在此浏览器中解密秘密。",
         "createFailed": "创建秘密链接失败。",
-        "copyFailed": "无法复制到剪贴板。"
+        "copyFailed": "无法复制到剪贴板。",
+        "passwordTooShort": "密码至少需要 {min, number} 个字符。"
     }
 }

@@ -6,20 +6,23 @@ import { FormatSelect } from '@/components/secret/format-select';
 import { GeneratedLink } from '@/components/secret/generated-link';
 import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
 import { MaxViewsControl } from '@/components/secret/max-views-control';
+import { PasswordField } from '@/components/secret/password-field';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
 import { FileIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
+import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, SECRET_FORMAT_EXTENSIONS, type SecretFormat } from '@/lib/secret-formats';
 
 type Props = {
     enableMultiRead?: boolean;
+    enablePassword?: boolean;
 };
 
-export function CreateForm({ enableMultiRead = false }: Props) {
+export function CreateForm({ enableMultiRead = false, enablePassword = false }: Props) {
     const t = useTranslations('create');
     const tErrors = useTranslations('errors');
 
@@ -31,8 +34,12 @@ export function CreateForm({ enableMultiRead = false }: Props) {
     const [ttlUnit, setTtlUnit] = useState<TtlUnit>('days');
     const [format, setFormat] = useState<SecretFormat>(DEFAULT_SECRET_FORMAT);
     const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
+    const [password, setPassword] = useState('');
 
     const effectiveMaxViews = enableMultiRead ? maxViews : DEFAULT_MAX_VIEWS;
+    const effectivePassword = enablePassword && password.length > 0 ? password : '';
+    const passwordTouched = enablePassword && password.length > 0;
+    const passwordValid = !passwordTouched || isValidPassword(password);
 
     const remaining = MAX_SECRET_LENGTH - secret.length;
     const activeStep = link ? 2 : 1;
@@ -41,6 +48,11 @@ export function CreateForm({ enableMultiRead = false }: Props) {
         event.preventDefault();
         if (!secret.trim()) return;
         setError('');
+
+        if (passwordTouched && !passwordValid) {
+            setError(tErrors('passwordTooShort', { min: MIN_PASSWORD_LENGTH }));
+            return;
+        }
 
         const expiresInSeconds = ttlValueToSeconds(ttlValue, ttlUnit);
         if (expiresInSeconds === null) {
@@ -54,6 +66,7 @@ export function CreateForm({ enableMultiRead = false }: Props) {
                 expiresInSeconds,
                 format,
                 maxViews: effectiveMaxViews,
+                ...(effectivePassword.length > 0 ? { password: effectivePassword } : {}),
             });
             setLink(next);
         } catch (err) {
@@ -66,6 +79,7 @@ export function CreateForm({ enableMultiRead = false }: Props) {
     function shareAnother() {
         setSecret('');
         setLink('');
+        setPassword('');
         setError('');
     }
 
@@ -77,7 +91,7 @@ export function CreateForm({ enableMultiRead = false }: Props) {
                     link={link}
                     expiresIn={{ value: ttlValue, unit: ttlUnit }}
                     maxReads={effectiveMaxViews}
-                    hasPassphrase={false}
+                    hasPassphrase={effectivePassword.length > 0}
                     onShareAnother={shareAnother}
                 />
             </>
@@ -111,6 +125,7 @@ export function CreateForm({ enableMultiRead = false }: Props) {
                         }}
                     />
                     {enableMultiRead ? <MaxViewsControl value={maxViews} onChange={setMaxViews} /> : null}
+                    {enablePassword ? <PasswordField value={password} onChange={setPassword} /> : null}
                 </div>
                 <footer className="card-footer">
                     <button

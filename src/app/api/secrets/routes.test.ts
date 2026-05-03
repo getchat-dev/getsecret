@@ -2,7 +2,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { POST as consumeSecret } from '@/app/api/secrets/[id]/route';
 import { POST as createSecret } from '@/app/api/secrets/route';
 import { MAX_EXPIRATION_SECONDS } from '@/lib/expiration';
-import { decryptSecret, type EncryptedSecret, prepareSecretUpload } from '@/lib/secret-crypto';
+import {
+    decryptSecret,
+    decryptSecretWithPassword,
+    deriveVerifierForOpen,
+    type EncryptedSecret,
+    prepareSecretUpload,
+    prepareSecretUploadWithPassword,
+} from '@/lib/secret-crypto';
 import { SECRET_TTL_SECONDS } from '@/lib/secret-store';
 import { getValkey } from '@/lib/valkey-client';
 
@@ -376,6 +383,165 @@ describe('secret API routes', () => {
                     encryptedSecret: prepared.encryptedSecret,
                     accessToken: prepared.accessToken,
                     maxViews: 50,
+                }),
+            }),
+        );
+        expect(response.status).toBe(400);
+    });
+
+    it('round-trips a password-protected secret end-to-end', async () => {
+        const secret = 'eyes-only · double-encrypted';
+        const password = 'correct-horse-battery';
+        const prepared = await prepareSecretUploadWithPassword(secret, password, 100_000);
+
+        const createResponse = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    'x-forwarded-for': '127.0.0.1',
+                },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    passwordParams: prepared.passwordParams,
+                    passwordVerifierHash: prepared.passwordVerifierHash,
+                }),
+            }),
+        );
+        expect(createResponse.status).toBe(201);
+
+        const verifier = await deriveVerifierForOpen(password, prepared.passwordParams);
+        const consume = await consumeSecret(
+            new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                body: JSON.stringify({ accessToken: prepared.accessToken, passwordVerifier: verifier }),
+            }),
+            { params: Promise.resolve({ id: prepared.id }) },
+        );
+        expect(consume.status).toBe(200);
+        const consumeData = (await consume.json()) as { encryptedSecret: EncryptedSecret };
+        const plaintext = await decryptSecretWithPassword(
+            prepared.key,
+            consumeData.encryptedSecret,
+            password,
+            prepared.passwordParams,
+        );
+        expect(plaintext).toBe(secret);
+    });
+
+    it('rejects consume of a password-protected secret without the verifier', async () => {
+        const password = 'correct-horse-battery';
+        const prepared = await prepareSecretUploadWithPassword('payload', password, 100_000);
+        await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    passwordParams: prepared.passwordParams,
+                    passwordVerifierHash: prepared.passwordVerifierHash,
+                }),
+            }),
+        );
+
+        const consume = await consumeSecret(
+            new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                body: JSON.stringify({ accessToken: prepared.accessToken }),
+            }),
+            { params: Promise.resolve({ id: prepared.id }) },
+        );
+        expect(consume.status).toBe(404);
+    });
+
+    it('locks out and destroys a password-protected secret after five wrong verifiers', async () => {
+        const prepared = await prepareSecretUploadWithPassword('payload', 'right-pw', 100_000);
+        await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    passwordParams: prepared.passwordParams,
+                    passwordVerifierHash: prepared.passwordVerifierHash,
+                }),
+            }),
+        );
+
+        const wrongVerifier = await deriveVerifierForOpen('wrong-pw', prepared.passwordParams);
+        for (let i = 0; i < 5; i += 1) {
+            const r = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        accessToken: prepared.accessToken,
+                        passwordVerifier: wrongVerifier,
+                    }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(r.status).toBe(404);
+        }
+
+        const correctVerifier = await deriveVerifierForOpen('right-pw', prepared.passwordParams);
+        const final = await consumeSecret(
+            new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                body: JSON.stringify({
+                    accessToken: prepared.accessToken,
+                    passwordVerifier: correctVerifier,
+                }),
+            }),
+            { params: Promise.resolve({ id: prepared.id }) },
+        );
+        expect(final.status).toBe(404);
+    });
+
+    it('rejects password-protected create when the feature flag is off', async () => {
+        const original = process.env.PASSWORD_PROTECTION_ENABLED;
+        process.env.PASSWORD_PROTECTION_ENABLED = 'false';
+        try {
+            const prepared = await prepareSecretUploadWithPassword('payload', 'a-strong-pw', 100_000);
+            const response = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        passwordParams: prepared.passwordParams,
+                        passwordVerifierHash: prepared.passwordVerifierHash,
+                    }),
+                }),
+            );
+            expect(response.status).toBe(400);
+        } finally {
+            process.env.PASSWORD_PROTECTION_ENABLED = original;
+        }
+    });
+
+    it('rejects a v2 envelope without password params', async () => {
+        const prepared = await prepareSecretUploadWithPassword('payload', 'a-strong-pw', 100_000);
+        const response = await createSecret(
+            new Request('http://localhost/api/secrets', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                body: JSON.stringify({
+                    id: prepared.id,
+                    encryptedSecret: prepared.encryptedSecret,
+                    accessToken: prepared.accessToken,
+                    // intentionally omitted: passwordParams, passwordVerifierHash
                 }),
             }),
         );

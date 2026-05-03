@@ -48,7 +48,9 @@
         "f3b": "Verifica il codice, esegui la tua istanza o blocca un commit specifico.",
         "encrypting": "Crittografia in corso…",
         "charsLeft": "{count, number} caratteri rimanenti",
-        "formatLabel": "Formato"
+        "formatLabel": "Formato",
+        "hidePassword": "Nascondi passphrase",
+        "showPassword": "Mostra passphrase"
     },
     "generated": {
         "title": "Il tuo link è pronto.",
@@ -84,7 +86,15 @@
         "info": "Rivelando, confermi di essere pronto a leggerlo ora. Cancelleremo immediatamente il payload cifrato — non c'è ritorno. Se sospetti un'intercettazione, chiudi questa scheda e chiedi al mittente un nuovo link.",
         "validating": "Verifica del link sicuro…",
         "readsRemaining": "{count, plural, one {# lettura rimanente} other {# letture rimanenti}}",
-        "unlimitedReads": "letture illimitate"
+        "unlimitedReads": "letture illimitate",
+        "passwordPromptSub": "Questo segreto è protetto da passphrase. Inseriscila per sbloccare e bruciare.",
+        "passwordPromptLabel": "Passphrase",
+        "passwordPromptPlaceholder": "Inserisci la passphrase per sbloccare",
+        "passwordPromptHint": "Almeno {min, number} caratteri. Dopo cinque tentativi falliti il segreto viene distrutto.",
+        "passwordWrong": "Passphrase errata. Dopo cinque errori il segreto viene distrutto.",
+        "passwordPill": "passphrase richiesta",
+        "hidePassword": "Nascondi passphrase",
+        "showPassword": "Mostra passphrase"
     },
     "revealed": {
         "title1": "Eccolo.",
@@ -149,6 +159,7 @@
         "secretExpired": "Questo segreto è scaduto prima di essere aperto.",
         "decryptFailed": "Impossibile decifrare il segreto in questo browser.",
         "createFailed": "Creazione del link del segreto fallita.",
-        "copyFailed": "Impossibile copiare negli appunti."
+        "copyFailed": "Impossibile copiare negli appunti.",
+        "passwordTooShort": "La passphrase deve avere almeno {min, number} caratteri."
     }
 }

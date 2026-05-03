@@ -48,7 +48,9 @@
         "f3b": "Code prüfen, eigene Instanz betreiben oder auf einen Commit fixieren.",
         "encrypting": "Verschlüssle…",
         "charsLeft": "{count, number} Zeichen übrig",
-        "formatLabel": "Format"
+        "formatLabel": "Format",
+        "hidePassword": "Passwort verbergen",
+        "showPassword": "Passwort anzeigen"
     },
     "generated": {
         "title": "Dein Link ist bereit.",
@@ -84,7 +86,15 @@
         "info": "Mit dem Enthüllen bestätigst du, dass du jetzt bereit bist. Wir löschen die verschlüsselten Daten sofort aus der DB — kein Rückgängig. Bei Verdacht auf Abfangen, schließe den Tab und bitte um einen neuen Link.",
         "validating": "Sicheren Link prüfen…",
         "readsRemaining": "{count, plural, one {# Aufruf übrig} other {# Aufrufe übrig}}",
-        "unlimitedReads": "unbegrenzte Aufrufe"
+        "unlimitedReads": "unbegrenzte Aufrufe",
+        "passwordPromptSub": "Dieses Geheimnis ist mit einem Passwort gesperrt. Gib es ein, um zu entsperren und zu verbrennen.",
+        "passwordPromptLabel": "Passwort",
+        "passwordPromptPlaceholder": "Passwort zum Entsperren eingeben",
+        "passwordPromptHint": "Mindestens {min, number} Zeichen. Nach fünf Fehlversuchen wird das Geheimnis zerstört.",
+        "passwordWrong": "Falsches Passwort. Nach fünf Fehlversuchen wird das Geheimnis zerstört.",
+        "passwordPill": "Passwort erforderlich",
+        "hidePassword": "Passwort verbergen",
+        "showPassword": "Passwort anzeigen"
     },
     "revealed": {
         "title1": "Hier ist es.",
@@ -149,6 +159,7 @@
         "secretExpired": "Dieses Geheimnis ist abgelaufen, bevor es geöffnet wurde.",
         "decryptFailed": "Geheimnis konnte in diesem Browser nicht entschlüsselt werden.",
         "createFailed": "Erstellen des Geheim-Links fehlgeschlagen.",
-        "copyFailed": "Konnte nicht in die Zwischenablage kopieren."
+        "copyFailed": "Konnte nicht in die Zwischenablage kopieren.",
+        "passwordTooShort": "Das Passwort muss mindestens {min, number} Zeichen lang sein."
     }
 }

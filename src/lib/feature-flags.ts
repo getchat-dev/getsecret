@@ -6,3 +6,7 @@
 export function isMultiReadEnabled(): boolean {
     return process.env.BURNOTES_MULTIREAD_ENABLED === 'true';
 }
+
+export function isPasswordEnabled(): boolean {
+    return process.env.PASSWORD_PROTECTION_ENABLED === 'true';
+}
