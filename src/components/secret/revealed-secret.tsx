@@ -15,6 +15,7 @@ type Props = {
 
 export function RevealedSecret({ content, format, viewsRemaining }: Props) {
     const t = useTranslations('revealed');
+    const tErrors = useTranslations('errors');
     const router = useRouter();
     const [hidden, setHidden] = useState(false);
     const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export function RevealedSecret({ content, format, viewsRemaining }: Props) {
                         copyLabel={t('copyClip')}
                         copiedLabel={t('copyClip')}
                         successMessage={t('copiedToast')}
-                        errorMessage={t('copyClip')}
+                        errorMessage={tErrors('copyFailed')}
                     />
                 </span>
             </header>

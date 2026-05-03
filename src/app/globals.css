@@ -1587,15 +1587,7 @@ h1.display .accent-word {
    TOAST
 ============================================================ */
 
-.toast-anchor {
-    position: relative;
-    display: inline-flex;
-}
-
 .toast {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 0;
     background: var(--bg-3);
     border: 1px solid var(--border-default);
     color: var(--fg-default);

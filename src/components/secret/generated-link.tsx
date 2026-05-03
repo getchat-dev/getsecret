@@ -1,8 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { useClipboardCopy } from '@/components/copy-button';
+import { useRef, useState } from 'react';
+import { ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { QrModal } from '@/components/secret/qr-modal';
 import {
     CheckIcon,
@@ -39,9 +39,10 @@ function splitUrl(url: string): { scheme: string; host: string; path: string; fr
 
 export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShareAnother }: Props) {
     const t = useTranslations('generated');
-    const tCreate = useTranslations('create');
+    const tErrors = useTranslations('errors');
     const tUnits = useTranslations('create.units');
-    const { copyStatus, copyText } = useClipboardCopy();
+    const { copyStatus, toast, copyText } = useClipboardCopy();
+    const copyButtonRef = useRef<HTMLButtonElement | null>(null);
     const [qrOpen, setQrOpen] = useState(false);
 
     const parts = splitUrl(link);
@@ -61,12 +62,13 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                         <span className="frag">{parts.fragment}</span>
                     </div>
                     <button
+                        ref={copyButtonRef}
                         type="button"
                         className={`copy-btn ${isCopied ? 'copied' : ''}`.trim()}
                         onClick={() =>
                             void copyText(link, {
                                 successMessage: t('copied'),
-                                errorMessage: tCreate('formatLabel'),
+                                errorMessage: tErrors('copyFailed'),
                             })
                         }
                         aria-label={isCopied ? t('copied') : t('copy')}
@@ -75,6 +77,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                         <span>{isCopied ? t('copied') : t('copy')}</span>
                     </button>
                 </div>
+                <ToastMessage toast={toast?.kind === 'error' ? toast : null} anchorRef={copyButtonRef} />
                 <div className="banner banner-warn">
                     <EyeIcon size={16} className="icon" />
                     <span>
