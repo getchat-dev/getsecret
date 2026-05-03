@@ -689,6 +689,19 @@ h1.display .accent-word {
     color: var(--fg-faint);
 }
 
+.textarea-wrap.auto-grow textarea {
+    resize: none;
+    overflow: hidden;
+}
+
+/* Auto-grow on phone-shaped touch devices in portrait: cap to viewport so the page can still scroll. */
+@media (hover: none) and (pointer: coarse) and (orientation: portrait) and (max-width: 768px) {
+    .textarea-wrap.auto-grow textarea {
+        max-height: calc(100dvh - 240px);
+        overflow: auto;
+    }
+}
+
 .textarea-wrap textarea.textarea-transparent {
     color: transparent;
     caret-color: var(--fg-default);
@@ -1093,7 +1106,7 @@ h1.display .accent-word {
 .format-select-menu {
     position: absolute;
     top: calc(100% + 6px);
-    left: 0;
+    right: 0;
     min-width: 240px;
     max-height: 320px;
     overflow-y: auto;
@@ -2177,5 +2190,21 @@ html[data-theme="light"] .qr-modal::backdrop {
     .stepper button {
         width: 26px;
         height: 30px;
+    }
+}
+
+/* Prevent iOS Safari from auto-zooming on focus: any input under 16px triggers it. */
+@media (hover: none) and (pointer: coarse) {
+    .input,
+    .input.mono,
+    .password-input,
+    .textarea-wrap textarea,
+    .textarea-overlay,
+    .stepper input {
+        font-size: 16px;
+    }
+
+    .stepper input {
+        width: 48px;
     }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { SECRET_FORMAT_PLACEHOLDERS, type SecretFormat } from '@/lib/secret-formats';
 
@@ -15,12 +15,41 @@ export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const overlayRef = useRef<HTMLPreElement | null>(null);
     const [highlightedHtml, setHighlightedHtml] = useState('');
+    const [autoGrow, setAutoGrow] = useState(false);
 
     useEffect(() => {
         if (autoFocus) {
             textareaRef.current?.focus();
         }
     }, [autoFocus]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) return;
+        // Desktop with mouse, OR phone-shaped touch device in portrait orientation.
+        const mql = window.matchMedia(
+            '(hover: hover) and (pointer: fine), (hover: none) and (pointer: coarse) and (orientation: portrait) and (max-width: 768px)',
+        );
+        const update = () => setAutoGrow(mql.matches);
+        update();
+        mql.addEventListener('change', update);
+        return () => mql.removeEventListener('change', update);
+    }, []);
+
+    useLayoutEffect(() => {
+        const ta = textareaRef.current;
+        if (!ta) return;
+        if (!autoGrow) {
+            ta.style.height = '';
+            return;
+        }
+        const resize = () => {
+            ta.style.height = 'auto';
+            ta.style.height = `${ta.scrollHeight}px`;
+        };
+        resize();
+        window.addEventListener('resize', resize);
+        return () => window.removeEventListener('resize', resize);
+    }, [autoGrow, value, format, highlightedHtml]);
 
     useEffect(() => {
         if (format === 'plain' || value.length === 0) {
@@ -54,7 +83,7 @@ export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
     const showOverlay = format !== 'plain' && highlightedHtml.length > 0;
 
     return (
-        <div className="textarea-wrap">
+        <div className={`textarea-wrap${autoGrow ? ' auto-grow' : ''}`}>
             <textarea
                 ref={textareaRef}
                 className={showOverlay ? 'textarea-transparent' : undefined}
