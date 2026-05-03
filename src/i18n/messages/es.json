@@ -5,8 +5,7 @@
         "docs": "Documentación",
         "security": "Seguridad",
         "api": "API",
-        "source": "Código fuente",
-        "status": "Todos los sistemas operativos"
+        "source": "Código fuente"
     },
     "eyebrow": {
         "create": "Cifrado de extremo a extremo · zero-knowledge",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · código abierto bajo MIT",
         "privacy": "Privacidad",
         "terms": "Términos",
-        "status": "Estado"
+        "statusOk": "Todos los sistemas operativos"
     },
     "tabsLegend": "Ciclo de vida de tu secreto",
     "errors": {

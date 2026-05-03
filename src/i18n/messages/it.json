@@ -5,8 +5,7 @@
         "docs": "Documenti",
         "security": "Sicurezza",
         "api": "API",
-        "source": "Sorgente",
-        "status": "Tutti i sistemi operativi"
+        "source": "Sorgente"
     },
     "eyebrow": {
         "create": "Cifratura end-to-end · zero-knowledge",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · open source MIT",
         "privacy": "Privacy",
         "terms": "Termini",
-        "status": "Stato"
+        "statusOk": "Tutti i sistemi operativi"
     },
     "tabsLegend": "Ciclo di vita del tuo segreto",
     "errors": {

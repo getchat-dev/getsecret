@@ -36,10 +36,6 @@ export function SiteHeader() {
                         <GithubIcon size={14} />
                         <span>{t('source')}</span>
                     </a>
-                    <span className="nav-status" role="status">
-                        <span className="status-dot" aria-hidden="true" />
-                        {t('status')}
-                    </span>
                     <LangPicker />
                     <ThemeSwitch />
                 </nav>

@@ -4,8 +4,6 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import packageJson from '../../../package.json';
 
-const SOURCE_URL = 'https://github.com/Markuper-tech/burnotes';
-
 export function SiteFooter() {
     const t = useTranslations('foot');
 
@@ -18,10 +16,11 @@ export function SiteFooter() {
             <nav className="foot-links" aria-label="Footer">
                 <Link href="/security#privacy">{t('privacy')}</Link>
                 <Link href="/security#terms">{t('terms')}</Link>
-                <a href={SOURCE_URL} target="_blank" rel="noreferrer">
-                    {t('status')}
-                </a>
             </nav>
+            <span className="foot-status" role="status">
+                <span className="status-dot" aria-hidden="true" />
+                {t('statusOk')}
+            </span>
         </footer>
     );
 }

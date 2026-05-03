@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { SECRET_FORMAT_PLACEHOLDERS, type SecretFormat } from '@/lib/secret-formats';
@@ -12,10 +13,12 @@ type Props = {
 };
 
 export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
+    const t = useTranslations('create');
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const overlayRef = useRef<HTMLPreElement | null>(null);
     const [highlightedHtml, setHighlightedHtml] = useState('');
     const [autoGrow, setAutoGrow] = useState(false);
+    const remaining = MAX_SECRET_LENGTH - value.length;
 
     useEffect(() => {
         if (autoFocus) {
@@ -106,6 +109,9 @@ export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
                     />
                 </pre>
             ) : null}
+            <span className="textarea-meta">
+                <span className="count">{t('charsLeft', { count: remaining })}</span>
+            </span>
         </div>
     );
 }

@@ -5,8 +5,7 @@
         "docs": "Docs",
         "security": "Security",
         "api": "API",
-        "source": "Source",
-        "status": "All systems operational"
+        "source": "Source"
     },
     "eyebrow": {
         "create": "End-to-end encrypted · zero-knowledge",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · open source under MIT",
         "privacy": "Privacy",
         "terms": "Terms",
-        "status": "Status"
+        "statusOk": "All systems operational"
     },
     "tabsLegend": "Lifecycle of your secret",
     "errors": {

@@ -5,8 +5,7 @@
         "docs": "Документы",
         "security": "Безопасность",
         "api": "API",
-        "source": "Исходники",
-        "status": "Все системы работают"
+        "source": "Исходники"
     },
     "eyebrow": {
         "create": "Сквозное шифрование · zero-knowledge",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · open source под MIT",
         "privacy": "Приватность",
         "terms": "Условия",
-        "status": "Статус"
+        "statusOk": "Все системы работают"
     },
     "tabsLegend": "Жизненный цикл вашего секрета",
     "errors": {

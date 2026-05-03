@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { FormatSelect } from '@/components/secret/format-select';
 import { GeneratedLink } from '@/components/secret/generated-link';
 import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
@@ -14,8 +14,9 @@ import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
-import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, SECRET_FORMAT_EXTENSIONS, type SecretFormat } from '@/lib/secret-formats';
+
+const DRAFT_STORAGE_KEY = 'burnotes:create:draft';
 
 type Props = {
     enableMultiRead?: boolean;
@@ -41,8 +42,20 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
     const passwordTouched = enablePassword && password.length > 0;
     const passwordValid = !passwordTouched || isValidPassword(password);
 
-    const remaining = MAX_SECRET_LENGTH - secret.length;
     const activeStep = link ? 2 : 1;
+
+    useEffect(() => {
+        const draft = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
+        if (draft) setSecret(draft);
+    }, []);
+
+    useEffect(() => {
+        if (secret) {
+            window.sessionStorage.setItem(DRAFT_STORAGE_KEY, secret);
+        } else {
+            window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+        }
+    }, [secret]);
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -68,6 +81,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
                 maxViews: effectiveMaxViews,
                 ...(effectivePassword.length > 0 ? { password: effectivePassword } : {}),
             });
+            window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
             setLink(next);
         } catch (err) {
             setError(err instanceof Error ? err.message : tErrors('createFailed'));
@@ -113,21 +127,25 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
                 </header>
                 <div className="card-body">
                     <SecretTextarea value={secret} onChange={setSecret} format={format} autoFocus />
-                    <div className="meta-row">
-                        <span className="hint">{t('charsLeft', { count: remaining })}</span>
+                    <div className="field-pair">
+                        <TtlControl
+                            value={ttlValue}
+                            unit={ttlUnit}
+                            onChange={({ value, unit }) => {
+                                setTtlValue(value);
+                                setTtlUnit(unit);
+                            }}
+                        />
+                        {enableMultiRead ? <MaxViewsControl value={maxViews} onChange={setMaxViews} /> : null}
                     </div>
-                    <TtlControl
-                        value={ttlValue}
-                        unit={ttlUnit}
-                        onChange={({ value, unit }) => {
-                            setTtlValue(value);
-                            setTtlUnit(unit);
-                        }}
-                    />
-                    {enableMultiRead ? <MaxViewsControl value={maxViews} onChange={setMaxViews} /> : null}
                     {enablePassword ? <PasswordField value={password} onChange={setPassword} /> : null}
                 </div>
                 <footer className="card-footer">
+                    {secret.length > 0 ? (
+                        <button type="button" className="btn btn-ghost" onClick={() => setSecret('')}>
+                            {t('clear')}
+                        </button>
+                    ) : null}
                     <button
                         type="submit"
                         className="btn btn-primary"
@@ -135,9 +153,6 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
                     >
                         <ZapIcon size={14} />
                         {isSubmitting ? t('encrypting') : t('submit')}
-                    </button>
-                    <button type="button" className="btn btn-ghost" onClick={() => setSecret('')}>
-                        {t('clear')}
                     </button>
                 </footer>
                 {error ? <p className="error">{error}</p> : null}

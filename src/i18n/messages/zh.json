@@ -5,8 +5,7 @@
         "docs": "文档",
         "security": "安全",
         "api": "API",
-        "source": "源代码",
-        "status": "所有系统正常运行"
+        "source": "源代码"
     },
     "eyebrow": {
         "create": "端到端加密 · 零知识",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · MIT 开源",
         "privacy": "隐私",
         "terms": "条款",
-        "status": "状态"
+        "statusOk": "所有系统正常运行"
     },
     "tabsLegend": "你的秘密的生命周期",
     "errors": {

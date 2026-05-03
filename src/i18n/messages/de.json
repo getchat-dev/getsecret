@@ -5,8 +5,7 @@
         "docs": "Doku",
         "security": "Sicherheit",
         "api": "API",
-        "source": "Quellcode",
-        "status": "Alle Systeme funktionsbereit"
+        "source": "Quellcode"
     },
     "eyebrow": {
         "create": "Ende-zu-Ende verschlüsselt · Zero-Knowledge",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · Open Source MIT",
         "privacy": "Datenschutz",
         "terms": "AGB",
-        "status": "Status"
+        "statusOk": "Alle Systeme funktionsbereit"
     },
     "tabsLegend": "Lebenszyklus deines Geheimnisses",
     "errors": {

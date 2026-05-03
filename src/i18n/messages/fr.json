@@ -5,8 +5,7 @@
         "docs": "Docs",
         "security": "Sécurité",
         "api": "API",
-        "source": "Source",
-        "status": "Tous les systèmes opérationnels"
+        "source": "Source"
     },
     "eyebrow": {
         "create": "Chiffré de bout en bout · zero-knowledge",
@@ -156,7 +155,7 @@
         "version": "v0.4.2 · open source MIT",
         "privacy": "Confidentialité",
         "terms": "Conditions",
-        "status": "Statut"
+        "statusOk": "Tous les systèmes opérationnels"
     },
     "tabsLegend": "Cycle de vie de votre secret",
     "errors": {
