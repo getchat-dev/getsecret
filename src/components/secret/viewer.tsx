@@ -25,11 +25,18 @@ type LinkState =
     | { status: 'ready'; secretKey: string; accessToken: string }
     | { status: 'error' };
 
+// Error reasons distinguish *why* reveal failed so the lock screen can show
+// the right message and we don't lie about a 429/5xx being "wrong password".
+// Transient reasons (rate-limited, service-unavailable, network) keep the
+// user on the lock screen and let them retry; 'consumed' goes to BurnedScreen
+// (terminal); 'wrong-password' stays on the lock screen with an inline error.
+type ErrorReason = 'consumed' | 'wrong-password' | 'rate-limited' | 'service-unavailable' | 'network';
+
 type SecretState =
     | { status: 'idle' }
     | { status: 'loading' }
     | { status: 'revealed'; content: string; format: SecretFormat; viewsRemaining: number | null }
-    | { status: 'error'; reason: 'consumed' | 'wrong-password' };
+    | { status: 'error'; reason: ErrorReason };
 
 type Props = {
     id: string;
@@ -100,43 +107,83 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
             const passwordVerifier =
                 passwordRequired && passwordParams ? await deriveVerifierForOpen(password, passwordParams) : null;
 
-            const response = await fetch(`/api/secrets/${encodeURIComponent(id)}`, {
-                method: 'POST',
-                cache: 'no-store',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    accessToken: linkState.accessToken,
-                    ...(passwordVerifier ? { passwordVerifier } : {}),
-                }),
-            });
+            let response: Response;
+            try {
+                response = await fetch(`/api/secrets/${encodeURIComponent(id)}`, {
+                    method: 'POST',
+                    cache: 'no-store',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        accessToken: linkState.accessToken,
+                        ...(passwordVerifier ? { passwordVerifier } : {}),
+                    }),
+                });
+            } catch {
+                // fetch only throws on transport-level failure (DNS, offline, abort, CORS) —
+                // never on HTTP error status. Treat as transient.
+                setSecretState({ status: 'error', reason: 'network' });
+                return;
+            }
+
+            if (response.status === 429) {
+                setSecretState({ status: 'error', reason: 'rate-limited' });
+                return;
+            }
+            if (response.status >= 500) {
+                setSecretState({ status: 'error', reason: 'service-unavailable' });
+                return;
+            }
+            if (!response.ok) {
+                // 4xx: most commonly 404 from the Lua mismatch path. For a
+                // password-protected secret we know our access token is
+                // correct (it's derived from the URL fragment we just
+                // validated against the id), so a 404 here almost always
+                // means wrong password — or that the secret was already
+                // burned by lockout. Both cases lead to the same UX outcome:
+                // try a different password, or the link is dead.
+                setSecretState({ status: 'error', reason: passwordRequired ? 'wrong-password' : 'consumed' });
+                return;
+            }
+
             const data = (await response.json()) as {
                 encryptedSecret?: EncryptedSecret;
                 format?: unknown;
                 viewsRemaining?: unknown;
             };
-            if (!response.ok || !data.encryptedSecret) {
+            if (!data.encryptedSecret) {
                 setSecretState({ status: 'error', reason: passwordRequired ? 'wrong-password' : 'consumed' });
                 return;
             }
-            const content =
-                data.encryptedSecret.version === SECRET_VERSION_V2 && passwordParams
-                    ? await decryptSecretWithPassword(
-                          linkState.secretKey,
-                          data.encryptedSecret,
-                          password,
-                          passwordParams,
-                      )
-                    : await decryptSecret(linkState.secretKey, data.encryptedSecret);
-            const format: SecretFormat = isSecretFormat(data.format) ? data.format : DEFAULT_SECRET_FORMAT;
-            const viewsRemaining: number | null =
-                typeof data.viewsRemaining === 'number' &&
-                Number.isInteger(data.viewsRemaining) &&
-                data.viewsRemaining >= 0
-                    ? data.viewsRemaining
-                    : null;
-            setSecretState({ status: 'revealed', content, format, viewsRemaining });
-        } catch {
-            setSecretState({ status: 'error', reason: passwordRequired ? 'wrong-password' : 'consumed' });
+
+            try {
+                const content =
+                    data.encryptedSecret.version === SECRET_VERSION_V2 && passwordParams
+                        ? await decryptSecretWithPassword(
+                              linkState.secretKey,
+                              data.encryptedSecret,
+                              password,
+                              passwordParams,
+                          )
+                        : await decryptSecret(linkState.secretKey, data.encryptedSecret);
+                const format: SecretFormat = isSecretFormat(data.format) ? data.format : DEFAULT_SECRET_FORMAT;
+                const viewsRemaining: number | null =
+                    typeof data.viewsRemaining === 'number' &&
+                    Number.isInteger(data.viewsRemaining) &&
+                    data.viewsRemaining >= 0
+                        ? data.viewsRemaining
+                        : null;
+                setSecretState({ status: 'revealed', content, format, viewsRemaining });
+            } catch {
+                // Local decrypt threw. Inner AES-GCM auth fail with a
+                // password-required secret means the verifier matched but
+                // K_inner didn't — in our crypto model that shouldn't
+                // happen, so the only realistic interpretation a user can
+                // act on is "wrong password". Without password we'd have
+                // already verified outer-key consistency via deriveSecretId,
+                // so this branch is essentially unreachable; we degrade to
+                // 'consumed' (terminal) since there is no retry strategy.
+                setSecretState({ status: 'error', reason: passwordRequired ? 'wrong-password' : 'consumed' });
+            }
         } finally {
             requestedRef.current = false;
         }
@@ -154,7 +201,10 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
         return <BurnedScreen reason={isExpired ? 'expired' : 'not-found'} />;
     }
 
-    if (secretState.status === 'error' && secretState.reason === 'consumed' && !passwordRequired) {
+    // Only `consumed` is a terminal failure. wrong-password / rate-limited /
+    // service-unavailable / network all stay on the lock screen so the user
+    // can retry once the underlying condition changes.
+    if (secretState.status === 'error' && secretState.reason === 'consumed') {
         return <BurnedScreen reason="consumed" />;
     }
 
@@ -184,7 +234,10 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
         );
     }
 
-    const wrongPassword = secretState.status === 'error' && secretState.reason === 'wrong-password';
+    // 'consumed' was already routed to <BurnedScreen /> above; the remaining
+    // reasons are exactly what LockScreen accepts.
+    const errorReason: 'wrong-password' | 'rate-limited' | 'service-unavailable' | 'network' | null =
+        secretState.status === 'error' && secretState.reason !== 'consumed' ? secretState.reason : null;
 
     return (
         <>
@@ -197,10 +250,13 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
                 readsRemaining={readsRemainingBeforeOpen}
                 passwordRequired={passwordRequired}
                 password={password}
-                passwordError={wrongPassword}
+                errorReason={errorReason}
                 onPasswordChange={(value) => {
                     setPassword(value);
-                    if (wrongPassword) setSecretState({ status: 'idle' });
+                    // Clear an active wrong-password error as soon as the
+                    // user starts typing again. Transient errors clear on
+                    // the next reveal attempt.
+                    if (errorReason === 'wrong-password') setSecretState({ status: 'idle' });
                 }}
                 onReveal={() => void revealSecret()}
             />

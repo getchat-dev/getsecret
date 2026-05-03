@@ -9,7 +9,10 @@ export async function SiteFooter() {
 
     return (
         <footer className="foot">
-            <span>v{packageJson.version}{packageJson?.license ? ` · open source under ${packageJson.license} license` : ''}</span>
+            <span>
+                v{packageJson.version}
+                {packageJson?.license ? ` · open source under ${packageJson.license} license` : ''}
+            </span>
             <nav className="foot-links" aria-label="Footer">
                 <Link href="/security#privacy">{t('privacy')}</Link>
                 <Link href="/security#terms">{t('terms')}</Link>

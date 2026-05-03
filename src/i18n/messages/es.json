@@ -94,7 +94,10 @@
         "passwordWrong": "Contraseña incorrecta. Tras cinco fallos el secreto se destruye.",
         "passwordPill": "contraseña requerida",
         "hidePassword": "Ocultar contraseña",
-        "showPassword": "Mostrar contraseña"
+        "showPassword": "Mostrar contraseña",
+        "errorRateLimited": "Demasiados intentos desde esta red. Espera un minuto e inténtalo de nuevo.",
+        "errorServiceUnavailable": "El servidor no está disponible temporalmente. Inténtalo en un momento.",
+        "errorNetwork": "No se pudo conectar al servidor. Verifica tu conexión e inténtalo de nuevo."
     },
     "revealed": {
         "title1": "Aquí está.",

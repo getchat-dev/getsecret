@@ -94,7 +94,10 @@
         "passwordWrong": "Wrong passphrase. The secret is destroyed after five misses.",
         "passwordPill": "passphrase required",
         "hidePassword": "Hide passphrase",
-        "showPassword": "Show passphrase"
+        "showPassword": "Show passphrase",
+        "errorRateLimited": "Too many attempts from this network. Wait a minute and try again.",
+        "errorServiceUnavailable": "Server is temporarily unavailable. Try again in a moment.",
+        "errorNetwork": "Could not reach the server. Check your connection and try again."
     },
     "revealed": {
         "title1": "Here it is.",

@@ -32,6 +32,8 @@ function formatRemainingTime(remainingMs: number): string {
     return `${hh}:${mm}:${ss}`;
 }
 
+type LockScreenErrorReason = 'wrong-password' | 'rate-limited' | 'service-unavailable' | 'network';
+
 type Props = {
     expiresAtUtc: string | null;
     isLoading: boolean;
@@ -40,7 +42,7 @@ type Props = {
     readsRemaining: number | null;
     passwordRequired: boolean;
     password: string;
-    passwordError: boolean;
+    errorReason: LockScreenErrorReason | null;
     onPasswordChange: (next: string) => void;
     onReveal: () => void;
 };
@@ -53,7 +55,7 @@ export function LockScreen({
     readsRemaining,
     passwordRequired,
     password,
-    passwordError,
+    errorReason,
     onPasswordChange,
     onReveal,
 }: Props) {
@@ -68,6 +70,11 @@ export function LockScreen({
     const buttonLabel = isLoading ? t('decrypting') : t('revealBtn');
     const passwordValid = !passwordRequired || isValidPassword(password);
     const disabled = isLoading || isExpired || isValidating || !passwordValid;
+    const isWrongPassword = errorReason === 'wrong-password';
+    const transientError =
+        errorReason === 'rate-limited' || errorReason === 'service-unavailable' || errorReason === 'network'
+            ? errorReason
+            : null;
 
     function readsPill() {
         if (readsRemaining === null) {
@@ -114,7 +121,7 @@ export function LockScreen({
                                     }
                                 }}
                                 placeholder={t('passwordPromptPlaceholder')}
-                                className={`password-input ${passwordError ? 'has-error' : ''}`.trim()}
+                                className={`password-input ${isWrongPassword ? 'has-error' : ''}`.trim()}
                             />
                             <button
                                 type="button"
@@ -126,12 +133,21 @@ export function LockScreen({
                             </button>
                         </div>
                     </div>
-                    {passwordError ? (
+                    {isWrongPassword ? (
                         <p className="hint hint-error">{t('passwordWrong')}</p>
                     ) : (
                         <p className="hint">{t('passwordPromptHint', { min: MIN_PASSWORD_LENGTH })}</p>
                     )}
                 </div>
+            ) : null}
+            {transientError ? (
+                <p className="hint hint-error">
+                    {transientError === 'rate-limited'
+                        ? t('errorRateLimited')
+                        : transientError === 'service-unavailable'
+                          ? t('errorServiceUnavailable')
+                          : t('errorNetwork')}
+                </p>
             ) : null}
             <div className="reveal-actions">
                 <button type="button" className="btn btn-primary" onClick={onReveal} disabled={disabled}>

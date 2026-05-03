@@ -94,7 +94,10 @@
         "passwordWrong": "Mauvaise phrase secrète. Après cinq erreurs, le secret est détruit.",
         "passwordPill": "phrase secrète requise",
         "hidePassword": "Masquer la phrase secrète",
-        "showPassword": "Afficher la phrase secrète"
+        "showPassword": "Afficher la phrase secrète",
+        "errorRateLimited": "Trop de tentatives depuis ce réseau. Attendez une minute et réessayez.",
+        "errorServiceUnavailable": "Le serveur est temporairement indisponible. Réessayez dans un instant.",
+        "errorNetwork": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez."
     },
     "revealed": {
         "title1": "Le voici.",

@@ -94,7 +94,10 @@
         "passwordWrong": "Falsches Passwort. Nach fünf Fehlversuchen wird das Geheimnis zerstört.",
         "passwordPill": "Passwort erforderlich",
         "hidePassword": "Passwort verbergen",
-        "showPassword": "Passwort anzeigen"
+        "showPassword": "Passwort anzeigen",
+        "errorRateLimited": "Zu viele Versuche aus diesem Netzwerk. Warte eine Minute und versuche es erneut.",
+        "errorServiceUnavailable": "Server ist vorübergehend nicht verfügbar. Versuche es in einem Moment.",
+        "errorNetwork": "Konnte den Server nicht erreichen. Prüfe deine Verbindung und versuche es erneut."
     },
     "revealed": {
         "title1": "Hier ist es.",

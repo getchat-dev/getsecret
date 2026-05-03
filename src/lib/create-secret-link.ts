@@ -1,3 +1,4 @@
+import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
     MAX_SECRET_LENGTH,
     type PreparedSecretUpload,
@@ -35,6 +36,14 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
 
     const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password } = options;
     const usePassword = typeof password === 'string' && password.length > 0;
+    // The reveal-side gate (LockScreen + Viewer) refuses to open with a
+    // password that doesn't pass isValidPassword. If we let a weaker one
+    // through here, the recipient simply can't open the link via UI — and a
+    // 1-character PBKDF2 input is brute-forcible in milliseconds. So we
+    // enforce the same policy at the create boundary.
+    if (usePassword && !isValidPassword(password)) {
+        throw new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+    }
 
     let prepared: PreparedSecretUpload | PreparedSecretUploadWithPassword;
     try {

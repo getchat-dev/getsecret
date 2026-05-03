@@ -644,7 +644,7 @@ TS-обёртка `consume()` конвертирует Lua-возврат `'-1'`
 
 2. **CSP-заголовки могут блокировать next-intl или next-themes.** Проверить `next.config.ts`. Скорее всего не сломается (всё inline или same-origin), но cмotreть в логи.
 
-3. **Backward compatibility v1 → v2 секретов.** На этапе 4 в продакшене могут жить v1 секреты (TTL до 30 дней). `decryptSecretWithPassword` должен fallback на `decryptSecret` для v1 (т.е. без password). `getMetadata` для v1 секретов возвращает `passwordParams: null` → `LockScreen` рисует обычный flow.
+3. **Backward compatibility v1 → v2 секретов.** На этапе 4 в продакшене могут жить v1 секреты (TTL до 30 дней). Backward-compat реализован на уровне **caller'а**, а не helper'а: `getMetadata` для v1 секретов возвращает `passwordParams: null`, после чего `<Viewer>` явно ветвится по `encryptedSecret.version + passwordParams` и зовёт либо `decryptSecret` (v1), либо `decryptSecretWithPassword` (v2). Сам `decryptSecretWithPassword` намеренно fail-fast на v1 (throws "Secret payload is not password-protected") — это надёжнее, чем silent fallback внутри хелпера: имя функции отражает контракт, и любой будущий caller, забывший развилку, получит сразу ошибку, а не молча проигнорированный пароль. `LockScreen` рисует обычный flow для v1 (без password input).
 
 4. **Перевод 7 языков из `new_design/i18n.jsx` — большой объём текста.** Тексты для новых ключей (`maxViews`, `password`, errors после 4-го этапа) будут добавляться по мере добавления фич. На этапе 1 нужны переводы только под уже существующие тексты + nav/header/footer.
 

@@ -94,7 +94,10 @@
         "passwordWrong": "Passphrase errata. Dopo cinque errori il segreto viene distrutto.",
         "passwordPill": "passphrase richiesta",
         "hidePassword": "Nascondi passphrase",
-        "showPassword": "Mostra passphrase"
+        "showPassword": "Mostra passphrase",
+        "errorRateLimited": "Troppi tentativi da questa rete. Aspetta un minuto e riprova.",
+        "errorServiceUnavailable": "Il server non è temporaneamente disponibile. Riprova tra un momento.",
+        "errorNetwork": "Impossibile raggiungere il server. Controlla la connessione e riprova."
     },
     "revealed": {
         "title1": "Eccolo.",
