@@ -168,6 +168,8 @@
         "decryptFailed": "无法在此浏览器中解密秘密。",
         "createFailed": "创建秘密链接失败。",
         "copyFailed": "无法复制到剪贴板。",
+        "qrRenderFailed": "无法生成二维码。",
+        "qrDownloadFailed": "无法保存二维码。",
         "passwordTooShort": "密码至少需要 {min, number} 个字符。"
     }
 }

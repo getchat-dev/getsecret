@@ -168,6 +168,8 @@
         "decryptFailed": "Could not decrypt the secret in this browser.",
         "createFailed": "Failed to create the secret link.",
         "copyFailed": "Could not copy to the clipboard.",
+        "qrRenderFailed": "Could not generate the QR code.",
+        "qrDownloadFailed": "Could not save the QR code.",
         "passwordTooShort": "Passphrase must be at least {min, number} characters."
     }
 }

@@ -168,6 +168,8 @@
         "decryptFailed": "Geheimnis konnte in diesem Browser nicht entschlüsselt werden.",
         "createFailed": "Erstellen des Geheim-Links fehlgeschlagen.",
         "copyFailed": "Konnte nicht in die Zwischenablage kopieren.",
+        "qrRenderFailed": "QR-Code konnte nicht erzeugt werden.",
+        "qrDownloadFailed": "QR-Code konnte nicht gespeichert werden.",
         "passwordTooShort": "Das Passwort muss mindestens {min, number} Zeichen lang sein."
     }
 }

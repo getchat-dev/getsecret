@@ -168,6 +168,8 @@
         "decryptFailed": "No se pudo descifrar el secreto en este navegador.",
         "createFailed": "No se pudo crear el enlace del secreto.",
         "copyFailed": "No se pudo copiar al portapapeles.",
+        "qrRenderFailed": "No se pudo generar el código QR.",
+        "qrDownloadFailed": "No se pudo guardar el código QR.",
         "passwordTooShort": "La contraseña debe tener al menos {min, number} caracteres."
     }
 }

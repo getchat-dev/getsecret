@@ -1914,6 +1914,28 @@ html[data-theme="light"] .qr-modal::backdrop {
     font-size: 18px;
 }
 
+.qr-canvas-error {
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    text-align: center;
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.qr-canvas-warning {
+    font-size: 32px;
+    line-height: 1;
+    color: var(--danger);
+}
+
+.qr-canvas-error-text {
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
 .qr-modal-subtitle {
     margin: 0;
     font-size: 12.5px;

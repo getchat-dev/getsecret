@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
-import { useClipboardCopy } from '@/components/copy-button';
+import { ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { CheckIcon, CopyIcon } from '@/components/ui/icons';
 import { renderQrPngDataUrl, renderQrSvg } from '@/lib/qr';
 
@@ -48,12 +48,14 @@ function dataUrlToBlob(dataUrl: string): Blob {
 
 export function QrModal({ link, open, onClose }: Props) {
     const t = useTranslations('generated');
-    const tCreate = useTranslations('create');
+    const tErrors = useTranslations('errors');
     const titleId = useId();
     const [svg, setSvg] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const onCloseRef = useRef(onClose);
-    const { copyStatus, copyText } = useClipboardCopy();
+    const { copyStatus, toast, copyText } = useClipboardCopy();
+    const copyButtonRef = useRef<HTMLButtonElement | null>(null);
     const isCopied = copyStatus === 'copied';
 
     useEffect(() => {
@@ -63,21 +65,25 @@ export function QrModal({ link, open, onClose }: Props) {
     useEffect(() => {
         if (!open) {
             setSvg(null);
+            setError(null);
             return;
         }
 
         let cancelled = false;
+        setError(null);
         const colors = readThemeColors();
         renderQrSvg(link, { color: { dark: colors.dark, light: colors.light } })
             .then((rendered) => {
                 if (!cancelled) setSvg(rendered);
             })
-            .catch(() => {});
+            .catch(() => {
+                if (!cancelled) setError(tErrors('qrRenderFailed'));
+            });
 
         return () => {
             cancelled = true;
         };
-    }, [open, link]);
+    }, [open, link, tErrors]);
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -118,15 +124,25 @@ export function QrModal({ link, open, onClose }: Props) {
     }
 
     async function handleDownloadSvg() {
-        const colors = readThemeColors();
-        const rendered = await renderQrSvg(link, { color: { dark: colors.dark, light: colors.light } });
-        downloadBlob('burnotes-secret-qr.svg', new Blob([rendered], { type: 'image/svg+xml' }));
+        try {
+            setError(null);
+            const colors = readThemeColors();
+            const rendered = await renderQrSvg(link, { color: { dark: colors.dark, light: colors.light } });
+            downloadBlob('burnotes-secret-qr.svg', new Blob([rendered], { type: 'image/svg+xml' }));
+        } catch {
+            setError(tErrors('qrDownloadFailed'));
+        }
     }
 
     async function handleDownloadPng() {
-        const colors = readThemeColors();
-        const dataUrl = await renderQrPngDataUrl(link, { color: { dark: colors.dark, light: colors.light } });
-        downloadBlob('burnotes-secret-qr.png', dataUrlToBlob(dataUrl));
+        try {
+            setError(null);
+            const colors = readThemeColors();
+            const dataUrl = await renderQrPngDataUrl(link, { color: { dark: colors.dark, light: colors.light } });
+            downloadBlob('burnotes-secret-qr.png', dataUrlToBlob(dataUrl));
+        } catch {
+            setError(tErrors('qrDownloadFailed'));
+        }
     }
 
     return (
@@ -154,21 +170,34 @@ export function QrModal({ link, open, onClose }: Props) {
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: qrcode lib output is structural SVG of <rect> nodes; payload is encoded as modules, not as markup
                             dangerouslySetInnerHTML={{ __html: svg }}
                         />
+                    ) : error ? (
+                        <div className="qr-canvas qr-canvas-error" role="alert">
+                            <span className="qr-canvas-warning" aria-hidden="true">
+                                ⚠
+                            </span>
+                            <span className="qr-canvas-error-text">{error}</span>
+                        </div>
                     ) : (
                         <div className="qr-canvas" aria-hidden="true">
                             <span className="qr-canvas-placeholder">…</span>
                         </div>
                     )}
                     <p className="qr-modal-subtitle">{t('qrSubtitle')}</p>
+                    {svg && error ? (
+                        <p className="error" role="alert">
+                            {error}
+                        </p>
+                    ) : null}
                 </div>
                 <footer className="qr-modal-footer">
                     <button
+                        ref={copyButtonRef}
                         type="button"
                         className="btn btn-secondary"
                         onClick={() =>
                             void copyText(link, {
                                 successMessage: t('copied'),
-                                errorMessage: tCreate('formatLabel'),
+                                errorMessage: tErrors('copyFailed'),
                             })
                         }
                     >
@@ -182,6 +211,7 @@ export function QrModal({ link, open, onClose }: Props) {
                         {t('qrDownloadPng')}
                     </button>
                 </footer>
+                <ToastMessage toast={toast?.kind === 'error' ? toast : null} anchorRef={copyButtonRef} />
             </div>
         </dialog>
     );

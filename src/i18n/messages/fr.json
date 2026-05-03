@@ -168,6 +168,8 @@
         "decryptFailed": "Impossible de déchiffrer le secret dans ce navigateur.",
         "createFailed": "Échec de la création du lien du secret.",
         "copyFailed": "Impossible de copier dans le presse-papiers.",
+        "qrRenderFailed": "Impossible de générer le QR code.",
+        "qrDownloadFailed": "Impossible d'enregistrer le QR code.",
         "passwordTooShort": "La phrase secrète doit comporter au moins {min, number} caractères."
     }
 }
