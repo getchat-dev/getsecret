@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 process.env.VALKEY_URL = 'redis://localhost:6379/0';
-process.env.BURNOTES_MULTIREAD_ENABLED = 'true';
+process.env.MULTIREAD_ENABLED = 'true';
 process.env.PASSWORD_PROTECTION_ENABLED = 'true';
 
 vi.mock('ioredis', async () => {

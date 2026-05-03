@@ -311,8 +311,8 @@ describe('secret API routes', () => {
     });
 
     it('coerces maxViews to single-read when the multi-read feature flag is off', async () => {
-        const original = process.env.BURNOTES_MULTIREAD_ENABLED;
-        process.env.BURNOTES_MULTIREAD_ENABLED = 'false';
+        const original = process.env.MULTIREAD_ENABLED;
+        process.env.MULTIREAD_ENABLED = 'false';
         try {
             const prepared = await prepareSecretUpload('flag-off payload');
             const response = await createSecret(
@@ -364,7 +364,7 @@ describe('secret API routes', () => {
             );
             expect(second.status).toBe(404);
         } finally {
-            process.env.BURNOTES_MULTIREAD_ENABLED = original;
+            process.env.MULTIREAD_ENABLED = original;
         }
     });
 

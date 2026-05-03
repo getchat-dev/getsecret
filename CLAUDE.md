@@ -27,7 +27,7 @@ Burnotes is a **client-side-encryption** one-time secret relay built on Next.js 
 
 **Storage.** `src/lib/secret-store.ts` and `src/lib/rate-limit.ts` are Valkey-backed through `src/lib/valkey-client.ts` (lazy `ioredis` singleton pinned to `globalThis`). Secrets are stored as Redis Hashes with `PEXPIRE 24h`; the open Lua script constant-time compares the access-token hash, locks out after 5 wrong attempts, increments `viewsUsed`, and deletes the record once `viewsUsed >= maxViews` (or stays alive when `maxViews = '-1'` for unlimited; missing field falls back to `1` for v1 backward-compat). Rate limiting uses a sorted-set sliding window. Valkey runs in its own Compose stack (`docker-compose.infra.yml`) so application restarts (and `./start.sh --down/--purge`) do not erase state. `VALKEY_URL` is required.
 
-**Feature flags.** `BURNOTES_MULTIREAD_ENABLED` (default `false`) gates the multi-view UI and the API: when off, the create endpoint coerces any client-supplied `maxViews` back to `1` and `<CreateForm>` hides the `<MaxViewsControl>`. `PASSWORD_PROTECTION_ENABLED` (default `false`) gates the password-protection layer: when off, `<CreateForm>` hides `<PasswordField>` and the API rejects any create request that includes `passwordParams`/`passwordVerifierHash` (400). Both are the rolling-deploy guardrails — keep the flags off across the cluster until every instance is on the new code path, then flip to `true` (env-var only, no rebuild needed for server-side reads).
+**Feature flags.** `MULTIREAD_ENABLED` (default `false`) gates the multi-view UI and the API: when off, the create endpoint coerces any client-supplied `maxViews` back to `1` and `<CreateForm>` hides the `<MaxViewsControl>`. `PASSWORD_PROTECTION_ENABLED` (default `false`) gates the password-protection layer: when off, `<CreateForm>` hides `<PasswordField>` and the API rejects any create request that includes `passwordParams`/`passwordVerifierHash` (400). Both are the rolling-deploy guardrails — keep the flags off across the cluster until every instance is on the new code path, then flip to `true` (env-var only, no rebuild needed for server-side reads).
 
 **Request path.**
 - `POST /api/secrets` (`src/app/api/secrets/route.ts`) — validate, rate-limit (await), hash token, store (await).
@@ -42,7 +42,7 @@ Burnotes is a **client-side-encryption** one-time secret relay built on Next.js 
 
 - The decryption key stays in the URL fragment. Never put it in path, query, body, logs, or analytics.
 - The server never sees plaintext and never needs to.
-- TTL is enforced by Valkey `PEXPIRE`, regardless of read. Consume is destructive once `viewsUsed` reaches `maxViews`; for `maxViews=1` (default and the only path under `BURNOTES_MULTIREAD_ENABLED=false`) that's the first read.
+- TTL is enforced by Valkey `PEXPIRE`, regardless of read. Consume is destructive once `viewsUsed` reaches `maxViews`; for `maxViews=1` (default and the only path under `MULTIREAD_ENABLED=false`) that's the first read.
 - Access-token comparison is constant-time (inside the `OPEN_SCRIPT` Lua script); brute-force lockout deletes the record after 5 misses (this is independent of `maxViews` — wrong tokens never decrement `viewsUsed`).
 - State lives in Valkey; `VALKEY_URL` is mandatory. Do not reintroduce an in-memory fallback — it masks outages and breaks durability.
 - API routes stay on the Node runtime (Web Crypto + `ioredis` socket).

@@ -4,7 +4,7 @@
 // behavior of the previous version until the operator flips the switch.
 
 export function isMultiReadEnabled(): boolean {
-    return process.env.BURNOTES_MULTIREAD_ENABLED === 'true';
+    return process.env.MULTIREAD_ENABLED === 'true';
 }
 
 export function isPasswordEnabled(): boolean {
