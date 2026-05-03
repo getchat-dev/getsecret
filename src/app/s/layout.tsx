@@ -1,13 +1,11 @@
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
-import { notFound } from 'next/navigation';
-import { hasLocale } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { ClientLocaleProvider } from '@/components/layout/client-locale-provider';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
-import { type Locale, routing } from '@/i18n/routing';
+import { pickLocaleFromAcceptLanguage } from '@/lib/accept-language';
 import '../globals.css';
 
 const inter = Inter({
@@ -24,33 +22,20 @@ const jetbrainsMono = JetBrains_Mono({
     display: 'swap',
 });
 
-export function generateStaticParams() {
-    return routing.locales.map((locale) => ({ locale }));
-}
-
-export default async function LocaleLayout({
-    children,
-    params,
-}: {
-    children: React.ReactNode;
-    params: Promise<{ locale: string }>;
-}) {
-    const { locale } = await params;
-    if (!hasLocale(routing.locales, locale)) {
-        notFound();
-    }
-
+export default async function SecretRouteLayout({ children }: { children: React.ReactNode }) {
+    // /s/:id has no locale segment in the URL — the language is picked from the
+    // browser's Accept-Language header on every request. Page is dynamic anyway
+    // (the secret data is fetched per request), so reading a header is free.
+    const headerList = await headers();
+    const locale = pickLocaleFromAcceptLanguage(headerList.get('accept-language'));
     setRequestLocale(locale);
     const messages = await getMessages();
-    const nonce = (await headers()).get('x-nonce') ?? undefined;
+    const nonce = headerList.get('x-nonce') ?? undefined;
 
     return (
         <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
             <head>
-                {/* Apply the user's saved theme before first paint to avoid a flash
-                    when the explicit choice differs from the system preference.
-                    `data-theme-choice` mirrors the choice (incl. "system") so the
-                    theme switch can highlight the right button via pure CSS. */}
+                {/* Apply the user's saved theme before first paint (see [locale]/layout.tsx for details). */}
                 <script
                     nonce={nonce}
                     suppressHydrationWarning
@@ -62,7 +47,7 @@ export default async function LocaleLayout({
                 />
             </head>
             <body>
-                <ClientLocaleProvider initialLocale={locale as Locale} initialMessages={messages}>
+                <ClientLocaleProvider initialLocale={locale} initialMessages={messages}>
                     <ThemeProvider nonce={nonce}>
                         <div className="bg-grid" aria-hidden="true" />
                         <SiteHeader />

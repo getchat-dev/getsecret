@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
@@ -49,6 +50,7 @@ const ICONS = {
 } as const;
 
 export function ThemeSwitch() {
+    const t = useTranslations('theme');
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
@@ -56,24 +58,35 @@ export function ThemeSwitch() {
         setMounted(true);
     }, []);
 
-    // Render placeholder until client mounts so SSR/CSR markup matches.
-    const active = mounted ? (theme ?? 'system') : 'system';
+    function handleSelect(option: 'system' | 'light' | 'dark') {
+        setTheme(option);
+        if (typeof document !== 'undefined') {
+            document.documentElement.setAttribute('data-theme-choice', option);
+        }
+    }
 
+    // Highlighting is driven by [data-theme-choice] on <html>, set by the
+    // pre-hydration script before first paint — so the right button is shown
+    // pressed instantly, with no post-mount jump.
     return (
         <fieldset className="theme-switch">
-            <legend className="visually-hidden">Theme</legend>
-            {(['system', 'light', 'dark'] as const).map((option) => (
-                <button
-                    key={option}
-                    type="button"
-                    className={active === option ? 'active' : ''}
-                    aria-pressed={active === option}
-                    aria-label={option}
-                    onClick={() => setTheme(option)}
-                >
-                    {ICONS[option]}
-                </button>
-            ))}
+            <legend className="visually-hidden">{t('legend')}</legend>
+            {(['system', 'light', 'dark'] as const).map((option) => {
+                const label = t(option);
+                return (
+                    <button
+                        key={option}
+                        type="button"
+                        data-option={option}
+                        aria-pressed={mounted ? theme === option : undefined}
+                        aria-label={label}
+                        title={label}
+                        onClick={() => handleSelect(option)}
+                    >
+                        {ICONS[option]}
+                    </button>
+                );
+            })}
         </fieldset>
     );
 }

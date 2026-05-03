@@ -171,5 +171,11 @@
         "qrRenderFailed": "Impossible de générer le QR code.",
         "qrDownloadFailed": "Impossible d'enregistrer le QR code.",
         "passwordTooShort": "La phrase secrète doit comporter au moins {min, number} caractères."
+    },
+    "theme": {
+        "legend": "Thème",
+        "system": "Thème du système",
+        "light": "Thème clair",
+        "dark": "Thème sombre"
     }
 }

@@ -1,11 +1,13 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import packageJson from '../../../package.json';
 
 const SOURCE_URL = 'https://github.com/Markuper-tech/burnotes';
 
-export async function SiteFooter() {
-    const t = await getTranslations('foot');
+export function SiteFooter() {
+    const t = useTranslations('foot');
 
     return (
         <footer className="foot">

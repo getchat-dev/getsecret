@@ -13,7 +13,7 @@ export default function robots(): MetadataRoute.Robots {
             {
                 userAgent: '*',
                 allow: '/',
-                disallow: ['/*/s/*', '/api/*'],
+                disallow: ['/s/*', '/api/*'],
             },
         ],
         sitemap: `${origin}/sitemap.xml`,

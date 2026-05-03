@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { CreateForm } from '@/components/secret/create-form';
+import { CreateIntro } from '@/components/secret/create-intro';
 import { isMultiReadEnabled, isPasswordEnabled } from '@/lib/feature-flags';
 
 export const dynamic = 'force-dynamic';
@@ -19,19 +20,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    const t = await getTranslations('create');
-    const tEyebrow = await getTranslations('eyebrow');
 
     return (
         <main className="page">
-            <span className="eyebrow">
-                <span className="ember-dot" />
-                {tEyebrow('create')}
-            </span>
-            <h1 className="display">
-                {t('title1')} <span className="accent-word">{t('title2')}</span>
-            </h1>
-            <p className="lede">{t('lede')}</p>
+            <CreateIntro />
             <CreateForm enableMultiRead={isMultiReadEnabled()} enablePassword={isPasswordEnabled()} />
         </main>
     );

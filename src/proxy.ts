@@ -25,9 +25,10 @@ export function proxy(request: NextRequest): NextResponse {
     const nonce = generateNonce();
     const { pathname } = request.nextUrl;
 
-    // API routes are not localized — skip the intl middleware so their URLs
-    // don't get a locale prefix, and just attach our security headers.
-    if (pathname.startsWith('/api/')) {
+    // API and secret-viewer routes are not localized — skip the intl middleware
+    // so their URLs don't get a locale prefix, and just attach our security
+    // headers. /s/:id picks the UI language from Accept-Language at render time.
+    if (pathname.startsWith('/api/') || pathname.startsWith('/s/')) {
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set('x-nonce', nonce);
         const response = NextResponse.next({ request: { headers: requestHeaders } });

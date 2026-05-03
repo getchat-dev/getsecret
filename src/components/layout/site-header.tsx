@@ -1,4 +1,6 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { LangPicker } from '@/components/layout/lang-picker';
 import { ThemeSwitch } from '@/components/layout/theme-switch';
 import { FlameIcon, GithubIcon } from '@/components/ui/icons';
@@ -6,8 +8,8 @@ import { Link } from '@/i18n/navigation';
 
 const SOURCE_URL = 'https://github.com/Markuper-tech/burnotes';
 
-export async function SiteHeader() {
-    const t = await getTranslations('nav');
+export function SiteHeader() {
+    const t = useTranslations('nav');
 
     return (
         <header className="nav">

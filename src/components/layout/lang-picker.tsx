@@ -2,8 +2,11 @@
 
 import { useLocale } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
+import { useSwitchLocale } from '@/components/layout/client-locale-provider';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { type Locale, routing } from '@/i18n/routing';
+
+const LOCALE_PREFIX_RE = new RegExp(`^/(${routing.locales.join('|')})(?=/|$)`);
 
 type LocaleMeta = {
     code: Locale;
@@ -25,6 +28,7 @@ const LOCALE_META: Record<Locale, LocaleMeta> = {
 
 export function LangPicker() {
     const locale = useLocale() as Locale;
+    const switchLocale = useSwitchLocale();
     const router = useRouter();
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
@@ -53,7 +57,21 @@ export function LangPicker() {
     function selectLocale(next: Locale) {
         setOpen(false);
         if (next === locale) return;
-        router.replace(pathname, { locale: next });
+        // Decide between a real route change (server re-render, blows away client
+        // state) and an in-place context swap based on whether the current page
+        // has stateful client UI we'd rather not throw away. The home page (form
+        // with input/animations) and global routes like /s/:id stay client-only;
+        // static localized pages (docs/faq/...) get a soft route change so their
+        // server-rendered text actually retranslates.
+        const fullPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        const localeMatch = fullPath.match(LOCALE_PREFIX_RE);
+        const restAfterLocale = localeMatch ? fullPath.slice(localeMatch[0].length) : null;
+        const isHome = restAfterLocale === '' || restAfterLocale === '/';
+        if (localeMatch && !isHome) {
+            router.replace(pathname, { locale: next });
+        } else {
+            void switchLocale(next);
+        }
     }
 
     return (

@@ -171,5 +171,11 @@
         "qrRenderFailed": "Could not generate the QR code.",
         "qrDownloadFailed": "Could not save the QR code.",
         "passwordTooShort": "Passphrase must be at least {min, number} characters."
+    },
+    "theme": {
+        "legend": "Theme",
+        "system": "Use system theme",
+        "light": "Light theme",
+        "dark": "Dark theme"
     }
 }

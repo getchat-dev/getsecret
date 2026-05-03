@@ -171,5 +171,11 @@
         "qrRenderFailed": "QR-Code konnte nicht erzeugt werden.",
         "qrDownloadFailed": "QR-Code konnte nicht gespeichert werden.",
         "passwordTooShort": "Das Passwort muss mindestens {min, number} Zeichen lang sein."
+    },
+    "theme": {
+        "legend": "Design",
+        "system": "Systemdesign",
+        "light": "Helles Design",
+        "dark": "Dunkles Design"
     }
 }
