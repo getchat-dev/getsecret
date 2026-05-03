@@ -155,7 +155,7 @@ code {
 ============================================================ */
 
 .page {
-    max-width: 720px;
+    max-width: 920px;
     margin: 0 auto;
     padding: 56px 28px 80px;
     position: relative;
@@ -691,14 +691,16 @@ h1.display .accent-word {
 
 .textarea-wrap.auto-grow textarea {
     resize: none;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 /* Auto-grow on phone-shaped touch devices in portrait: cap to viewport so the page can still scroll. */
 @media (hover: none) and (pointer: coarse) and (orientation: portrait) and (max-width: 768px) {
     .textarea-wrap.auto-grow textarea {
         max-height: calc(100dvh - 240px);
-        overflow: auto;
+        overflow-x: auto;
+        overflow-y: auto;
     }
 }
 
@@ -727,9 +729,7 @@ h1.display .accent-word {
     font-family: var(--font-mono);
     font-size: 13.5px;
     line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    word-break: normal;
+    white-space: pre;
     color: var(--fg-default);
 }
 
@@ -1034,7 +1034,7 @@ h1.display .accent-word {
     color: var(--accent);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 920px) {
     .screen-tabs {
         display: flex;
         overflow-x: auto;
@@ -1995,7 +1995,7 @@ html[data-theme="light"] .qr-modal::backdrop {
     }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 920px) {
     .page {
         padding: 32px 16px 60px;
     }

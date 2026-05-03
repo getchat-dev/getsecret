@@ -93,6 +93,7 @@ export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
                 maxLength={MAX_SECRET_LENGTH}
                 autoComplete="off"
                 spellCheck={false}
+                wrap={format === 'plain' ? 'soft' : 'off'}
                 placeholder={SECRET_FORMAT_PLACEHOLDERS[format]}
                 required
             />
