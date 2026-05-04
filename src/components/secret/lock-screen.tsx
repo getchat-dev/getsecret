@@ -15,21 +15,19 @@ function useUtcNow(intervalMs = 1000) {
     return now;
 }
 
-function formatRemainingTime(remainingMs: number): string {
+// Buckets the remaining time into a human phrase (days/hours/minutes/seconds).
+// Returns the i18n key + count so the caller can localize with ICU plurals.
+// We do this instead of a fixed mm:ss format because the recipient cares
+// about "how long do I have to act", not exact seconds — and a counting-down
+// HH:MM:SS implies false urgency for a 24h-valid link.
+function bucketRemainingTime(remainingMs: number): { key: string; count: number } {
     const totalSeconds = Math.max(0, Math.floor(remainingMs / 1000));
-    const days = Math.floor(totalSeconds / 86_400);
-    const hours = Math.floor((totalSeconds % 86_400) / 3_600);
-    const minutes = Math.floor((totalSeconds % 3_600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const hh = String(hours).padStart(2, '0');
-    const mm = String(minutes).padStart(2, '0');
-    const ss = String(seconds).padStart(2, '0');
-
-    if (days > 0) {
-        return `${days}d ${hh}:${mm}:${ss}`;
-    }
-    return `${hh}:${mm}:${ss}`;
+    if (totalSeconds < 60) return { key: 'linkValidSeconds', count: totalSeconds };
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    if (totalMinutes < 60) return { key: 'linkValidMinutes', count: totalMinutes };
+    const totalHours = Math.floor(totalMinutes / 60);
+    if (totalHours < 24) return { key: 'linkValidHours', count: totalHours };
+    return { key: 'linkValidDays', count: Math.floor(totalHours / 24) };
 }
 
 type LockScreenErrorReason = 'wrong-password' | 'rate-limited' | 'service-unavailable' | 'network';
@@ -64,6 +62,7 @@ export function LockScreen({
     const expiresAtMs = useMemo(() => (expiresAtUtc ? Date.parse(expiresAtUtc) : Number.NaN), [expiresAtUtc]);
     const now = useUtcNow();
     const remainingMs = Number.isFinite(expiresAtMs) ? Math.max(0, expiresAtMs - now) : 0;
+    const remainingBucket = bucketRemainingTime(remainingMs);
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -91,11 +90,8 @@ export function LockScreen({
             <div className="lock-icon">
                 <LockIcon size={28} />
             </div>
-            <h2 className="reveal-title">{t('lockedTitle')}</h2>
             <p className="reveal-sub">{passwordRequired ? t('passwordPromptSub') : t('lockedSub')}</p>
             <div className="reveal-meta">
-                <span className="pill pill-accent">AES-256-GCM</span>
-                <span className="pill pill-muted">{t('key256')}</span>
                 {passwordRequired ? <span className="pill pill-accent">{t('passwordPill')}</span> : null}
                 {readsPill()}
             </div>
@@ -149,16 +145,19 @@ export function LockScreen({
                           : t('errorNetwork')}
                 </p>
             ) : null}
+            {!isExpired && Number.isFinite(expiresAtMs) ? (
+                <p className="countdown">{t(remainingBucket.key, { count: remainingBucket.count })}</p>
+            ) : null}
             <div className="reveal-actions">
                 <button type="button" className="btn btn-primary" onClick={onReveal} disabled={disabled}>
                     <ZapIcon size={14} />
                     {buttonLabel}
                 </button>
-                {!isExpired && Number.isFinite(expiresAtMs) ? (
-                    <span className="countdown">
-                        {t('expiresIn')} {formatRemainingTime(remainingMs)}
-                    </span>
-                ) : null}
+                {readsRemaining === null ? null : readsRemaining > 1 ? (
+                    <span className="reveal-hint">{t('revealHintRemaining', { count: readsRemaining - 1 })}</span>
+                ) : (
+                    <span className="reveal-hint">{t('revealHint')}</span>
+                )}
             </div>
         </section>
     );

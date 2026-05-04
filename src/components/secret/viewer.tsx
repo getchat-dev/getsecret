@@ -3,7 +3,6 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BurnedScreen } from '@/components/secret/burned-screen';
-import { type LifecycleStep, LifecycleSteps } from '@/components/secret/lifecycle-steps';
 import { LockScreen } from '@/components/secret/lock-screen';
 import { RevealedSecret } from '@/components/secret/revealed-secret';
 import type { PasswordParams } from '@/lib/password-derive';
@@ -189,14 +188,6 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
         }
     }
 
-    function deriveStep(): LifecycleStep {
-        if (linkState.status === 'error') return 5;
-        if (isExpired) return 5;
-        if (secretState.status === 'revealed') return 4;
-        if (secretState.status === 'error' && secretState.reason === 'consumed') return 5;
-        return 3;
-    }
-
     if (linkState.status === 'error' || isExpired) {
         return <BurnedScreen reason={isExpired ? 'expired' : 'not-found'} />;
     }
@@ -210,27 +201,21 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
 
     if (secretState.status === 'revealed') {
         return (
-            <>
-                <LifecycleSteps activeStep={deriveStep()} />
-                <RevealedSecret
-                    content={secretState.content}
-                    format={secretState.format}
-                    viewsRemaining={secretState.viewsRemaining}
-                />
-            </>
+            <RevealedSecret
+                content={secretState.content}
+                format={secretState.format}
+                viewsRemaining={secretState.viewsRemaining}
+            />
         );
     }
 
     if (linkState.status === 'checking') {
         return (
-            <>
-                <LifecycleSteps activeStep={3} />
-                <section className="card">
-                    <p className="hint" style={{ padding: 18 }}>
-                        {t('validating')}
-                    </p>
-                </section>
-            </>
+            <section className="card">
+                <p className="hint" style={{ padding: 18 }}>
+                    {t('validating')}
+                </p>
+            </section>
         );
     }
 
@@ -240,26 +225,23 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
         secretState.status === 'error' && secretState.reason !== 'consumed' ? secretState.reason : null;
 
     return (
-        <>
-            <LifecycleSteps activeStep={3} />
-            <LockScreen
-                expiresAtUtc={expiresAtUtc}
-                isLoading={secretState.status === 'loading'}
-                isExpired={isExpired}
-                isValidating={false}
-                readsRemaining={readsRemainingBeforeOpen}
-                passwordRequired={passwordRequired}
-                password={password}
-                errorReason={errorReason}
-                onPasswordChange={(value) => {
-                    setPassword(value);
-                    // Clear an active wrong-password error as soon as the
-                    // user starts typing again. Transient errors clear on
-                    // the next reveal attempt.
-                    if (errorReason === 'wrong-password') setSecretState({ status: 'idle' });
-                }}
-                onReveal={() => void revealSecret()}
-            />
-        </>
+        <LockScreen
+            expiresAtUtc={expiresAtUtc}
+            isLoading={secretState.status === 'loading'}
+            isExpired={isExpired}
+            isValidating={false}
+            readsRemaining={readsRemainingBeforeOpen}
+            passwordRequired={passwordRequired}
+            password={password}
+            errorReason={errorReason}
+            onPasswordChange={(value) => {
+                setPassword(value);
+                // Clear an active wrong-password error as soon as the
+                // user starts typing again. Transient errors clear on
+                // the next reveal attempt.
+                if (errorReason === 'wrong-password') setSecretState({ status: 'idle' });
+            }}
+            onReveal={() => void revealSecret()}
+        />
     );
 }

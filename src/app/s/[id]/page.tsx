@@ -24,9 +24,12 @@ export default async function SecretPage({ params }: { params: Promise<{ id: str
         );
     }
 
+    const readsRemaining: number | null =
+        secretMetadata.maxViews === null ? null : Math.max(0, secretMetadata.maxViews - secretMetadata.viewsUsed);
+
     return (
         <main className="page">
-            <RevealIntro />
+            <RevealIntro readsRemaining={readsRemaining} />
             <Viewer
                 id={id}
                 expiresAtUtc={new Date(secretMetadata.expiresAt).toISOString()}
