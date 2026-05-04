@@ -97,17 +97,9 @@ export function RevealedSecret({ content, format, viewsRemaining }: Props) {
                 </div>
             </div>
             <footer className="card-footer">
-                <CopyButton
-                    textToCopy={content}
-                    copyLabel={t('copyClip')}
-                    copiedLabel={t('copyClip')}
-                    successMessage={t('copiedToast')}
-                    errorMessage={t('copyClip')}
-                />
                 <button type="button" className="btn btn-secondary" onClick={() => router.push('/')}>
                     <PlusIcon size={14} /> {t('shareBack')}
                 </button>
-                <span className="card-footer-note">{t('footnote')}</span>
             </footer>
         </section>
     );
