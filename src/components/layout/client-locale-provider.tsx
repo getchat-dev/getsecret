@@ -19,12 +19,7 @@ const Ctx = createContext<SwitchCtx | null>(null);
 
 const messageLoaders: Record<Locale, () => Promise<{ default: Messages }>> = {
     en: () => import('@/i18n/messages/en.json'),
-    zh: () => import('@/i18n/messages/zh.json'),
     ru: () => import('@/i18n/messages/ru.json'),
-    es: () => import('@/i18n/messages/es.json'),
-    it: () => import('@/i18n/messages/it.json'),
-    de: () => import('@/i18n/messages/de.json'),
-    fr: () => import('@/i18n/messages/fr.json'),
 };
 
 type Props = {

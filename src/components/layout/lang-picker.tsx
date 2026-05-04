@@ -14,16 +14,11 @@ type LocaleMeta = {
     flag: string;
 };
 
-// Hard-coded per-locale labels mirroring new_design/i18n.jsx so we can render
-// them without bundling all 7 message JSONs into the client.
+// Hard-coded per-locale labels so we can render them without bundling all the
+// message JSONs into the client.
 const LOCALE_META: Record<Locale, LocaleMeta> = {
     en: { code: 'en', label: 'English', flag: '🇬🇧' },
-    zh: { code: 'zh', label: '中文', flag: '🇨🇳' },
     ru: { code: 'ru', label: 'Русский', flag: '🇷🇺' },
-    es: { code: 'es', label: 'Español', flag: '🇪🇸' },
-    it: { code: 'it', label: 'Italiano', flag: '🇮🇹' },
-    de: { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
-    fr: { code: 'fr', label: 'Français', flag: '🇫🇷' },
 };
 
 export function LangPicker() {
