@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { CopyButton } from '@/components/copy-button';
-import { EyeIcon, EyeOffIcon, FlameIcon, PlusIcon } from '@/components/ui/icons';
+import { EyeIcon, EyeOffIcon, PlusIcon, UnlockIcon } from '@/components/ui/icons';
 import { useRouter } from '@/i18n/navigation';
 import type { SecretFormat } from '@/lib/secret-formats';
 
@@ -78,7 +78,7 @@ export function RevealedSecret({ content, format, viewsRemaining }: Props) {
                     </pre>
                 </div>
                 <div className="banner banner-success">
-                    <FlameIcon size={16} className="icon" />
+                    <UnlockIcon size={16} className="icon" />
                     <span>
                         {viewsRemaining === null ? (
                             <>
