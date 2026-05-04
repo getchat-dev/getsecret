@@ -570,7 +570,7 @@ h1.display .accent-word {
     background: var(--bg-2);
 }
 
-.card-footer .btn-primary[type='submit'] {
+.card-footer .btn-primary[type="submit"] {
     margin-left: auto;
 }
 

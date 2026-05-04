@@ -12,7 +12,7 @@ import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import 'highlight.js/styles/github.css';
-import type { SecretFormat } from '@/lib/secret-formats';
+import { isSecretFormat, type SecretFormat } from '@/lib/secret-formats';
 
 const ALIASES: Partial<Record<SecretFormat, string>> = {
     toml: 'ini',
@@ -47,4 +47,46 @@ export function highlight(content: string, format: SecretFormat): string {
     ensureRegistered();
     const language = ALIASES[format] ?? format;
     return hljs.highlight(content, { language, ignoreIllegals: true }).value;
+}
+
+const AUTO_DETECT_LANGUAGES = ['yaml', 'ini', 'javascript', 'typescript', 'python', 'bash', 'sql', 'xml', 'css', 'php'];
+
+const MIN_AUTO_DETECT_LENGTH = 10;
+const MIN_AUTO_DETECT_RELEVANCE = 10;
+
+const TYPESCRIPT_HINTS =
+    /\)\s*:\s*[A-Za-z_$][\w$<>[\],\s|&]*\s*[{=>]|:\s*(?:string|number|boolean|void|any|unknown|never|object|null|undefined|bigint|symbol)\b|\b(?:interface|enum)\s+\w+|\btype\s+\w+\s*=|\bas\s+(?:string|number|boolean|const|unknown|\w+(?:\[\])?)\b|\?\s*:\s*\w/;
+
+export function detectFormat(content: string): SecretFormat | null {
+    const trimmed = content.trim();
+    if (trimmed.length < MIN_AUTO_DETECT_LENGTH) {
+        return null;
+    }
+
+    const isJsonShape =
+        (trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'));
+    if (isJsonShape) {
+        try {
+            JSON.parse(trimmed);
+            return 'json';
+        } catch {}
+    }
+
+    ensureRegistered();
+    const result = hljs.highlightAuto(content, AUTO_DETECT_LANGUAGES);
+    if (!result.language || (result.relevance ?? 0) < MIN_AUTO_DETECT_RELEVANCE) {
+        return null;
+    }
+
+    const detected = result.language;
+    if (detected === 'ini') {
+        return 'toml';
+    }
+    if (detected === 'xml') {
+        return /<!doctype\s+html|<html\b/i.test(content) ? 'html' : 'xml';
+    }
+    if (detected === 'javascript' && TYPESCRIPT_HINTS.test(content)) {
+        return 'typescript';
+    }
+    return isSecretFormat(detected) ? detected : null;
 }

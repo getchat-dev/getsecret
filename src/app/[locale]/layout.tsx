@@ -56,8 +56,7 @@ export default async function LocaleLayout({
                     suppressHydrationWarning
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted inline pre-hydration script.
                     dangerouslySetInnerHTML={{
-                        __html:
-                            "(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='system')t='system';if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-theme-choice',t);}catch(e){}})();",
+                        __html: "(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='system')t='system';if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-theme-choice',t);}catch(e){}})();",
                     }}
                 />
             </head>

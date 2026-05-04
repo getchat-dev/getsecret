@@ -114,10 +114,7 @@ function computeAnchoredPosition(
         : Math.min(viewport.height - toastSize.height - VIEWPORT_MARGIN, anchor.bottom + ANCHOR_GAP);
 
     const desiredLeft = anchor.left + anchor.width / 2 - toastSize.width / 2;
-    const left = Math.max(
-        VIEWPORT_MARGIN,
-        Math.min(desiredLeft, viewport.width - toastSize.width - VIEWPORT_MARGIN),
-    );
+    const left = Math.max(VIEWPORT_MARGIN, Math.min(desiredLeft, viewport.width - toastSize.width - VIEWPORT_MARGIN));
 
     return { top, left };
 }

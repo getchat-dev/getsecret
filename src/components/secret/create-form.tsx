@@ -14,9 +14,15 @@ import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
-import { DEFAULT_SECRET_FORMAT, SECRET_FORMAT_EXTENSIONS, type SecretFormat } from '@/lib/secret-formats';
+import {
+    DEFAULT_SECRET_FORMAT,
+    isSecretFormat,
+    SECRET_FORMAT_EXTENSIONS,
+    type SecretFormat,
+} from '@/lib/secret-formats';
 
 const DRAFT_STORAGE_KEY = 'burnotes:create:draft';
+const FORMAT_STORAGE_KEY = 'burnotes:create:format';
 
 type Props = {
     enableMultiRead?: boolean;
@@ -47,6 +53,8 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
     useEffect(() => {
         const draft = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
         if (draft) setSecret(draft);
+        const savedFormat = window.sessionStorage.getItem(FORMAT_STORAGE_KEY);
+        if (savedFormat && isSecretFormat(savedFormat)) setFormat(savedFormat);
     }, []);
 
     useEffect(() => {
@@ -56,6 +64,14 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
             window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
         }
     }, [secret]);
+
+    useEffect(() => {
+        if (format !== DEFAULT_SECRET_FORMAT) {
+            window.sessionStorage.setItem(FORMAT_STORAGE_KEY, format);
+        } else {
+            window.sessionStorage.removeItem(FORMAT_STORAGE_KEY);
+        }
+    }, [format]);
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -82,6 +98,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
                 ...(effectivePassword.length > 0 ? { password: effectivePassword } : {}),
             });
             window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+            window.sessionStorage.removeItem(FORMAT_STORAGE_KEY);
             setLink(next);
         } catch (err) {
             setError(err instanceof Error ? err.message : tErrors('createFailed'));
@@ -92,6 +109,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
 
     function shareAnother() {
         setSecret('');
+        setFormat(DEFAULT_SECRET_FORMAT);
         setLink('');
         setPassword('');
         setError('');
@@ -126,7 +144,16 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
                     </span>
                 </header>
                 <div className="card-body">
-                    <SecretTextarea value={secret} onChange={setSecret} format={format} autoFocus />
+                    <SecretTextarea
+                        value={secret}
+                        onChange={(next) => {
+                            setSecret(next);
+                            if (next.length === 0) setFormat(DEFAULT_SECRET_FORMAT);
+                        }}
+                        onFormatDetected={setFormat}
+                        format={format}
+                        autoFocus
+                    />
                     <div className="field-pair">
                         <TtlControl
                             value={ttlValue}
@@ -142,7 +169,14 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false }: 
                 </div>
                 <footer className="card-footer">
                     {secret.length > 0 ? (
-                        <button type="button" className="btn btn-ghost" onClick={() => setSecret('')}>
+                        <button
+                            type="button"
+                            className="btn btn-ghost"
+                            onClick={() => {
+                                setSecret('');
+                                setFormat(DEFAULT_SECRET_FORMAT);
+                            }}
+                        >
                             {t('clear')}
                         </button>
                     ) : null}

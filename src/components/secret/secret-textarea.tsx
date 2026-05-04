@@ -1,18 +1,19 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type ClipboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { SECRET_FORMAT_PLACEHOLDERS, type SecretFormat } from '@/lib/secret-formats';
 
 type Props = {
     value: string;
     onChange: (next: string) => void;
+    onFormatDetected?: (format: SecretFormat) => void;
     format: SecretFormat;
     autoFocus?: boolean;
 };
 
-export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
+export function SecretTextarea({ value, onChange, onFormatDetected, format, autoFocus }: Props) {
     const t = useTranslations('create');
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const overlayRef = useRef<HTMLPreElement | null>(null);
@@ -83,6 +84,22 @@ export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
         }
     }
 
+    function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+        if (!onFormatDetected) return;
+        const ta = event.currentTarget;
+        const replacesAll = ta.selectionStart === 0 && ta.selectionEnd === ta.value.length;
+        if (!replacesAll) return;
+        const pasted = event.clipboardData.getData('text');
+        if (!pasted) return;
+        void (async () => {
+            try {
+                const { detectFormat } = await import('@/lib/highlight-secret');
+                const detected = detectFormat(pasted);
+                if (detected) onFormatDetected(detected);
+            } catch {}
+        })();
+    }
+
     const showOverlay = format !== 'plain' && highlightedHtml.length > 0;
 
     return (
@@ -93,6 +110,7 @@ export function SecretTextarea({ value, onChange, format, autoFocus }: Props) {
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 onScroll={handleScroll}
+                onPaste={handlePaste}
                 maxLength={MAX_SECRET_LENGTH}
                 autoComplete="off"
                 spellCheck={false}
