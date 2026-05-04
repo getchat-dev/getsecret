@@ -39,3 +39,14 @@ services:
       # Redirect middleware
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
       - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
+
+      # Redirection from old domain to new domain
+      - traefik.http.routers.burnotes-old.rule=Host(`${OLD_APP_HOST}`)
+      - traefik.http.routers.burnotes-old.entrypoints=web,websecure
+      - traefik.http.routers.burnotes-old.middlewares=redirect-to-new-domain
+      - traefik.http.routers.burnotes-old.tls=true
+      - traefik.http.routers.burnotes-old.tls.certresolver=le
+
+      - traefik.http.middlewares.redirect-to-new-domain.redirectregex.regex=^https?://${OLD_APP_HOST}/?(.*)
+      - traefik.http.middlewares.redirect-to-new-domain.redirectregex.replacement=https://${APP_HOST}/$${1}
+      - traefik.http.middlewares.redirect-to-new-domain.redirectregex.permanent=true
