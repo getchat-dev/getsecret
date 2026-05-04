@@ -2285,3 +2285,83 @@ html[data-theme="dark"] .qr-modal::backdrop {
         width: 48px;
     }
 }
+
+/* ============================================================
+   PROSE — long-form content pages (security, faq, docs)
+============================================================ */
+
+.page-prose {
+    max-width: 64ch;
+    color: var(--fg-default);
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+.page-prose h2 {
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    color: var(--fg-default);
+    margin: 44px 0 14px;
+}
+
+.page-prose h2:first-child {
+    margin-top: 0;
+}
+
+.page-prose p {
+    color: var(--fg-default);
+    margin: 0 0 14px;
+}
+
+.page-prose ul,
+.page-prose ol {
+    margin: 0 0 18px;
+    padding-left: 22px;
+    color: var(--fg-default);
+}
+
+.page-prose ul li,
+.page-prose ol li {
+    margin: 0 0 6px;
+}
+
+.page-prose ul li::marker {
+    color: var(--accent);
+}
+
+.page-prose ol li::marker {
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.page-prose strong {
+    font-weight: 650;
+    color: var(--fg-default);
+}
+
+.page-prose code {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-3);
+    border: 1px solid var(--border-subtle);
+    color: var(--fg-default);
+}
+
+.page-prose .prose-example {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 12px 14px;
+    margin: 4px 0 18px;
+    border-radius: var(--radius-md);
+    background: var(--bg-3);
+    border: 1px solid var(--border-subtle);
+    color: var(--fg-default);
+    overflow-x: auto;
+    white-space: nowrap;
+}

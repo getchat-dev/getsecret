@@ -19,19 +19,19 @@ export function SiteHeader() {
                         <FlameIcon size={14} />
                     </span>
                     <span className="brand-name">
-                        Burnotes<span className="dot">.am</span>
+                        burnotes<span className="dot">.app</span>
                     </span>
                 </Link>
                 <nav className="nav-links" aria-label="Primary">
-                    <Link href="/docs" className="nav-link">
+                    {/* <Link href="/docs" className="nav-link">
                         {t('docs')}
-                    </Link>
+                    </Link> */}
                     <Link href="/security" className="nav-link">
                         {t('security')}
                     </Link>
-                    <Link href="/developers" className="nav-link">
+                    {/* <Link href="/developers" className="nav-link">
                         {t('api')}
-                    </Link>
+                    </Link> */}
                     <a href={SOURCE_URL} className="nav-link" target="_blank" rel="noreferrer" aria-label={t('source')}>
                         <GithubIcon size={14} />
                         <span>{t('source')}</span>

@@ -1,37 +1,34 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { loadContent } from '@/lib/content';
 
-const TITLE_KEY = 'docs';
+const NAV_KEY = 'docs';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
-    const t = await getTranslations({ locale, namespace: 'nav' });
-    const title = `${t(TITLE_KEY)} · Burnotes`;
-    const description =
-        'How Burnotes encrypts secrets in your browser, the URL fragment trust boundary, and the API contract for self-hosting.';
+    const { frontmatter } = await loadContent('docs', locale);
+    const title = `${frontmatter.title} · Burnotes`;
     return {
         title,
-        description,
-        openGraph: { title, description },
+        description: frontmatter.metaDescription,
+        openGraph: { title, description: frontmatter.metaDescription },
     };
 }
 
 export default async function DocsPage({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = await params;
     setRequestLocale(locale);
-    const t = await getTranslations('nav');
+    const navT = await getTranslations('nav');
+    const { default: Content, frontmatter } = await loadContent('docs', locale);
 
     return (
         <main className="page">
-            <span className="eyebrow">{t(TITLE_KEY)}</span>
-            <h1 className="display">{t(TITLE_KEY)}</h1>
-            <p className="lede">
-                Burnotes is a one-time secret relay that ships ciphertext to a 24-hour Valkey hash and hands the
-                decryption key back through the URL fragment. The full protocol — how the AES-GCM key is generated, why
-                the access token is hashed twice, how brute-force attempts are bounded — is documented alongside the
-                source.
-            </p>
-            <p className="hint">Detailed guides are landing here next; in the meantime, see the README on GitHub.</p>
+            <span className="eyebrow">{navT(NAV_KEY)}</span>
+            <h1 className="display">{frontmatter.title}</h1>
+            <p className="lede">{frontmatter.lede}</p>
+            <article className="page-prose">
+                <Content />
+            </article>
         </main>
     );
 }

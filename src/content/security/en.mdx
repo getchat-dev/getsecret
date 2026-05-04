@@ -1,0 +1,76 @@
+---
+title: "Security"
+lede: "Passwords, tokens, and keys fly through work chats every day. Burnotes lets you hand over a secret once — without leaving a trail in your message history."
+metaDescription: "Why Burnotes exists, how client-side encryption works, and where the boundaries are — in plain language."
+---
+
+## The problem
+
+Every day, passwords, tokens, API keys, and server credentials fly through work chats and email. Someone drops a production key into Slack. Someone sends an admin password over Telegram "for five minutes." Someone notes it down to themselves so they won't forget.
+
+It's convenient. But it isn't temporary.
+
+A message in a chat app isn't a note that disappears. It's a record:
+
+- in the chat history on your device and on the recipient's;
+- in the phone's cloud backup;
+- on the messenger's servers;
+- sometimes — in corporate monitoring logs.
+
+Anyone who later gets access to even one of those copies gets the password too. A year from now. Five years. Long after you've forgotten you ever sent it.
+
+## The cost of a mistake
+
+Leaks don't happen because of weak passwords. They happen because passwords end up in places they shouldn't be.
+
+- Verizon's 2024 DBIR puts stolen credentials among the top breach vectors — they show up in roughly one in three incidents.
+- IBM puts the average cost of a single corporate breach at $4.88M.
+- The global cybersecurity market is over $200B a year. That's money companies spend protecting what their own employees leak through chat.
+
+You won't move the budget at Microsoft. But you can stop leaving secrets in your message history.
+
+## How Burnotes works
+
+The idea is simple: the server should not know what you're sending.
+
+When you create a secret, everything happens in your browser:
+
+1. Your browser generates a random key. No one but you ever sees it.
+2. It uses that key to encrypt your text with AES-256-GCM. Only the encrypted string travels to the server — without the key, it can't be read.
+3. The server stores two pieces: the encrypted text and a fingerprint of the access token. The third piece — the key itself — is placed in the link after the `#` symbol.
+
+The link looks like this:
+
+<code className="prose-example">https://burnotes.app/s/abc123#xyz789</code>
+
+The part after `#` is called the fragment. Browsers are designed so that the fragment **is never sent to the server**. This isn't our invention — it's been part of how the web works since the late nineties. The fragment stays on your device and is used only locally.
+
+What that means in practice:
+
+- The key never reaches our logs.
+- The key never reaches the logs of any network in between.
+- The key isn't visible to anyone who intercepts the traffic.
+
+When the recipient opens the link, their browser pulls the key out of the `#`, downloads the encrypted text, and decrypts it locally in the browser. After the first view, the server deletes the record. It cannot be recovered — not by us, not by you.
+
+## A password on top of the link
+
+If there's a chance the link could reach the wrong person, put a password on the secret when you create it. Then the link alone isn't enough — without the password, it stays sealed.
+
+How it works:
+
+- The password never reaches the server. Your browser uses it to derive a second key (PBKDF2-SHA256, 600,000 iterations) and encrypts the secret a second time — on top of the first layer.
+- The server stores only a fingerprint for verification. The password cannot be recovered from the fingerprint.
+- On the fifth wrong attempt, the server deletes the record. Brute-forcing is pointless — the secret destroys itself before it can be guessed.
+
+The point is to send the link and the password through different channels. Link in Slack, password by voice or SMS. If one channel leaks, the attacker is left with encrypted noise.
+
+## What Burnotes doesn't do
+
+Technology doesn't replace common sense.
+
+- If you send the link in the same chat where you usually paste passwords, nothing has been solved — that chat will be read first.
+- If there's malware already on the recipient's device, it will see the secret right alongside them.
+- If a link without a password reaches the wrong person and they open it, we cannot revoke it.
+
+Burnotes removes one specific risk — the trail in your message history. No more, no less.
