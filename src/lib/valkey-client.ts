@@ -22,6 +22,21 @@ function createValkey(): Redis {
     client.on('error', (err: Error) => {
         console.error('[valkey] connection error:', err.message);
     });
+    client.on('connect', () => {
+        console.log('[valkey] socket connected');
+    });
+    client.on('ready', () => {
+        console.log('[valkey] ready');
+    });
+    client.on('reconnecting', (delayMs: number) => {
+        console.warn(`[valkey] reconnecting in ${delayMs}ms`);
+    });
+    client.on('end', () => {
+        console.warn('[valkey] connection ended');
+    });
+    client.on('close', () => {
+        console.warn('[valkey] connection closed');
+    });
     return client;
 }
 

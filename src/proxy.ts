@@ -21,7 +21,16 @@ function applySecurityHeaders(response: NextResponse, nonce: string): NextRespon
     return response;
 }
 
+function logRequest(request: NextRequest): void {
+    const ua = request.headers.get('user-agent') ?? '-';
+    const uaShort = (ua.length > 80 ? ua.slice(0, 80) : ua).replace(/"/g, "'");
+    const xff = request.headers.get('x-forwarded-for');
+    const ip = xff ? (xff.split(',')[0]?.trim() ?? '-') : '-';
+    console.log(`[req] ${request.method} ${request.nextUrl.pathname} ip=${ip || '-'} ua="${uaShort}"`);
+}
+
 export function proxy(request: NextRequest): NextResponse {
+    logRequest(request);
     const nonce = generateNonce();
     const { pathname } = request.nextUrl;
 
