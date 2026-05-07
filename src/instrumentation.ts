@@ -12,7 +12,7 @@ export async function register(): Promise<void> {
     const timer = setInterval(() => {
         const m = process.memoryUsage();
         console.log(
-            `[mem] rss=${mb(m.rss)}m heap=${mb(m.heapUsed)}/${mb(m.heapTotal)}m external=${mb(m.external)}m arrayBuffers=${mb(m.arrayBuffers)}m`,
+            `${new Date().toISOString()} [mem] rss=${mb(m.rss)}m heap=${mb(m.heapUsed)}/${mb(m.heapTotal)}m external=${mb(m.external)}m arrayBuffers=${mb(m.arrayBuffers)}m`,
         );
     }, intervalMs);
     timer.unref();

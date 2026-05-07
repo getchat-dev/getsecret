@@ -26,7 +26,9 @@ function logRequest(request: NextRequest): void {
     const uaShort = (ua.length > 80 ? ua.slice(0, 80) : ua).replace(/"/g, "'");
     const xff = request.headers.get('x-forwarded-for');
     const ip = xff ? (xff.split(',')[0]?.trim() ?? '-') : '-';
-    console.log(`[req] ${request.method} ${request.nextUrl.pathname} ip=${ip || '-'} ua="${uaShort}"`);
+    console.log(
+        `${new Date().toISOString()} [req] ${request.method} ${request.nextUrl.pathname} ip=${ip || '-'} ua="${uaShort}"`,
+    );
 }
 
 export function proxy(request: NextRequest): NextResponse {
