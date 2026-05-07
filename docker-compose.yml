@@ -12,9 +12,38 @@ services:
     image: $WERF_APP_DOCKER_IMAGE_NAME
     command: ["npm", "start"]
     init: true
+    restart: unless-stopped
     env_file: .env
     expose:
       - "${APP_PORT}"
+    # Resource ceiling so a runaway/injected workload cannot consume the host.
+    # The Node.js heap is also clamped via NODE_OPTIONS; both must be honored.
+    mem_limit: 512m
+    pids_limit: 200
+    cpus: 1.0
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=384"
+    # Container filesystem is read-only by default; the few paths the app
+    # genuinely writes to are remounted as size-bounded tmpfs with noexec —
+    # which means a dropped binary in /tmp or /var/tmp cannot be executed.
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777,noexec,nosuid,nodev
+      - /var/tmp:size=16m,mode=1777,noexec,nosuid,nodev
+      - /app/.next/cache:size=64m,mode=0755,noexec,nosuid,nodev
+      - /home/burnotes/.npm:size=8m,mode=0755,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "wget -qO- --timeout=3 http://127.0.0.1:${APP_PORT}/robots.txt > /dev/null || exit 1"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - web
       - infra
