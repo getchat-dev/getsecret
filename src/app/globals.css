@@ -2064,6 +2064,7 @@ html[data-theme="dark"] .qr-modal::backdrop {
     *,
     *::before,
     *::after {
+        /* biome-ignore lint/complexity/noImportantStyles: prefers-reduced-motion override must beat component-level transition-duration */
         transition-duration: 0.01ms !important;
     }
 }

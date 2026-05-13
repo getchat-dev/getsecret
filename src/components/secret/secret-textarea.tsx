@@ -39,6 +39,7 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
         return () => mql.removeEventListener('change', update);
     }, []);
 
+    // biome-ignore lint/correctness/useExhaustiveDependencies: value/format/highlightedHtml are re-measure triggers, not read inside the effect
     useLayoutEffect(() => {
         const ta = textareaRef.current;
         if (!ta) return;

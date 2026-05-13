@@ -146,6 +146,7 @@ export function QrModal({ link, open, onClose }: Props) {
     }
 
     return (
+        // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop click-to-close; <dialog> handles Esc natively
         <dialog ref={dialogRef} className="qr-modal" aria-labelledby={titleId} onClick={handleDialogClick}>
             <div className="qr-modal-inner">
                 <header className="qr-modal-header">
