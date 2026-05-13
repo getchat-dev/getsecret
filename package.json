@@ -1,6 +1,6 @@
 {
     "name": "burnotes",
-    "version": "2.24.0",
+    "version": "2.24.1",
     "private": true,
     "scripts": {
         "dev": "next dev",
@@ -16,6 +16,7 @@
         "fix": "biome check --write",
         "lint:ci": "biome check",
         "clean": "rm -rf .next",
+        "clear": "rm -rf .next node_modules",
         "setup:bindings": "npm install --include=optional --no-save"
     },
     "dependencies": {
