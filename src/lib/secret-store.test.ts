@@ -43,6 +43,8 @@ describe('secret-store', () => {
             encryptedSecret: sampleEncryptedSecret(),
             format: 'plain',
             viewsRemaining: 0,
+            fileS3Key: null,
+            destroyed: true,
         });
         expect(await secretStore.consume('secret-id', 'token-hash')).toBeNull();
     });
@@ -77,6 +79,8 @@ describe('secret-store', () => {
             encryptedSecret: sampleEncryptedSecret(),
             format: 'plain',
             viewsRemaining: 0,
+            fileS3Key: null,
+            destroyed: true,
         });
     });
 
@@ -102,6 +106,8 @@ describe('secret-store', () => {
             encryptedSecret: sampleEncryptedSecret(),
             format: 'json',
             viewsRemaining: 0,
+            fileS3Key: null,
+            destroyed: true,
         });
     });
 
@@ -118,6 +124,8 @@ describe('secret-store', () => {
             encryptedSecret: sampleEncryptedSecret(),
             format: 'plain',
             viewsRemaining: 0,
+            fileS3Key: null,
+            destroyed: true,
         });
     });
 
@@ -135,6 +143,8 @@ describe('secret-store', () => {
             encryptedSecret: sampleEncryptedSecret(),
             format: 'plain',
             viewsRemaining: 0,
+            fileS3Key: null,
+            destroyed: true,
         });
     });
 
@@ -153,6 +163,8 @@ describe('secret-store', () => {
             encryptedSecret: sampleEncryptedSecret(),
             format: 'plain',
             viewsRemaining: 0,
+            fileS3Key: null,
+            destroyed: true,
         });
         expect(await secretStore.consume('v1-secret', 'token-hash')).toBeNull();
     });
@@ -326,5 +338,169 @@ describe('secret-store', () => {
                 'b'.repeat(43),
             ),
         ).toBeNull();
+    });
+
+    describe('file attachments', () => {
+        const fileAttachment = { s3Key: 'f/12345678-1234-1234-1234-1234567890ab', size: 4096 };
+
+        it('persists fileS3Key/fileSize and returns them on consume', async () => {
+            const created = await secretStore.create(
+                'file-secret',
+                sampleEncryptedSecret(),
+                'token-hash',
+                undefined,
+                'plain',
+                1,
+                null,
+                null,
+                fileAttachment,
+            );
+            expect(created).not.toBeNull();
+
+            // Raw hash fields should carry the file binding.
+            const stored = await getValkey().hmget(`${SECRET_KEY_PREFIX}file-secret`, 'fileS3Key', 'fileSize');
+            expect(stored).toEqual([fileAttachment.s3Key, String(fileAttachment.size)]);
+
+            const consumed = await secretStore.consume('file-secret', 'token-hash');
+            expect(consumed).toEqual({
+                encryptedSecret: sampleEncryptedSecret(),
+                format: 'plain',
+                viewsRemaining: 0,
+                fileS3Key: fileAttachment.s3Key,
+                destroyed: true,
+            });
+        });
+
+        it('does not set file fields for text-only secrets', async () => {
+            await secretStore.create('text-only', sampleEncryptedSecret(), 'token-hash');
+            const stored = await getValkey().hmget(`${SECRET_KEY_PREFIX}text-only`, 'fileS3Key', 'fileSize');
+            expect(stored).toEqual([null, null]);
+
+            const consumed = await secretStore.consume('text-only', 'token-hash');
+            expect(consumed?.fileS3Key).toBeNull();
+        });
+
+        it('reports destroyed=true only on the consume that crosses maxViews', async () => {
+            await secretStore.create(
+                'mv-destroyed',
+                sampleEncryptedSecret(),
+                'token-hash',
+                undefined,
+                'plain',
+                3,
+                null,
+                null,
+                fileAttachment,
+            );
+            const first = await secretStore.consume('mv-destroyed', 'token-hash');
+            expect(first?.destroyed).toBe(false);
+            expect(first?.fileS3Key).toBe(fileAttachment.s3Key);
+
+            const second = await secretStore.consume('mv-destroyed', 'token-hash');
+            expect(second?.destroyed).toBe(false);
+            expect(second?.fileS3Key).toBe(fileAttachment.s3Key);
+
+            const third = await secretStore.consume('mv-destroyed', 'token-hash');
+            expect(third?.destroyed).toBe(true);
+            expect(third?.fileS3Key).toBe(fileAttachment.s3Key);
+        });
+
+        it('reports destroyed=false on every consume of an unlimited secret', async () => {
+            await secretStore.create(
+                'unlimited-file',
+                sampleEncryptedSecret(),
+                'token-hash',
+                undefined,
+                'plain',
+                null,
+                null,
+                null,
+                fileAttachment,
+            );
+            for (let i = 0; i < 5; i += 1) {
+                const consumed = await secretStore.consume('unlimited-file', 'token-hash');
+                expect(consumed?.destroyed).toBe(false);
+                expect(consumed?.fileS3Key).toBe(fileAttachment.s3Key);
+            }
+            // Record still exists.
+            expect(await secretStore.getMetadata('unlimited-file')).not.toBeNull();
+        });
+
+        it('rejects creation with empty s3Key', async () => {
+            const result = await secretStore.create(
+                'bad-s3-key',
+                sampleEncryptedSecret(),
+                'token-hash',
+                undefined,
+                'plain',
+                1,
+                null,
+                null,
+                { s3Key: '', size: 100 },
+            );
+            expect(result).toBeNull();
+        });
+
+        it('rejects creation with non-positive file size', async () => {
+            expect(
+                await secretStore.create(
+                    'zero-size',
+                    sampleEncryptedSecret(),
+                    'token-hash',
+                    undefined,
+                    'plain',
+                    1,
+                    null,
+                    null,
+                    { s3Key: 'f/abc', size: 0 },
+                ),
+            ).toBeNull();
+            expect(
+                await secretStore.create(
+                    'neg-size',
+                    sampleEncryptedSecret(),
+                    'token-hash',
+                    undefined,
+                    'plain',
+                    1,
+                    null,
+                    null,
+                    { s3Key: 'f/abc', size: -1 },
+                ),
+            ).toBeNull();
+            expect(
+                await secretStore.create(
+                    'nan-size',
+                    sampleEncryptedSecret(),
+                    'token-hash',
+                    undefined,
+                    'plain',
+                    1,
+                    null,
+                    null,
+                    { s3Key: 'f/abc', size: Number.NaN },
+                ),
+            ).toBeNull();
+        });
+
+        it('falls back to no-file when OPEN script reads a hash without fileS3Key (v1 legacy)', async () => {
+            // Legacy record predating the file-attachments feature: no
+            // fileS3Key field at all. Script should return empty string and
+            // the store layer should surface fileS3Key=null.
+            const client = getValkey();
+            const key = `${SECRET_KEY_PREFIX}legacy-no-file`;
+            await client.hset(key, {
+                encryptedSecret: JSON.stringify(sampleEncryptedSecret()),
+                accessTokenHash: 'token-hash',
+                expiresAt: String(Date.now() + 60_000),
+                failedAttempts: '0',
+                format: 'plain',
+                maxViews: '1',
+                viewsUsed: '0',
+            });
+            const consumed = await secretStore.consume('legacy-no-file', 'token-hash');
+            expect(consumed?.fileS3Key).toBeNull();
+            expect(consumed?.destroyed).toBe(true);
+        });
     });
 });

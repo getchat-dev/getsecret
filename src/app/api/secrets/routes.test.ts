@@ -1,7 +1,18 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Mock the S3 client so the routes never reach real network and so we can
+// drive the upload-session HEAD-verify path through deterministic responses.
+vi.mock('@/lib/s3-client', () => ({
+    headObject: vi.fn(),
+    getPresignedPutUrl: vi.fn(),
+    getPresignedGetUrl: vi.fn(async () => 'https://s3.example.com/burnotes-files/f/xxx?X-Amz-Signature=fake-get'),
+    getMaxFileSizeBytes: vi.fn(() => 25 * 1024 * 1024),
+}));
+
 import { POST as consumeSecret } from '@/app/api/secrets/[id]/route';
 import { POST as createSecret } from '@/app/api/secrets/route';
 import { MAX_EXPIRATION_SECONDS } from '@/lib/expiration';
+import { getPresignedGetUrl, headObject } from '@/lib/s3-client';
 import {
     decryptSecret,
     decryptSecretWithPassword,
@@ -12,6 +23,9 @@ import {
 } from '@/lib/secret-crypto';
 import { SECRET_TTL_SECONDS } from '@/lib/secret-store';
 import { getValkey } from '@/lib/valkey-client';
+
+const headObjectMock = headObject as unknown as ReturnType<typeof vi.fn>;
+const getPresignedGetUrlMock = getPresignedGetUrl as unknown as ReturnType<typeof vi.fn>;
 
 describe('secret API routes', () => {
     beforeEach(async () => {
@@ -564,5 +578,245 @@ describe('secret API routes', () => {
         );
 
         expect(response.status).toBe(413);
+    });
+
+    describe('file attachments', () => {
+        const VALID_UPLOAD_TOKEN = 'z'.repeat(43);
+
+        async function seedUploadSession(token: string, s3Key: string, expectedSize: number): Promise<void> {
+            await getValkey().set(
+                `upload:${token}`,
+                JSON.stringify({ s3Key, expectedSize, ip: '127.0.0.1', expiresAt: Date.now() + 60_000 }),
+                'PX',
+                600_000,
+            );
+        }
+
+        beforeEach(() => {
+            headObjectMock.mockReset();
+            getPresignedGetUrlMock.mockReset();
+            getPresignedGetUrlMock.mockResolvedValue(
+                'https://s3.example.com/burnotes-files/f/xxx?X-Amz-Signature=fake-get',
+            );
+        });
+
+        it('binds the file when the upload token resolves and consume returns a signed GET URL', async () => {
+            const prepared = await prepareSecretUpload('secret with file');
+            const s3Key = 'f/12345678-1234-1234-1234-1234567890ab';
+            await seedUploadSession(VALID_UPLOAD_TOKEN, s3Key, 4096);
+            headObjectMock.mockResolvedValueOnce({ contentLength: 4096, etag: '"abc"' });
+
+            const createResponse = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: VALID_UPLOAD_TOKEN,
+                    }),
+                }),
+            );
+            expect(createResponse.status).toBe(201);
+            const createData = (await createResponse.json()) as { fileAttached: boolean };
+            expect(createData.fileAttached).toBe(true);
+
+            const consumeResponse = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(consumeResponse.status).toBe(200);
+            const consumeData = (await consumeResponse.json()) as {
+                file?: { signedGetUrl: string; expiresIn: number };
+            };
+            expect(consumeData.file?.signedGetUrl).toContain('https://');
+            expect(consumeData.file?.expiresIn).toBe(300);
+            expect(getPresignedGetUrlMock).toHaveBeenCalledWith({ key: s3Key, expiresIn: 300 });
+        });
+
+        it('omits the file block on consume for a text-only secret', async () => {
+            const prepared = await prepareSecretUpload('text only');
+            await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                    }),
+                }),
+            );
+
+            const consumeResponse = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            expect(consumeResponse.status).toBe(200);
+            const consumeData = (await consumeResponse.json()) as { file?: unknown };
+            expect(consumeData.file).toBeUndefined();
+            expect(getPresignedGetUrlMock).not.toHaveBeenCalled();
+        });
+
+        it('still reveals the secret if the GET URL signer fails (file silently dropped)', async () => {
+            const prepared = await prepareSecretUpload('secret with broken signer');
+            const s3Key = 'f/12345678-1234-1234-1234-1234567890ac';
+            await seedUploadSession(VALID_UPLOAD_TOKEN, s3Key, 100);
+            headObjectMock.mockResolvedValueOnce({ contentLength: 100, etag: '"abc"' });
+            await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: VALID_UPLOAD_TOKEN,
+                    }),
+                }),
+            );
+
+            getPresignedGetUrlMock.mockRejectedValueOnce(new Error('signer down'));
+            const consumeResponse = await consumeSecret(
+                new Request(`http://localhost/api/secrets/${prepared.id}`, {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({ accessToken: prepared.accessToken }),
+                }),
+                { params: Promise.resolve({ id: prepared.id }) },
+            );
+            // The secret itself still reveals — only the file block is dropped.
+            expect(consumeResponse.status).toBe(200);
+            const consumeData = (await consumeResponse.json()) as { file?: unknown };
+            expect(consumeData.file).toBeUndefined();
+        });
+
+        it('returns 400 on malformed uploadToken (no Valkey/S3 reads)', async () => {
+            const prepared = await prepareSecretUpload('payload');
+            const response = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: 'too-short',
+                    }),
+                }),
+            );
+            expect(response.status).toBe(400);
+            expect(headObjectMock).not.toHaveBeenCalled();
+        });
+
+        it('returns 400 when the upload token does not match a stored session', async () => {
+            const prepared = await prepareSecretUpload('payload');
+            const response = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: VALID_UPLOAD_TOKEN, // no session stored
+                    }),
+                }),
+            );
+            expect(response.status).toBe(400);
+            const data = (await response.json()) as { error: string };
+            expect(data.error).toMatch(/expired|already used/i);
+        });
+
+        it('returns 400 when HEAD-verify finds a size mismatch', async () => {
+            const prepared = await prepareSecretUpload('payload');
+            await seedUploadSession(VALID_UPLOAD_TOKEN, 'f/00000000-0000-0000-0000-000000000099', 1024);
+            headObjectMock.mockResolvedValueOnce({ contentLength: 2048, etag: '"x"' });
+
+            const response = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: VALID_UPLOAD_TOKEN,
+                    }),
+                }),
+            );
+            expect(response.status).toBe(400);
+            const data = (await response.json()) as { error: string };
+            expect(data.error).toMatch(/size mismatch/i);
+        });
+
+        it('upload token is consumed even on size-mismatch (cannot be replayed)', async () => {
+            const prepared = await prepareSecretUpload('payload');
+            await seedUploadSession(VALID_UPLOAD_TOKEN, 'f/abcd', 1024);
+            headObjectMock.mockResolvedValueOnce({ contentLength: 9999, etag: '"x"' });
+
+            await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: prepared.id,
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: VALID_UPLOAD_TOKEN,
+                    }),
+                }),
+            );
+
+            // Token is gone — second use returns "expired/already used".
+            const second = await createSecret(
+                new Request('http://localhost/api/secrets', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                    body: JSON.stringify({
+                        id: 'b'.repeat(43),
+                        encryptedSecret: prepared.encryptedSecret,
+                        accessToken: prepared.accessToken,
+                        uploadToken: VALID_UPLOAD_TOKEN,
+                    }),
+                }),
+            );
+            expect(second.status).toBe(400);
+            const data = (await second.json()) as { error: string };
+            expect(data.error).toMatch(/expired|already used/i);
+        });
+
+        it('returns 503 when the storage layer errors during HEAD-verify', async () => {
+            const prepared = await prepareSecretUpload('payload');
+            await seedUploadSession(VALID_UPLOAD_TOKEN, 'f/0011', 100);
+            // Force the valkey getdel inside resolveAndConsumeUploadSession to throw.
+            const spy = vi.spyOn(getValkey(), 'getdel').mockRejectedValueOnce(new Error('redis down'));
+            try {
+                const response = await createSecret(
+                    new Request('http://localhost/api/secrets', {
+                        method: 'POST',
+                        headers: { 'content-type': 'application/json', 'x-forwarded-for': '127.0.0.1' },
+                        body: JSON.stringify({
+                            id: prepared.id,
+                            encryptedSecret: prepared.encryptedSecret,
+                            accessToken: prepared.accessToken,
+                            uploadToken: VALID_UPLOAD_TOKEN,
+                        }),
+                    }),
+                );
+                expect(response.status).toBe(503);
+            } finally {
+                spy.mockRestore();
+            }
+        });
     });
 });
