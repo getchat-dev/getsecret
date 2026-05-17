@@ -1,10 +1,13 @@
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
+    type FileRef,
     MAX_SECRET_LENGTH,
     type PreparedSecretUpload,
     type PreparedSecretUploadWithPassword,
     prepareSecretUpload,
+    prepareSecretUploadEnvelope,
     prepareSecretUploadWithPassword,
+    prepareSecretUploadWithPasswordEnvelope,
 } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, type SecretFormat } from '@/lib/secret-formats';
 
@@ -21,6 +24,8 @@ type CreateSecretLinkOptions = {
     format?: SecretFormat;
     maxViews?: number | null;
     password?: string;
+    fileRef?: FileRef;
+    uploadToken?: string;
 };
 
 function isPreparedWithPassword(
@@ -30,8 +35,21 @@ function isPreparedWithPassword(
 }
 
 export async function createSecretLink(secret: string, options: CreateSecretLinkOptions = {}): Promise<string> {
-    if (secret.length === 0 || secret.length > MAX_SECRET_LENGTH) {
+    const { fileRef, uploadToken } = options;
+    const hasFile = fileRef !== undefined;
+    // A secret needs SOMETHING — either text content or a file attachment.
+    // File-only secrets are allowed (empty text), text-only secrets are
+    // allowed (no file), but a fully empty payload is rejected here.
+    if (!hasFile && secret.length === 0) {
         throw new Error(`Secret length must be between 1 and ${MAX_SECRET_LENGTH} characters.`);
+    }
+    if (secret.length > MAX_SECRET_LENGTH) {
+        throw new Error(`Secret length must be between 1 and ${MAX_SECRET_LENGTH} characters.`);
+    }
+    // fileRef and uploadToken are produced as a pair by uploadFile(); a caller
+    // that sets one without the other is misusing the API.
+    if (hasFile !== (uploadToken !== undefined)) {
+        throw new Error('fileRef and uploadToken must be provided together');
     }
 
     const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password } = options;
@@ -47,9 +65,20 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
 
     let prepared: PreparedSecretUpload | PreparedSecretUploadWithPassword;
     try {
-        prepared = usePassword
-            ? await prepareSecretUploadWithPassword(secret, password)
-            : await prepareSecretUpload(secret);
+        if (hasFile) {
+            // File-attached secrets always use the envelope format so the
+            // fileRef rides inside the ciphertext.
+            const payload = { text: secret, fileRef };
+            prepared = usePassword
+                ? await prepareSecretUploadWithPasswordEnvelope(payload, password)
+                : await prepareSecretUploadEnvelope(payload);
+        } else {
+            // Text-only secrets keep the legacy raw plaintext on the wire so
+            // old client/server combinations still interoperate during rollout.
+            prepared = usePassword
+                ? await prepareSecretUploadWithPassword(secret, password)
+                : await prepareSecretUpload(secret);
+        }
     } catch {
         throw new Error('Browser encryption is not available');
     }
@@ -77,6 +106,7 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
                 ...(typeof expiresInSeconds === 'number' ? { expiresInSeconds } : {}),
                 ...(maxViews !== undefined ? { maxViews } : {}),
                 ...passwordFields,
+                ...(uploadToken ? { uploadToken } : {}),
             }),
         });
     } catch {

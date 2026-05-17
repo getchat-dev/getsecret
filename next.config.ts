@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     output: 'standalone',
     poweredByHeader: false,
     serverExternalPackages: ['ioredis'],
-    allowedDevOrigins: ['http://burnotes.local'],
+    allowedDevOrigins: ['burnotes.local'],
     async headers() {
         return [
             {

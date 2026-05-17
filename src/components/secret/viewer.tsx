@@ -8,12 +8,13 @@ import { RevealedSecret } from '@/components/secret/revealed-secret';
 import type { PasswordParams } from '@/lib/password-derive';
 import { isValidPassword } from '@/lib/password-policy';
 import {
-    decryptSecret,
-    decryptSecretWithPassword,
+    decryptSecretToPayload,
+    decryptSecretWithPasswordToPayload,
     deriveSecretAccessToken,
     deriveSecretId,
     deriveVerifierForOpen,
     type EncryptedSecret,
+    type FileRef,
     readSecretKeyFromHash,
     SECRET_VERSION_V2,
 } from '@/lib/secret-crypto';
@@ -31,10 +32,21 @@ type LinkState =
 // (terminal); 'wrong-password' stays on the lock screen with an inline error.
 type ErrorReason = 'consumed' | 'wrong-password' | 'rate-limited' | 'service-unavailable' | 'network';
 
+export type AttachedFile = {
+    fileRef: FileRef;
+    signedGetUrl: string;
+};
+
 type SecretState =
     | { status: 'idle' }
     | { status: 'loading' }
-    | { status: 'revealed'; content: string; format: SecretFormat; viewsRemaining: number | null }
+    | {
+          status: 'revealed';
+          content: string;
+          format: SecretFormat;
+          viewsRemaining: number | null;
+          file: AttachedFile | null;
+      }
     | { status: 'error'; reason: ErrorReason };
 
 type Props = {
@@ -148,6 +160,7 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
                 encryptedSecret?: EncryptedSecret;
                 format?: unknown;
                 viewsRemaining?: unknown;
+                file?: { signedGetUrl?: unknown; expiresIn?: unknown } | null;
             };
             if (!data.encryptedSecret) {
                 setSecretState({ status: 'error', reason: passwordRequired ? 'wrong-password' : 'consumed' });
@@ -155,15 +168,15 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
             }
 
             try {
-                const content =
+                const payload =
                     data.encryptedSecret.version === SECRET_VERSION_V2 && passwordParams
-                        ? await decryptSecretWithPassword(
+                        ? await decryptSecretWithPasswordToPayload(
                               linkState.secretKey,
                               data.encryptedSecret,
                               password,
                               passwordParams,
                           )
-                        : await decryptSecret(linkState.secretKey, data.encryptedSecret);
+                        : await decryptSecretToPayload(linkState.secretKey, data.encryptedSecret);
                 const format: SecretFormat = isSecretFormat(data.format) ? data.format : DEFAULT_SECRET_FORMAT;
                 const viewsRemaining: number | null =
                     typeof data.viewsRemaining === 'number' &&
@@ -171,7 +184,17 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
                     data.viewsRemaining >= 0
                         ? data.viewsRemaining
                         : null;
-                setSecretState({ status: 'revealed', content, format, viewsRemaining });
+                const signedGetUrl =
+                    data.file && typeof data.file.signedGetUrl === 'string' ? data.file.signedGetUrl : null;
+                const file: AttachedFile | null =
+                    payload.fileRef && signedGetUrl ? { fileRef: payload.fileRef, signedGetUrl } : null;
+                setSecretState({
+                    status: 'revealed',
+                    content: payload.text,
+                    format,
+                    viewsRemaining,
+                    file,
+                });
             } catch {
                 // Local decrypt threw. Inner AES-GCM auth fail with a
                 // password-required secret means the verifier matched but
@@ -205,6 +228,7 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
                 content={secretState.content}
                 format={secretState.format}
                 viewsRemaining={secretState.viewsRemaining}
+                file={secretState.file}
             />
         );
     }

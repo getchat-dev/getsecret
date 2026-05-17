@@ -1,6 +1,7 @@
 import { getClientIp, jsonNoStore, readJsonBody } from '@/lib/http';
 import { hashPasswordVerifier, isValidPasswordVerifier } from '@/lib/password-derive';
 import { rateLimiter } from '@/lib/rate-limit';
+import { getPresignedGetUrl } from '@/lib/s3-client';
 import { hashAccessToken, isValidAccessToken, isValidSecretId } from '@/lib/secret-crypto';
 import { secretStore } from '@/lib/secret-store';
 
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic';
 const CONSUME_LIMIT = 120;
 const CONSUME_WINDOW_MS = 60_000;
 const CONSUME_MAX_BODY_BYTES = 1024;
+const FILE_GET_URL_TTL_SECONDS = 300;
 
 type ConsumeSecretBody = {
     accessToken?: unknown;
@@ -61,11 +63,32 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         return jsonNoStore({ error: 'Secret not found or expired' }, 404);
     }
 
+    // If this secret had an attached file, sign a short-lived GET URL the
+    // client uses to fetch the encrypted container from S3. We deliberately
+    // do NOT eagerly delete the object on the destroyed-view: the signed URL
+    // has a 5-minute TTL, but a race with our own DELETE could 404 the
+    // legitimate download. Bucket lifecycle (2 days) is the cleanup mechanism.
+    let file: { signedGetUrl: string; expiresIn: number } | null = null;
+    if (consumed.fileS3Key) {
+        try {
+            const signedGetUrl = await getPresignedGetUrl({
+                key: consumed.fileS3Key,
+                expiresIn: FILE_GET_URL_TTL_SECONDS,
+            });
+            file = { signedGetUrl, expiresIn: FILE_GET_URL_TTL_SECONDS };
+        } catch {
+            // S3 outage / config error — the secret still reveals correctly,
+            // the client just can't download the attachment.
+            file = null;
+        }
+    }
+
     return jsonNoStore(
         {
             encryptedSecret: consumed.encryptedSecret,
             format: consumed.format,
             viewsRemaining: consumed.viewsRemaining,
+            ...(file ? { file } : {}),
         },
         200,
     );

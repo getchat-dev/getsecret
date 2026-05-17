@@ -12,7 +12,8 @@ import {
     SECRET_VERSION_V2,
 } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, isSecretFormat } from '@/lib/secret-formats';
-import { secretStore } from '@/lib/secret-store';
+import { type FileAttachment, secretStore } from '@/lib/secret-store';
+import { isValidUploadToken, resolveAndConsumeUploadSession } from '@/lib/upload-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,6 +31,7 @@ type CreateSecretBody = {
     maxViews?: unknown;
     passwordParams?: unknown;
     passwordVerifierHash?: unknown;
+    uploadToken?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -112,6 +114,34 @@ export async function POST(request: Request) {
         return jsonNoStore({ error: 'v2 payload requires password params' }, 400);
     }
 
+    // Optional file attachment. The client first uploads the encrypted
+    // container to S3 via POST /api/files/presign, then passes the resulting
+    // uploadToken here. We resolve the token (single-use), HEAD-verify the
+    // object on S3, and only then bind it to the secret. The S3 key, file
+    // size, and presigned URLs never leak the file's plaintext, name, or MIME.
+    let file: FileAttachment | null = null;
+    if (body.uploadToken !== undefined) {
+        if (!isValidUploadToken(body.uploadToken)) {
+            return jsonNoStore({ error: 'Invalid upload token' }, 400);
+        }
+        const resolved = await resolveAndConsumeUploadSession(body.uploadToken);
+        if (!resolved.ok) {
+            const message =
+                resolved.reason === 'not-found'
+                    ? 'Upload session expired or already used'
+                    : resolved.reason === 'object-missing'
+                      ? 'Uploaded object not found in storage'
+                      : resolved.reason === 'size-mismatch'
+                        ? 'Uploaded object size mismatch'
+                        : resolved.reason === 'storage-error'
+                          ? 'Storage temporarily unavailable'
+                          : 'Invalid upload token';
+            const status = resolved.reason === 'storage-error' ? 503 : 400;
+            return jsonNoStore({ error: message }, status);
+        }
+        file = resolved.file;
+    }
+
     const accessTokenHash = await hashAccessToken(body.accessToken);
     const createdSecret = await secretStore.create(
         body.id,
@@ -122,6 +152,7 @@ export async function POST(request: Request) {
         maxViews,
         hasPasswordRequest && isValidPasswordParams(body.passwordParams) ? body.passwordParams : null,
         hasPasswordRequest && isValidPasswordVerifierHash(body.passwordVerifierHash) ? body.passwordVerifierHash : null,
+        file,
     );
     if (!createdSecret) {
         return jsonNoStore({ error: 'Secret id already exists' }, 409);
@@ -134,6 +165,7 @@ export async function POST(request: Request) {
             expiresAt: createdSecret.expiresAt,
             expiresInSeconds,
             maxViews,
+            fileAttached: file !== null,
         },
         201,
     );

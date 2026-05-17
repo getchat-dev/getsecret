@@ -55,7 +55,7 @@ export function ClientLocaleProvider({ initialLocale, initialMessages, children 
 
     return (
         <Ctx.Provider value={{ locale, switchLocale }}>
-            <NextIntlClientProvider locale={locale} messages={messages}>
+            <NextIntlClientProvider locale={locale} messages={messages} timeZone="UTC">
                 {children}
             </NextIntlClientProvider>
         </Ctx.Provider>

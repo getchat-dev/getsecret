@@ -31,6 +31,11 @@
         "passphrasePh": "leave empty for link-only access",
         "submit": "Encrypt & generate link",
         "clear": "Clear",
+        "cancel": "Cancel",
+        "uploading": "Uploading… {percent}%",
+        "attachFileHint": "Drop a file here, or",
+        "browseFile": "Browse files",
+        "removeFile": "Remove",
         "shortcut": "⌘ + Enter",
         "info": "Your secret is encrypted in this browser before it leaves. The decryption key is appended after the # in the link — fragments are never sent to our servers.",
         "howItWorks": "How it works ↗",
@@ -129,7 +134,10 @@
         "copyClip": "Copy to clipboard",
         "shareBack": "Share something back",
         "footnote": "decrypted locally · never logged",
-        "copiedToast": "Secret copied — paste it now"
+        "copiedToast": "Secret copied — paste it now",
+        "attachmentLabel": "Attached file",
+        "download": "Download",
+        "downloading": "Downloading…"
     },
     "burned": {
         "title1": "This secret is",
@@ -178,7 +186,10 @@
         "copyFailed": "Could not copy to the clipboard.",
         "qrRenderFailed": "Could not generate the QR code.",
         "qrDownloadFailed": "Could not save the QR code.",
-        "passwordTooShort": "Passphrase must be at least {min, number} characters."
+        "passwordTooShort": "Passphrase must be at least {min, number} characters.",
+        "fileTooLarge": "File is too large; maximum is {max}.",
+        "downloadFailed": "Could not download the attached file.",
+        "fileExpired": "The attached file is no longer available."
     },
     "theme": {
         "legend": "Theme",

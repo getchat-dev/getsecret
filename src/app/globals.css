@@ -603,6 +603,102 @@ h1.display .accent-word {
 }
 
 /* ============================================================
+   FILE ATTACHMENTS
+============================================================ */
+
+.file-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    background: var(--bg-1);
+    border: 1px dashed var(--border-default);
+    border-radius: var(--radius-md);
+    text-align: center;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+
+.file-dropzone.is-dragging {
+    border-color: var(--accent-border);
+    background: var(--accent-bg-soft);
+}
+
+.file-dropzone.has-file {
+    padding: 12px 14px;
+    border-style: solid;
+    align-items: stretch;
+    text-align: left;
+}
+
+.file-dropzone-hint {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--fg-muted);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.file-info svg {
+    color: var(--fg-subtle);
+    flex-shrink: 0;
+}
+
+.file-info-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg-default);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.file-info-meta {
+    font-size: 11px;
+    color: var(--fg-subtle);
+    font-family: var(--font-mono);
+    margin-right: auto;
+}
+
+.attachment {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    background: var(--bg-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.attachment svg {
+    color: var(--fg-subtle);
+    flex-shrink: 0;
+}
+
+.attachment-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg-default);
+    margin-right: auto;
+}
+
+.attachment-error {
+    flex-basis: 100%;
+    font-size: 12px;
+    color: var(--danger);
+}
+
+/* ============================================================
    FORM CONTROLS
 ============================================================ */
 

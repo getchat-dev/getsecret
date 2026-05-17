@@ -8,6 +8,10 @@ import { getValkey, SECRET_KEY_PREFIX } from '@/lib/valkey-client';
 
 const MAX_FAILED_ATTEMPTS = 5;
 
+// ARGV[10] = fileS3Key, ARGV[11] = fileSize. Both are optional (empty string =
+// not set); when present they bind a server-allocated S3 object to this
+// secret. The file lives on S3 as an opaque encrypted container; the server
+// only stores the key + size for cleanup and presigning.
 const CREATE_SCRIPT = `
 if redis.call('EXISTS', KEYS[1]) == 1 then
     return 0
@@ -23,6 +27,9 @@ redis.call('HSET', KEYS[1],
     'passwordSalt', ARGV[7],
     'passwordIterations', ARGV[8],
     'passwordVerifierHash', ARGV[9])
+if ARGV[10] ~= '' then
+    redis.call('HSET', KEYS[1], 'fileS3Key', ARGV[10], 'fileSize', ARGV[11])
+end
 redis.call('PEXPIRE', KEYS[1], ARGV[4])
 return 1
 `;
@@ -82,6 +89,7 @@ if tokenDiff + pwDiff > 0 then
 end
 local encrypted = redis.call('HGET', KEYS[1], 'encryptedSecret')
 local format = redis.call('HGET', KEYS[1], 'format') or ''
+local fileS3Key = redis.call('HGET', KEYS[1], 'fileS3Key') or ''
 local maxViewsRaw = redis.call('HGET', KEYS[1], 'maxViews')
 local maxViews
 if maxViewsRaw == false or maxViewsRaw == nil then
@@ -96,6 +104,7 @@ else
 end
 local viewsUsed = redis.call('HINCRBY', KEYS[1], 'viewsUsed', 1)
 local viewsRemaining
+local destroyed = '0'
 if maxViews == -1 then
     viewsRemaining = -1
 else
@@ -105,16 +114,24 @@ else
     end
     if viewsUsed >= maxViews then
         redis.call('DEL', KEYS[1])
+        destroyed = '1'
     end
 end
-return {'ok', encrypted, format, tostring(viewsRemaining)}
+return {'ok', encrypted, format, tostring(viewsRemaining), fileS3Key, destroyed}
 `;
 
 type BurnotesCommands = {
     burnotesCreate: (...args: (string | number)[]) => Promise<number>;
     burnotesOpen: (
         ...args: (string | number)[]
-    ) => Promise<[string] | [string, string] | [string, string, string] | [string, string, string, string]>;
+    ) => Promise<
+        | [string]
+        | [string, string]
+        | [string, string, string]
+        | [string, string, string, string]
+        | [string, string, string, string, string]
+        | [string, string, string, string, string, string]
+    >;
 };
 
 const registered = new WeakSet<Redis>();
@@ -164,6 +181,13 @@ export type ConsumedSecret = {
     encryptedSecret: EncryptedSecret;
     format: SecretFormat;
     viewsRemaining: number | null;
+    fileS3Key: string | null;
+    destroyed: boolean;
+};
+
+export type FileAttachment = {
+    s3Key: string;
+    size: number;
 };
 
 class SecretStore {
@@ -176,6 +200,7 @@ class SecretStore {
         maxViews: number | null = DEFAULT_MAX_VIEWS,
         passwordParams: PasswordParams | null = null,
         passwordVerifierHash: string | null = null,
+        file: FileAttachment | null = null,
     ): Promise<{ expiresAt: number } | null> {
         if (!isValidMaxViews(maxViews)) return null;
         // passwordParams and passwordVerifierHash must be set together or both omitted.
@@ -190,6 +215,10 @@ class SecretStore {
             ) {
                 return null;
             }
+        }
+        if (file !== null) {
+            if (typeof file.s3Key !== 'string' || file.s3Key.length === 0) return null;
+            if (!Number.isInteger(file.size) || file.size <= 0) return null;
         }
 
         const client = getClient();
@@ -206,6 +235,8 @@ class SecretStore {
             passwordParams ? passwordParams.salt : '',
             passwordParams ? String(passwordParams.iterations) : '',
             passwordVerifierHash ?? '',
+            file ? file.s3Key : '',
+            file ? String(file.size) : '',
         );
         if (result !== 1) {
             return null;
@@ -263,7 +294,10 @@ class SecretStore {
         const parsedRemaining = typeof rawRemaining === 'string' ? Number.parseInt(rawRemaining, 10) : Number.NaN;
         const viewsRemaining: number | null =
             !Number.isInteger(parsedRemaining) || parsedRemaining < 0 ? null : parsedRemaining;
-        return { encryptedSecret, format, viewsRemaining };
+        const rawFileKey = typeof result[4] === 'string' ? result[4] : '';
+        const fileS3Key = rawFileKey.length > 0 ? rawFileKey : null;
+        const destroyed = result[5] === '1';
+        return { encryptedSecret, format, viewsRemaining, fileS3Key, destroyed };
     }
 }
 

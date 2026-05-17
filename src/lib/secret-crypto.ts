@@ -52,6 +52,34 @@ export type PreparedSecretUploadWithPassword = PreparedSecretUpload & {
     passwordVerifierHash: string;
 };
 
+// File reference embedded inside the plaintext envelope. The server never
+// sees this — it lives inside the encrypted ciphertext along with the text.
+// `s3Key` is the opaque object key on S3 (server-allocated, `f/<uuid>`),
+// `keyB64` is the AES-GCM key for the encrypted file container (32 random
+// bytes, base64url). The client retrieves the file from S3 via a signed GET
+// URL returned by the consume endpoint, then decrypts the container locally.
+export type FileRef = {
+    s3Key: string;
+    keyB64: string;
+};
+
+export type SecretPayload = {
+    text: string;
+    fileRef?: FileRef;
+};
+
+// Envelope wire format inside the AES-GCM plaintext:
+//
+//   byte 0:     0x00 (magic — marks the envelope format)
+//   bytes 1..:  UTF-8 JSON { text: string, fileRef?: { s3Key, keyB64 } }
+//
+// Legacy secrets (created before this format was introduced) have plaintext
+// that is raw UTF-8 text with no 0x00 prefix. The decoder detects them by
+// the absence of the magic byte and returns { text: <raw> } so old links keep
+// working without a migration.
+const ENVELOPE_MAGIC = 0x00;
+const S3_KEY_PATTERN = /^f\/[0-9a-f-]{36}$/;
+
 function base64UrlLengthForBytes(byteLength: number): number {
     return Math.ceil(byteLength / 3) * 4 - ((3 - (byteLength % 3)) % 3);
 }
@@ -161,6 +189,51 @@ export function readSecretKeyFromHash(hash: string): string | null {
     return fragment.length > 0 ? fragment : null;
 }
 
+function isFileRefShape(value: unknown): value is FileRef {
+    if (!value || typeof value !== 'object') return false;
+    const v = value as Record<string, unknown>;
+    if (typeof v.s3Key !== 'string' || !S3_KEY_PATTERN.test(v.s3Key)) return false;
+    if (typeof v.keyB64 !== 'string' || !BASE64URL_PATTERN.test(v.keyB64)) return false;
+    return true;
+}
+
+export function encodePlaintext(payload: SecretPayload): Uint8Array {
+    const envelope: { text: string; fileRef?: FileRef } = { text: payload.text };
+    if (payload.fileRef) envelope.fileRef = payload.fileRef;
+    const json = JSON.stringify(envelope);
+    const jsonBytes = textEncoder.encode(json);
+    const out = new Uint8Array(1 + jsonBytes.length);
+    out[0] = ENVELOPE_MAGIC;
+    out.set(jsonBytes, 1);
+    return out;
+}
+
+export function decodePlaintext(plaintext: Uint8Array): SecretPayload {
+    // Legacy raw text: no magic byte → treat the whole buffer as UTF-8 text.
+    // We accept any byte that is not the magic, so a plaintext that happens to
+    // start with a non-zero byte never gets misinterpreted as an envelope.
+    if (plaintext.length === 0 || plaintext[0] !== ENVELOPE_MAGIC) {
+        return { text: textDecoder.decode(plaintext) };
+    }
+    // Magic-prefixed payloads MUST be valid JSON. Silent fallback on parse
+    // failure would hide ciphertext corruption (which AES-GCM auth tags do
+    // catch, but only on the outer ciphertext layer — corruption inside the
+    // decrypted envelope would slip through).
+    let json: unknown;
+    try {
+        json = JSON.parse(textDecoder.decode(plaintext.subarray(1)));
+    } catch {
+        throw new Error('Malformed secret envelope: invalid JSON');
+    }
+    if (!json || typeof json !== 'object') {
+        throw new Error('Malformed secret envelope: not an object');
+    }
+    const obj = json as Record<string, unknown>;
+    const text = typeof obj.text === 'string' ? obj.text : '';
+    const fileRef = isFileRefShape(obj.fileRef) ? obj.fileRef : undefined;
+    return fileRef ? { text, fileRef } : { text };
+}
+
 export async function deriveSecretId(secretKey: string): Promise<string> {
     return deriveToken(SECRET_ID_LABEL, decodeSecretKey(secretKey));
 }
@@ -174,14 +247,21 @@ export async function hashAccessToken(accessToken: string): Promise<string> {
 }
 
 export async function prepareSecretUpload(secret: string): Promise<PreparedSecretUpload> {
+    return prepareSecretUploadFromBytes(textEncoder.encode(secret));
+}
+
+// Envelope-aware variant: pass a structured payload (text + optional fileRef).
+// Use this for file-attached secrets so the file reference is carried inside
+// the ciphertext and never leaks to the server.
+export async function prepareSecretUploadEnvelope(payload: SecretPayload): Promise<PreparedSecretUpload> {
+    return prepareSecretUploadFromBytes(encodePlaintext(payload));
+}
+
+async function prepareSecretUploadFromBytes(plaintext: Uint8Array): Promise<PreparedSecretUpload> {
     const keyBytes = crypto.getRandomValues(new Uint8Array(SECRET_KEY_BYTES));
     const ivBytes = crypto.getRandomValues(new Uint8Array(SECRET_IV_BYTES));
     const encryptionKey = await importAesKey(keyBytes, ['encrypt']);
-    const ciphertext = await crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: ivBytes },
-        encryptionKey,
-        textEncoder.encode(secret),
-    );
+    const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: ivBytes }, encryptionKey, plaintext);
 
     return {
         id: await deriveToken(SECRET_ID_LABEL, keyBytes),
@@ -195,7 +275,7 @@ export async function prepareSecretUpload(secret: string): Promise<PreparedSecre
     };
 }
 
-export async function decryptSecret(secretKey: string, encryptedSecret: EncryptedSecret): Promise<string> {
+async function decryptSecretToBytes(secretKey: string, encryptedSecret: EncryptedSecret): Promise<Uint8Array> {
     if (!isValidEncryptedSecret(encryptedSecret)) {
         throw new Error('Unsupported secret payload');
     }
@@ -212,7 +292,23 @@ export async function decryptSecret(secretKey: string, encryptedSecret: Encrypte
         ciphertextBytes,
     );
 
-    return textDecoder.decode(plaintext);
+    return new Uint8Array(plaintext);
+}
+
+export async function decryptSecret(secretKey: string, encryptedSecret: EncryptedSecret): Promise<string> {
+    const plaintext = await decryptSecretToBytes(secretKey, encryptedSecret);
+    // The envelope decoder handles both legacy raw plaintext (no magic byte,
+    // returned as-is) and modern envelope plaintext (returns the text field).
+    // String callers lose the fileRef if one was set — they should switch to
+    // decryptSecretToPayload if they need it.
+    return decodePlaintext(plaintext).text;
+}
+
+export async function decryptSecretToPayload(
+    secretKey: string,
+    encryptedSecret: EncryptedSecret,
+): Promise<SecretPayload> {
+    return decodePlaintext(await decryptSecretToBytes(secretKey, encryptedSecret));
 }
 
 // Password-protected upload: inner AES-GCM(plaintext) under PBKDF2-derived key,
@@ -226,6 +322,25 @@ export async function prepareSecretUploadWithPassword(
     password: string,
     iterations: number = PASSWORD_PBKDF2_ITERATIONS,
 ): Promise<PreparedSecretUploadWithPassword> {
+    return prepareSecretUploadWithPasswordFromBytes(textEncoder.encode(secret), password, iterations);
+}
+
+// Envelope-aware password variant: the envelope (with optional fileRef) sits
+// at the INNERMOST layer, so file references are protected by both the URL
+// fragment key AND the user's password.
+export async function prepareSecretUploadWithPasswordEnvelope(
+    payload: SecretPayload,
+    password: string,
+    iterations: number = PASSWORD_PBKDF2_ITERATIONS,
+): Promise<PreparedSecretUploadWithPassword> {
+    return prepareSecretUploadWithPasswordFromBytes(encodePlaintext(payload), password, iterations);
+}
+
+async function prepareSecretUploadWithPasswordFromBytes(
+    plaintext: Uint8Array,
+    password: string,
+    iterations: number,
+): Promise<PreparedSecretUploadWithPassword> {
     const outerKeyBytes = crypto.getRandomValues(new Uint8Array(SECRET_KEY_BYTES));
     const outerIvBytes = crypto.getRandomValues(new Uint8Array(SECRET_IV_BYTES));
     const innerIvBytes = crypto.getRandomValues(new Uint8Array(SECRET_IV_BYTES));
@@ -234,7 +349,7 @@ export async function prepareSecretUploadWithPassword(
 
     const innerKey = await importAesKey(innerKeyBytes, ['encrypt']);
     const innerCiphertext = new Uint8Array(
-        await crypto.subtle.encrypt({ name: 'AES-GCM', iv: innerIvBytes }, innerKey, textEncoder.encode(secret)),
+        await crypto.subtle.encrypt({ name: 'AES-GCM', iv: innerIvBytes }, innerKey, plaintext),
     );
     const bundle = concatBytes(innerIvBytes, innerCiphertext);
 
@@ -263,12 +378,12 @@ export async function prepareSecretUploadWithPassword(
     };
 }
 
-export async function decryptSecretWithPassword(
+async function decryptSecretWithPasswordToBytes(
     secretKey: string,
     encryptedSecret: EncryptedSecret,
     password: string,
     passwordParams: PasswordParams,
-): Promise<string> {
+): Promise<Uint8Array> {
     if (!isValidEncryptedSecret(encryptedSecret)) {
         throw new Error('Unsupported secret payload');
     }
@@ -295,7 +410,27 @@ export async function decryptSecretWithPassword(
     const innerKey = await importAesKey(innerKeyBytes, ['decrypt']);
     const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: innerIvBytes }, innerKey, innerCiphertext);
 
-    return textDecoder.decode(plaintext);
+    return new Uint8Array(plaintext);
+}
+
+export async function decryptSecretWithPassword(
+    secretKey: string,
+    encryptedSecret: EncryptedSecret,
+    password: string,
+    passwordParams: PasswordParams,
+): Promise<string> {
+    const plaintext = await decryptSecretWithPasswordToBytes(secretKey, encryptedSecret, password, passwordParams);
+    return decodePlaintext(plaintext).text;
+}
+
+export async function decryptSecretWithPasswordToPayload(
+    secretKey: string,
+    encryptedSecret: EncryptedSecret,
+    password: string,
+    passwordParams: PasswordParams,
+): Promise<SecretPayload> {
+    const plaintext = await decryptSecretWithPasswordToBytes(secretKey, encryptedSecret, password, passwordParams);
+    return decodePlaintext(plaintext);
 }
 
 // Helper for the open path: derive the verifier client-side from password +

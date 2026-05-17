@@ -19,6 +19,12 @@ One-time secret sharing app on Node.js + Next.js.
 | `VALKEY_URL` | _(required)_ | Connection string for Valkey/Redis. The app refuses to start without it. |
 | `MULTIREAD_ENABLED` | `false` | When `true`, exposes the multi-view UI control and lets the API persist `maxViews ∈ {1,3,5,10,null}`. When `false`, the server forces every link to single-read regardless of what the client sent — keep it `false` during a rolling deploy until every instance is on the new code, then flip to `true` (env-only, no rebuild). |
 | `PASSWORD_PROTECTION_ENABLED` | `false` | When `true`, exposes the optional passphrase field on create and accepts password-protected payloads at the API. When `false`, the create endpoint rejects any request containing `passwordParams` (400). Same rolling-deploy guardrail as multi-read. |
+| `S3_ENDPOINT` | _(required for files)_ | S3-compatible endpoint, e.g. `https://fra1.digitaloceanspaces.com` (DO Spaces) or `http://localhost:9000` (MinIO via `docker-compose.infra.yml`). |
+| `S3_REGION` | _(required for files)_ | Region string. AWS/DO use real region names (`fra1`, `us-east-1`); MinIO accepts any value (`us-east-1` is the typical default). |
+| `S3_BUCKET` | _(required for files)_ | Bucket name (e.g. `burnotes-files`). The `minio-init` job in `docker-compose.infra.yml` auto-creates this for local dev. |
+| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | _(required for files)_ | Credentials. Local MinIO defaults to `burnotes-dev` / `burnotes-dev-secret-please-change`. |
+| `S3_FORCE_PATH_STYLE` | `false` | Set to `true` for MinIO and other path-style servers. AWS and DO Spaces use virtual-hosted style (`false`). |
+| `MAX_FILE_SIZE_BYTES` | `26214400` | Maximum allowed file size (in bytes). Default 25 MiB. Enforced on both the presign and the signed PUT (via `Content-Length`). |
 
 ## Local run
 
