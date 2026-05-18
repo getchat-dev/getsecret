@@ -9,7 +9,7 @@ import { MaxViewsControl } from '@/components/secret/max-views-control';
 import { PasswordField } from '@/components/secret/password-field';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
-import { FileIcon, ZapIcon } from '@/components/ui/icons';
+import { AlertIcon, FileIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
@@ -101,13 +101,70 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
         setFile(next);
     }
 
-    function handleDrop(event: React.DragEvent<HTMLDivElement>) {
-        event.preventDefault();
-        setIsDragging(false);
+    // Drop-target is window-wide: a user can drag a file onto any part of the
+    // page (header, empty margins, the form itself) and it will attach. The
+    // form just visually highlights via the `is-dragging` class so the user
+    // knows where the file is going to land. A counter ([dragDepth]) is
+    // required because the browser fires `dragleave` every time the cursor
+    // crosses a child element; a plain boolean would flicker.
+    const dragDepth = useRef(0);
+    // Effect captures a stale chooseFile closure otherwise; chooseFile is
+    // re-created each render. The ref always points at the latest version.
+    const chooseFileRef = useRef(chooseFile);
+    useEffect(() => {
+        chooseFileRef.current = chooseFile;
+    });
+
+    useEffect(() => {
         if (!enableFileAttachments) return;
-        const dropped = event.dataTransfer.files?.[0];
-        if (dropped) chooseFile(dropped);
-    }
+
+        function isFileDrag(event: DragEvent): boolean {
+            const types = event.dataTransfer?.types;
+            if (!types) return false;
+            return Array.from(types).includes('Files');
+        }
+
+        function onEnter(event: DragEvent) {
+            if (!isFileDrag(event)) return;
+            event.preventDefault();
+            dragDepth.current += 1;
+            if (dragDepth.current === 1) setIsDragging(true);
+        }
+
+        function onOver(event: DragEvent) {
+            // dragover must preventDefault to mark the page as a valid drop
+            // target; otherwise the browser falls back to its default "open
+            // file in tab" behavior and our drop handler never runs.
+            if (!isFileDrag(event)) return;
+            event.preventDefault();
+        }
+
+        function onLeave(event: DragEvent) {
+            if (!isFileDrag(event)) return;
+            dragDepth.current = Math.max(0, dragDepth.current - 1);
+            if (dragDepth.current === 0) setIsDragging(false);
+        }
+
+        function onDrop(event: DragEvent) {
+            if (!isFileDrag(event)) return;
+            event.preventDefault();
+            dragDepth.current = 0;
+            setIsDragging(false);
+            const dropped = event.dataTransfer?.files?.[0];
+            if (dropped) chooseFileRef.current(dropped);
+        }
+
+        window.addEventListener('dragenter', onEnter);
+        window.addEventListener('dragover', onOver);
+        window.addEventListener('dragleave', onLeave);
+        window.addEventListener('drop', onDrop);
+        return () => {
+            window.removeEventListener('dragenter', onEnter);
+            window.removeEventListener('dragover', onOver);
+            window.removeEventListener('dragleave', onLeave);
+            window.removeEventListener('drop', onDrop);
+        };
+    }, [enableFileAttachments]);
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -187,6 +244,15 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     return (
         <>
             <LifecycleSteps activeStep={activeStep} />
+            {enableFileAttachments && isDragging ? (
+                <div className="drop-overlay" aria-hidden="true">
+                    <div className="drop-overlay-message">
+                        <FileIcon size={32} />
+                        <strong>{t('dropOverlay')}</strong>
+                        <span className="drop-overlay-hint">{t('dropOverlayHint')}</span>
+                    </div>
+                </div>
+            ) : null}
             <form onSubmit={handleSubmit} className="card fade-up" noValidate>
                 <header className="card-header">
                     <span className="card-header-title">
@@ -208,52 +274,32 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         format={format}
                         autoFocus
                     />
-                    {enableFileAttachments ? (
-                        // biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop is a pointer-only enhancement on top of the keyboard-accessible "Browse" button inside.
-                        <div
-                            className={`file-dropzone ${isDragging ? 'is-dragging' : ''} ${file ? 'has-file' : ''}`.trim()}
-                            onDragOver={(e) => {
-                                e.preventDefault();
-                                setIsDragging(true);
-                            }}
-                            onDragLeave={() => setIsDragging(false)}
-                            onDrop={handleDrop}
-                        >
-                            {file ? (
-                                <div className="file-info">
-                                    <FileIcon size={16} />
-                                    <span className="file-info-name">{file.name}</span>
-                                    <span className="file-info-meta">
-                                        {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        className="btn btn-ghost btn-sm"
-                                        onClick={() => chooseFile(null)}
-                                        disabled={isSubmitting}
-                                    >
-                                        {t('removeFile')}
-                                    </button>
-                                </div>
-                            ) : (
-                                <>
-                                    <p className="file-dropzone-hint">{t('attachFileHint')}</p>
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary btn-sm"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        {t('browseFile')}
-                                    </button>
-                                </>
-                            )}
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                hidden
-                                onChange={(e) => chooseFile(e.target.files?.[0] ?? null)}
-                            />
+                    {enableFileAttachments && file ? (
+                        <div className="file-info-card">
+                            <div className="file-info">
+                                <FileIcon size={16} />
+                                <span className="file-info-name">{file.name}</span>
+                                <span className="file-info-meta">
+                                    {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
+                                </span>
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => chooseFile(null)}
+                                    disabled={isSubmitting}
+                                >
+                                    {t('removeFile')}
+                                </button>
+                            </div>
                         </div>
+                    ) : null}
+                    {enableFileAttachments ? (
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            hidden
+                            onChange={(e) => chooseFile(e.target.files?.[0] ?? null)}
+                        />
                     ) : null}
                     <div className="field-pair">
                         <TtlControl
@@ -267,8 +313,24 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         {enableMultiRead ? <MaxViewsControl value={maxViews} onChange={setMaxViews} /> : null}
                     </div>
                     {enablePassword ? <PasswordField value={password} onChange={setPassword} /> : null}
+                    {error ? (
+                        <div className="banner banner-danger" role="alert">
+                            <AlertIcon size={16} className="icon" />
+                            <span>{error}</span>
+                        </div>
+                    ) : null}
                 </div>
                 <footer className="card-footer">
+                    {enableFileAttachments ? (
+                        <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isSubmitting || file !== null}
+                        >
+                            <FileIcon size={14} /> {t('attachFile')}
+                        </button>
+                    ) : null}
                     {secret.length > 0 || file ? (
                         <button
                             type="button"
@@ -299,7 +361,6 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                             : t('submit')}
                     </button>
                 </footer>
-                {error ? <p className="error">{error}</p> : null}
             </form>
         </>
     );

@@ -606,38 +606,66 @@ h1.display .accent-word {
    FILE ATTACHMENTS
 ============================================================ */
 
-.file-dropzone {
+.file-info-card {
+    padding: 12px 14px;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+}
+
+/* Fullscreen overlay shown when a file is being dragged anywhere on the
+   viewport. The whole window is the drop target (listeners attached in
+   create-form.tsx); the overlay just signals that this site accepts file
+   drops. `pointer-events: none` keeps the underlying drop handler in
+   charge — without it the overlay would steal the drop event. */
+.drop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    pointer-events: none;
+    background: var(--accent-bg-soft);
+    border: 4px dashed var(--accent-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: drop-overlay-in 0.12s ease-out;
+}
+
+.drop-overlay-message {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: 10px;
-    padding: 20px;
-    background: var(--bg-1);
-    border: 1px dashed var(--border-default);
-    border-radius: var(--radius-md);
-    text-align: center;
-    transition:
-        border-color 0.15s,
-        background 0.15s;
+    padding: 28px 36px;
+    background: var(--bg-0);
+    border: 1px solid var(--accent-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-pop);
+    font-size: 15px;
+    color: var(--fg-default);
 }
 
-.file-dropzone.is-dragging {
-    border-color: var(--accent-border);
-    background: var(--accent-bg-soft);
+.drop-overlay-message svg {
+    color: var(--accent);
 }
 
-.file-dropzone.has-file {
-    padding: 12px 14px;
-    border-style: solid;
-    align-items: stretch;
-    text-align: left;
+.drop-overlay-message strong {
+    font-weight: 600;
+    font-size: 16px;
 }
 
-.file-dropzone-hint {
-    margin: 0;
+.drop-overlay-hint {
     font-size: 12.5px;
     color: var(--fg-muted);
+}
+
+@keyframes drop-overlay-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .file-info {
