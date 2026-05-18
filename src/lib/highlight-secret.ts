@@ -1,3 +1,4 @@
+import DOMPurifyNs from 'dompurify';
 import hljs from 'highlight.js/lib/core';
 import bash from 'highlight.js/lib/languages/bash';
 import css from 'highlight.js/lib/languages/css';
@@ -13,6 +14,16 @@ import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 import 'highlight.js/styles/github.css';
 import { isSecretFormat, type SecretFormat } from '@/lib/secret-formats';
+
+// Tolerate both ESM (`.default`) and CJS-interop (`DOMPurifyNs` itself is the
+// instance) shapes — Turbopack and webpack disagree about which one ends up as
+// the binding name when the source uses `export default`.
+const DOMPurify =
+    (DOMPurifyNs as unknown as { default?: typeof DOMPurifyNs }).default ?? (DOMPurifyNs as typeof DOMPurifyNs);
+const SANITIZE_CONFIG: { ALLOWED_TAGS: string[]; ALLOWED_ATTR: string[] } = {
+    ALLOWED_TAGS: ['span'],
+    ALLOWED_ATTR: ['class'],
+};
 
 const ALIASES: Partial<Record<SecretFormat, string>> = {
     toml: 'ini',
@@ -47,6 +58,16 @@ export function highlight(content: string, format: SecretFormat): string {
     ensureRegistered();
     const language = ALIASES[format] ?? format;
     return hljs.highlight(content, { language, ignoreIllegals: true }).value;
+}
+
+// Defense-in-depth wrapper: produce hljs output and pass it through DOMPurify
+// before it ever reaches `dangerouslySetInnerHTML`. We trust hljs to escape,
+// but a regression or future CVE could let raw HTML slip past — the
+// allow-list guarantees only `<span class="...">` survives regardless.
+export function highlightSafe(content: string, format: SecretFormat): string {
+    const raw = highlight(content, format);
+    if (raw.length === 0) return '';
+    return DOMPurify.sanitize(raw, SANITIZE_CONFIG);
 }
 
 const AUTO_DETECT_LANGUAGES = ['yaml', 'ini', 'javascript', 'typescript', 'python', 'bash', 'sql', 'xml', 'css', 'php'];

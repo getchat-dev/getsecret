@@ -49,9 +49,15 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
         let cancelled = false;
         void (async () => {
             try {
-                const { highlight } = await import('@/lib/highlight-secret');
-                if (!cancelled) setHighlightedHtml(highlight(content, format));
-            } catch {
+                const { highlightSafe } = await import('@/lib/highlight-secret');
+                if (cancelled) return;
+                setHighlightedHtml(highlightSafe(content, format));
+            } catch (err) {
+                // Surface the failure in the console so we don't silently
+                // fall back to unstyled plaintext on regressions in the
+                // hljs/DOMPurify chain — the user still sees content (the
+                // safe fallback), but a dev catches the breakage immediately.
+                console.error('[burnotes] highlight failed, falling back to raw text', err);
                 if (!cancelled) setHighlightedHtml('');
             }
         })();
@@ -135,7 +141,7 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                             {showHighlighted ? (
                                 <code
                                     className={`hljs language-${format}`}
-                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight.js escapes content; only span tags are injected.
+                                    // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight.js output is post-processed through DOMPurify (allow-list: span + class only) in the useEffect above, so only sanitized markup ever reaches this prop.
                                     dangerouslySetInnerHTML={{ __html: highlightedHtml as string }}
                                 />
                             ) : (
