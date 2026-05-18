@@ -15,15 +15,25 @@ function isValidIp(value: string): boolean {
     return value.split(':').length >= 3;
 }
 
+// TRUSTED_PROXY_HOPS must be set explicitly. A silent default of 0 would make
+// every client share the single 'unknown' rate-limit bucket — one attacker
+// could exhaust the budget for the entire fleet (trivial DoS). Fail loud at
+// first use so a missing or malformed value is caught in deploy/dev, not in
+// production traffic.
 function getTrustedProxyHops(): number {
     const raw = process.env.TRUSTED_PROXY_HOPS;
-    if (!raw) {
-        return 0;
+    if (raw === undefined || raw.trim() === '') {
+        throw new Error(
+            'TRUSTED_PROXY_HOPS is not set. Set it to the number of trusted reverse-proxy hops in front of the app ' +
+                '(1 behind Traefik/nginx; higher for chained proxies; 0 only for direct exposure, which disables ' +
+                'per-IP rate limiting).',
+        );
     }
 
-    const parsed = Number.parseInt(raw, 10);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-        return 0;
+    const trimmed = raw.trim();
+    const parsed = Number(trimmed);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+        throw new Error(`TRUSTED_PROXY_HOPS must be a non-negative integer, got: ${JSON.stringify(raw)}`);
     }
 
     return parsed;
@@ -31,7 +41,10 @@ function getTrustedProxyHops(): number {
 
 export function getClientIp(request: Request): string {
     const hops = getTrustedProxyHops();
-    if (hops <= 0) {
+    if (hops === 0) {
+        // Operator explicitly opted out of header-based IP detection; nothing
+        // we can trust here. Returning a constant means rate-limit becomes
+        // global — this is a deliberate trade-off for direct-exposure setups.
         return 'unknown';
     }
 

@@ -30,8 +30,16 @@ describe('getClientIp', () => {
         expect(getClientIp(requestWith({ 'x-real-ip': '1.2.3.4' }))).toBe('unknown');
     });
 
-    it('defaults to ignoring headers when TRUSTED_PROXY_HOPS is unset', () => {
-        expect(getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toBe('unknown');
+    it('throws when TRUSTED_PROXY_HOPS is unset', () => {
+        // Fail-loud is intentional: a silent default of 0 would collapse all
+        // clients into a single rate-limit bucket (trivial DoS). Operators
+        // must consciously set this env var.
+        expect(() => getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toThrow(/TRUSTED_PROXY_HOPS/);
+    });
+
+    it('throws when TRUSTED_PROXY_HOPS is an empty string', () => {
+        setHops('');
+        expect(() => getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toThrow(/TRUSTED_PROXY_HOPS/);
     });
 
     it('takes the rightmost untrusted IP when one proxy hop is trusted', () => {
@@ -86,10 +94,18 @@ describe('getClientIp', () => {
         expect(getClientIp(requestWith({ 'x-forwarded-for': '2001:db8::1, 10.0.0.1' }))).toBe('2001:db8::1');
     });
 
-    it('treats negative or non-numeric TRUSTED_PROXY_HOPS as zero', () => {
+    it('throws on negative TRUSTED_PROXY_HOPS', () => {
         setHops('-1');
-        expect(getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toBe('unknown');
+        expect(() => getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toThrow(/non-negative integer/);
+    });
+
+    it('throws on non-numeric TRUSTED_PROXY_HOPS', () => {
         setHops('nope');
-        expect(getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toBe('unknown');
+        expect(() => getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toThrow(/non-negative integer/);
+    });
+
+    it('throws on a non-integer TRUSTED_PROXY_HOPS', () => {
+        setHops('1.5');
+        expect(() => getClientIp(requestWith({ 'x-forwarded-for': '1.2.3.4' }))).toThrow(/non-negative integer/);
     });
 });
