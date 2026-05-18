@@ -246,6 +246,13 @@ export async function hashAccessToken(accessToken: string): Promise<string> {
     return encodeBase64Url(await sha256(textEncoder.encode(accessToken)));
 }
 
+/**
+ * @deprecated Use {@link prepareSecretUploadEnvelope} instead. This raw-string
+ * variant pre-dates the envelope format and stores plaintext without the 0x00
+ * magic byte / JSON wrapper, leaving two parallel wire shapes to maintain.
+ * Production code uses the envelope path exclusively; this helper is retained
+ * only as a fixture factory for backward-compat decode tests.
+ */
 export async function prepareSecretUpload(secret: string): Promise<PreparedSecretUpload> {
     return prepareSecretUploadFromBytes(textEncoder.encode(secret));
 }
@@ -311,12 +318,18 @@ export async function decryptSecretToPayload(
     return decodePlaintext(await decryptSecretToBytes(secretKey, encryptedSecret));
 }
 
-// Password-protected upload: inner AES-GCM(plaintext) under PBKDF2-derived key,
-// outer AES-GCM(iv_inner || inner) under the URL-fragment key. The server
-// learns neither plaintext nor password — only salt, iterations, and a hash
-// of a hash of the derived key (verifierHash). Compromising the database
-// alone yields nothing actionable; an attacker still has to brute-force the
-// password against PBKDF2 (600k iterations) AND survive the 5-attempt lockout.
+/**
+ * Password-protected upload: inner AES-GCM(plaintext) under PBKDF2-derived key,
+ * outer AES-GCM(iv_inner || inner) under the URL-fragment key. The server
+ * learns neither plaintext nor password — only salt, iterations, and a hash
+ * of a hash of the derived key (verifierHash). Compromising the database
+ * alone yields nothing actionable; an attacker still has to brute-force the
+ * password against PBKDF2 (600k iterations) AND survive the 5-attempt lockout.
+ *
+ * @deprecated Use {@link prepareSecretUploadWithPasswordEnvelope} instead.
+ * Same rationale as {@link prepareSecretUpload}: this raw-string variant
+ * skips the envelope wrapper and is kept only for backward-compat fixtures.
+ */
 export async function prepareSecretUploadWithPassword(
     secret: string,
     password: string,

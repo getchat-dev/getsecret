@@ -4,9 +4,7 @@ import {
     MAX_SECRET_LENGTH,
     type PreparedSecretUpload,
     type PreparedSecretUploadWithPassword,
-    prepareSecretUpload,
     prepareSecretUploadEnvelope,
-    prepareSecretUploadWithPassword,
     prepareSecretUploadWithPasswordEnvelope,
 } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, type SecretFormat } from '@/lib/secret-formats';
@@ -65,20 +63,17 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
 
     let prepared: PreparedSecretUpload | PreparedSecretUploadWithPassword;
     try {
-        if (hasFile) {
-            // File-attached secrets always use the envelope format so the
-            // fileRef rides inside the ciphertext.
-            const payload = { text: secret, fileRef };
-            prepared = usePassword
-                ? await prepareSecretUploadWithPasswordEnvelope(payload, password)
-                : await prepareSecretUploadEnvelope(payload);
-        } else {
-            // Text-only secrets keep the legacy raw plaintext on the wire so
-            // old client/server combinations still interoperate during rollout.
-            prepared = usePassword
-                ? await prepareSecretUploadWithPassword(secret, password)
-                : await prepareSecretUpload(secret);
-        }
+        // Always use the envelope format. The 0x00-prefixed JSON wrapper costs
+        // a handful of bytes and gives us one consistent plaintext shape to
+        // evolve (e.g. add new fields without splitting decoders between
+        // legacy raw-string and envelope branches). The viewer always uses
+        // `decryptSecretToPayload`, which handles envelope payloads directly;
+        // `decodePlaintext` keeps a raw-string fallback so any in-flight
+        // pre-envelope secret from older client builds still decodes.
+        const payload = fileRef ? { text: secret, fileRef } : { text: secret };
+        prepared = usePassword
+            ? await prepareSecretUploadWithPasswordEnvelope(payload, password)
+            : await prepareSecretUploadEnvelope(payload);
     } catch {
         throw new Error('Browser encryption is not available');
     }
