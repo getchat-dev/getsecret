@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { buildCspHeader, STATIC_SECURITY_HEADERS } from '@/lib/security-headers';
+import { buildCspHeader, getStaticSecurityHeaders } from '@/lib/security-headers';
 
 function connectSrc(csp: string): string {
     return (csp.split(';').find((d) => d.trim().startsWith('connect-src')) ?? '').trim();
@@ -23,18 +23,44 @@ function setEnv(name: 'S3_ENDPOINT' | 'S3_BUCKET' | 'S3_FORCE_PATH_STYLE' | 'NOD
 }
 
 function header(name: string): string | undefined {
-    return STATIC_SECURITY_HEADERS.find((h) => h.key.toLowerCase() === name.toLowerCase())?.value;
+    return getStaticSecurityHeaders().find((h) => h.key.toLowerCase() === name.toLowerCase())?.value;
 }
 
 describe('security-headers', () => {
-    it('exposes HSTS with a long max-age and includeSubDomains', () => {
+    beforeEach(() => {
+        setEnv('NODE_ENV', 'production');
+    });
+
+    afterEach(() => {
+        setEnv('NODE_ENV', originalNodeEnv);
+    });
+
+    it('exposes HSTS with a long max-age and includeSubDomains in production', () => {
         const hsts = header('Strict-Transport-Security');
         expect(hsts).toBeDefined();
         expect(hsts).toMatch(/max-age=\d{7,}/);
         expect(hsts).toContain('includeSubDomains');
     });
 
-    it('still ships the non-CSP baseline headers', () => {
+    it('omits HSTS in development to keep http://*.local dev hosts working', () => {
+        setEnv('NODE_ENV', 'development');
+        expect(header('Strict-Transport-Security')).toBeUndefined();
+    });
+
+    it('omits HSTS in test runs', () => {
+        setEnv('NODE_ENV', 'test');
+        expect(header('Strict-Transport-Security')).toBeUndefined();
+    });
+
+    it('still ships the non-CSP baseline headers in production', () => {
+        expect(header('X-Content-Type-Options')).toBe('nosniff');
+        expect(header('X-Frame-Options')).toBe('DENY');
+        expect(header('Referrer-Policy')).toBe('no-referrer');
+        expect(header('Permissions-Policy')).toContain('camera=()');
+    });
+
+    it('keeps baseline non-HSTS headers in development too', () => {
+        setEnv('NODE_ENV', 'development');
         expect(header('X-Content-Type-Options')).toBe('nosniff');
         expect(header('X-Frame-Options')).toBe('DENY');
         expect(header('Referrer-Policy')).toBe('no-referrer');

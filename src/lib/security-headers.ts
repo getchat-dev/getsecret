@@ -1,25 +1,26 @@
-export const STATIC_SECURITY_HEADERS = [
-    {
-        key: 'X-Content-Type-Options',
-        value: 'nosniff',
-    },
-    {
-        key: 'X-Frame-Options',
-        value: 'DENY',
-    },
-    {
-        key: 'Referrer-Policy',
-        value: 'no-referrer',
-    },
-    {
-        key: 'Permissions-Policy',
-        value: 'camera=(), microphone=(), geolocation=()',
-    },
-    {
-        key: 'Strict-Transport-Security',
-        value: 'max-age=63072000; includeSubDomains; preload',
-    },
-] as const;
+type SecurityHeader = { key: string; value: string };
+
+const BASELINE_HEADERS: ReadonlyArray<SecurityHeader> = [
+    { key: 'X-Content-Type-Options', value: 'nosniff' },
+    { key: 'X-Frame-Options', value: 'DENY' },
+    { key: 'Referrer-Policy', value: 'no-referrer' },
+    { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+];
+
+// HSTS is intentionally prod-only. Shipping it from `npm run dev` would mean
+// a developer who once touched `https://burnotes.local` gets their browser
+// locked into HTTPS for two years (`preload + includeSubDomains`), at which
+// point `http://burnotes.local` silently 307s and the dev stack stops
+// working. The preload directive also asks the browser to never downgrade
+// even on the very first visit — wrong promise to make for an .local host.
+const HSTS_HEADER: SecurityHeader = {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+};
+
+export function getStaticSecurityHeaders(): SecurityHeader[] {
+    return process.env.NODE_ENV === 'production' ? [...BASELINE_HEADERS, HSTS_HEADER] : [...BASELINE_HEADERS];
+}
 
 // Build the `connect-src` directive: 'self' plus the specific S3 origins
 // we actually need to talk to. The browser does presigned PUT/GET against

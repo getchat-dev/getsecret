@@ -1,7 +1,7 @@
 import createMDX from '@next/mdx';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
-import { STATIC_SECURITY_HEADERS } from './src/lib/security-headers';
+import { getStaticSecurityHeaders } from './src/lib/security-headers';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
         return [
             {
                 source: '/(.*)',
-                headers: STATIC_SECURITY_HEADERS.map((h) => ({ key: h.key, value: h.value })),
+                headers: getStaticSecurityHeaders().map((h) => ({ key: h.key, value: h.value })),
             },
         ];
     },
