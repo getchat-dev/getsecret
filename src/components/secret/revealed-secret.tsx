@@ -48,6 +48,14 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadError, setDownloadError] = useState<string | null>(null);
     const [previewState, setPreviewState] = useState<PreviewState>({ status: 'idle' });
+    // Cache the decrypted file once the auto-preview path has done the fetch +
+    // container decode. The manual Download button then reuses these bytes
+    // instead of re-fetching from S3 and running the AES-GCM container decrypt
+    // a second time. Same Blob is referenced by the preview's blob URL, so
+    // caching here doesn't grow JS heap — only keeps a reference that GC
+    // would otherwise reclaim once the effect's local `decoded` went out of
+    // scope. Stays in memory until the component unmounts.
+    const [decryptedFile, setDecryptedFile] = useState<{ blob: Blob; filename: string } | null>(null);
 
     useEffect(() => {
         if (format === 'plain') {
@@ -108,6 +116,13 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 const blob = new Blob([new Uint8Array(decoded.bytes)], {
                     type: decoded.meta.mime || 'application/octet-stream',
                 });
+                // Hand the Blob to the manual Download path BEFORE attempting
+                // image decode. The bytes are valid regardless of whether
+                // they're a recognizable image — downstream image decode might
+                // still return null (false-positive MIME, HEIC worker blocked)
+                // and we don't want that to invalidate a perfectly downloadable
+                // file the user already paid for.
+                setDecryptedFile({ blob, filename: decoded.meta.filename || 'attachment' });
                 imageHandle = decodeImagePreview(blob, {
                     type: decoded.meta.mime,
                     name: decoded.meta.filename,
@@ -136,20 +151,38 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
         setIsDownloading(true);
         let blobUrl: string | null = null;
         try {
-            const response = await fetch(file.signedGetUrl, { cache: 'no-store' });
-            if (!response.ok) {
-                throw new Error(response.status === 404 ? tErrors('fileExpired') : tErrors('downloadFailed'));
+            // Fast path: auto-preview already fetched + decrypted the file, or
+            // the user previously clicked Download in this session. Reuse the
+            // cached Blob instead of paying for another signed-URL fetch and
+            // another AES-GCM container decrypt. The cache is null only when
+            // previewImage was off (or its decrypt failed), so the slow path
+            // below still covers every case.
+            let blob: Blob;
+            let filename: string;
+            if (decryptedFile) {
+                blob = decryptedFile.blob;
+                filename = decryptedFile.filename;
+            } else {
+                const response = await fetch(file.signedGetUrl, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(response.status === 404 ? tErrors('fileExpired') : tErrors('downloadFailed'));
+                }
+                const ciphertext = new Uint8Array(await response.arrayBuffer());
+                const keyBytes = decodeBase64Url(file.fileRef.keyB64);
+                const decoded = await decodeContainer(ciphertext, keyBytes);
+                blob = new Blob([new Uint8Array(decoded.bytes)], {
+                    type: decoded.meta.mime || 'application/octet-stream',
+                });
+                filename = decoded.meta.filename || 'attachment';
+                // Populate the cache so a second click is free too (matters
+                // even without auto-preview, e.g. user downloads, decides to
+                // re-save under a different name).
+                setDecryptedFile({ blob, filename });
             }
-            const ciphertext = new Uint8Array(await response.arrayBuffer());
-            const keyBytes = decodeBase64Url(file.fileRef.keyB64);
-            const decoded = await decodeContainer(ciphertext, keyBytes);
-            const blob = new Blob([new Uint8Array(decoded.bytes)], {
-                type: decoded.meta.mime || 'application/octet-stream',
-            });
             blobUrl = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = blobUrl;
-            anchor.download = decoded.meta.filename || 'attachment';
+            anchor.download = filename;
             document.body.appendChild(anchor);
             anchor.click();
             document.body.removeChild(anchor);
@@ -158,9 +191,10 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
         } finally {
             setIsDownloading(false);
             if (blobUrl) {
-                // Hold the Blob URL just long enough for the browser to start
-                // the download, then revoke so the decrypted file is not
-                // pinned in memory.
+                // Hold the anchor's Blob URL just long enough for the browser
+                // to start the download, then revoke it. The underlying Blob
+                // stays alive via `decryptedFile` state — only the URL handle
+                // is released here.
                 setTimeout(() => {
                     if (blobUrl) URL.revokeObjectURL(blobUrl);
                 }, 1500);
