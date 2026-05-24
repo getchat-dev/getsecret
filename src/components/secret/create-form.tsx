@@ -33,6 +33,33 @@ function formatBytes(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
+// Pull a file out of a paste event's DataTransfer. `clipboardData.files` is
+// the fast path (set by most browsers when the clipboard carries a binary
+// payload like a screenshot). `items` is the fallback — some browsers /
+// platforms only surface the file through getAsFile().
+function fileFromClipboard(data: DataTransfer | null): File | null {
+    if (!data) return null;
+    if (data.files.length > 0) return data.files[0];
+    for (const item of Array.from(data.items)) {
+        if (item.kind === 'file') {
+            const f = item.getAsFile();
+            if (f) return f;
+        }
+    }
+    return null;
+}
+
+// Clipboard files often arrive without a name (typically true for
+// screenshots: items.getAsFile() returns a File whose `name` is empty or
+// generic like "image.png"). Synthesize a stable, sortable filename from the
+// MIME so the recipient sees something more meaningful than `attachment`.
+function ensurePastedFilename(file: File): File {
+    if (file.name && file.name !== 'image.png') return file;
+    const subtype = (file.type.split('/')[1] || 'bin').split(';')[0].split('+')[0] || 'bin';
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    return new File([file], `pasted-${stamp}.${subtype}`, { type: file.type });
+}
+
 type Props = {
     enableMultiRead?: boolean;
     enablePassword?: boolean;
@@ -185,11 +212,28 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
         window.addEventListener('dragover', onOver);
         window.addEventListener('dragleave', onLeave);
         window.addEventListener('drop', onDrop);
+
+        // Paste handler: matches the drag-and-drop UX — the whole window is
+        // a paste target for file/image data. The SecretTextarea has its own
+        // onPaste for text (format detection); the two coexist because a
+        // text-only clipboard has no `files` and this handler is a no-op,
+        // while a screenshot paste has no insertable text so the textarea's
+        // default behavior is also a no-op. We never preventDefault: pasting
+        // text alongside a file (rare) still inserts the text, and pasting
+        // outside the form (e.g. into a password field nearby) doesn't lose
+        // its native behavior since we only act when files are present.
+        function onPaste(event: ClipboardEvent) {
+            const picked = fileFromClipboard(event.clipboardData);
+            if (!picked) return;
+            chooseFileRef.current(ensurePastedFilename(picked));
+        }
+        window.addEventListener('paste', onPaste);
         return () => {
             window.removeEventListener('dragenter', onEnter);
             window.removeEventListener('dragover', onOver);
             window.removeEventListener('dragleave', onLeave);
             window.removeEventListener('drop', onDrop);
+            window.removeEventListener('paste', onPaste);
         };
     }, [enableFileAttachments]);
 
