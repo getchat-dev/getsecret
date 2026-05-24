@@ -680,6 +680,16 @@ h1.display .accent-word {
     flex-shrink: 0;
 }
 
+.file-info-preview {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default);
+    background: var(--bg-0);
+    flex-shrink: 0;
+}
+
 .file-info-name {
     font-size: 13px;
     font-weight: 600;

@@ -64,7 +64,13 @@ function buildConnectSrc(): string {
 }
 
 function buildScriptSrc(nonce: string): string {
-    const base = `'self' 'nonce-${nonce}' 'strict-dynamic'`;
+    // 'wasm-unsafe-eval' is a narrow CSP keyword that only re-enables
+    // WebAssembly.compile/instantiate without re-enabling JS `eval()`. We need
+    // it because HEIC preview thumbnails are decoded by `heic-to` (a libheif
+    // WASM build) loaded on demand in the browser. Without this directive the
+    // browser blocks the WASM module and HEIC files silently fall back to the
+    // generic file icon.
+    const base = `'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'`;
     // React Fast Refresh and webpack HMR use eval() in dev for module
     // reconciliation. Without 'unsafe-eval' the browser blocks both and the
     // dev server can't propagate code changes to the running page.
@@ -84,5 +90,11 @@ export function buildCspHeader(nonce: string): string {
         "style-src 'self' 'unsafe-inline'",
         `script-src ${buildScriptSrc(nonce)}`,
         `connect-src ${buildConnectSrc()}`,
+        // heic-to/next inlines its Web Worker as a string and instantiates it
+        // from a blob: URL — bundler-agnostic and avoids the eval() the main
+        // entry needs. Without explicit `worker-src`, the policy falls back
+        // through `child-src` → `default-src 'self'`, which forbids blob: and
+        // would block the worker. 'self' is harmless padding.
+        "worker-src 'self' blob:",
     ].join('; ');
 }

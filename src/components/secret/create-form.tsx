@@ -26,6 +26,32 @@ const DRAFT_STORAGE_KEY = 'burnotes:create:draft';
 const FORMAT_STORAGE_KEY = 'burnotes:create:format';
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
+// Allowlist instead of `image/*` because Chrome/Firefox can't decode HEIC/HEIF
+// (Safari can), JPEG 2000, etc. Rendering them via <img> shows a broken-image
+// glyph. Stick to formats every evergreen browser handles natively. HEIC is
+// handled separately by decoding through `heic-to` (lazy-loaded WASM).
+const PREVIEWABLE_IMAGE_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/avif',
+    'image/svg+xml',
+    'image/bmp',
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
+]);
+
+// Both MIME and extension because some upload paths (older drag sources, mobile
+// browsers, some Android pickers) leave `file.type` empty for HEIC/HEIF.
+function isHeicCandidate(file: File): boolean {
+    const type = file.type.toLowerCase();
+    if (type === 'image/heic' || type === 'image/heif') return true;
+    if (type === 'image/heic-sequence' || type === 'image/heif-sequence') return true;
+    const name = file.name.toLowerCase();
+    return name.endsWith('.heic') || name.endsWith('.heif');
+}
+
 function formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -52,6 +78,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
     const [password, setPassword] = useState('');
     const [file, setFile] = useState<File | null>(null);
+    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,6 +114,55 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
             window.sessionStorage.removeItem(FORMAT_STORAGE_KEY);
         }
     }, [format]);
+
+    useEffect(() => {
+        if (!file) {
+            setImagePreviewUrl(null);
+            return;
+        }
+
+        if (PREVIEWABLE_IMAGE_TYPES.has(file.type)) {
+            const url = URL.createObjectURL(file);
+            setImagePreviewUrl(url);
+            return () => URL.revokeObjectURL(url);
+        }
+
+        if (!isHeicCandidate(file)) {
+            setImagePreviewUrl(null);
+            return;
+        }
+
+        // HEIC/HEIF: dynamic import keeps the libheif WASM bundle (~hundreds of
+        // KB) out of the initial JS payload — only users who actually drop a
+        // HEIC file pay the cost. Using the `/next` entry runs libheif inside
+        // a Web Worker so the main thread (and any in-flight encryption /
+        // upload) doesn't freeze for the 0.5–2s the decode typically takes.
+        // `cancelled` guards against a stale conversion resolving after the
+        // user picked a different file or cleared this one.
+        let cancelled = false;
+        let convertedUrl: string | null = null;
+        setImagePreviewUrl(null);
+        (async () => {
+            try {
+                const { heicTo, isHeic } = await import('heic-to/next');
+                if (cancelled) return;
+                if (!(await isHeic(file))) return;
+                const jpeg = await heicTo({ blob: file, type: 'image/jpeg', quality: 0.85 });
+                if (cancelled) return;
+                convertedUrl = URL.createObjectURL(jpeg);
+                setImagePreviewUrl(convertedUrl);
+            } catch (err) {
+                // Decode failure (corrupt file, unsupported HEIC variant, CSP
+                // blocking WASM / blob worker) — leave the icon fallback.
+                console.error('heic preview decode failed', err);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+            if (convertedUrl) URL.revokeObjectURL(convertedUrl);
+        };
+    }, [file]);
 
     function chooseFile(next: File | null) {
         if (!next) {
@@ -277,7 +353,16 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                     {enableFileAttachments && file ? (
                         <div className="file-info-card">
                             <div className="file-info">
-                                <FileIcon size={16} />
+                                {imagePreviewUrl ? (
+                                    <img
+                                        src={imagePreviewUrl}
+                                        alt={file.name}
+                                        className="file-info-preview"
+                                        onError={() => setImagePreviewUrl(null)}
+                                    />
+                                ) : (
+                                    <FileIcon size={16} />
+                                )}
                                 <span className="file-info-name">{file.name}</span>
                                 <span className="file-info-meta">
                                     {formatBytes(file.size)} · {file.type || 'application/octet-stream'}

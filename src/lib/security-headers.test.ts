@@ -86,6 +86,33 @@ describe('security-headers', () => {
         expect(csp).toContain("frame-ancestors 'none'");
         expect(csp).toContain("base-uri 'self'");
     });
+
+    // 'wasm-unsafe-eval' is required for the HEIC preview decoder (heic-to,
+    // libheif WASM build) loaded on demand in the browser. Removing it will
+    // silently break HEIC thumbnails in production. If this test fails after
+    // an intentional removal, also delete the HEIC branch in
+    // src/components/secret/create-form.tsx.
+    it("keeps 'wasm-unsafe-eval' in script-src in both production and development", () => {
+        const scriptSrc = (env: 'production' | 'development') => {
+            setEnv('NODE_ENV', env);
+            const csp = buildCspHeader('n');
+            return csp.split(';').find((d) => d.trim().startsWith('script-src')) ?? '';
+        };
+        expect(scriptSrc('production')).toContain("'wasm-unsafe-eval'");
+        expect(scriptSrc('development')).toContain("'wasm-unsafe-eval'");
+    });
+
+    // worker-src must allow blob: because heic-to/next instantiates its
+    // libheif worker from a blob URL. Without this directive the policy
+    // falls back to default-src 'self', which silently blocks the worker
+    // and breaks HEIC thumbnails. Tied to the same code path as the
+    // 'wasm-unsafe-eval' test above.
+    it("keeps worker-src 'self' blob: so the heic-to worker can launch", () => {
+        const csp = buildCspHeader('n');
+        const workerSrc = csp.split(';').find((d) => d.trim().startsWith('worker-src')) ?? '';
+        expect(workerSrc).toContain("'self'");
+        expect(workerSrc).toContain('blob:');
+    });
 });
 
 describe('buildCspHeader connect-src', () => {
