@@ -31,6 +31,12 @@
         "passphrasePh": "laissez vide pour accès lien uniquement",
         "submit": "Chiffrer et générer le lien",
         "clear": "Effacer",
+        "cancel": "Annuler",
+        "uploading": "Téléversement… {percent}%",
+        "attachFile": "Joindre un fichier",
+        "removeFile": "Retirer",
+        "dropOverlay": "Déposer pour joindre",
+        "dropOverlayHint": "Chiffré de bout en bout dans votre navigateur",
         "shortcut": "⌘ + Enter",
         "info": "Votre secret est chiffré dans ce navigateur avant de partir. La clé est ajoutée après le # — les fragments ne sont jamais envoyés à nos serveurs.",
         "howItWorks": "Comment ça marche ↗",
@@ -49,7 +55,8 @@
         "charsLeft": "{count, number} caractères restants",
         "formatLabel": "Format",
         "hidePassword": "Masquer la phrase secrète",
-        "showPassword": "Afficher la phrase secrète"
+        "showPassword": "Afficher la phrase secrète",
+        "previewImageLabel": "Afficher l'aperçu de l'image à l'ouverture"
     },
     "generated": {
         "title": "Votre lien est prêt.",
@@ -129,7 +136,11 @@
         "copyClip": "Copier dans le presse-papiers",
         "shareBack": "Partager en retour",
         "footnote": "déchiffré localement · jamais journalisé",
-        "copiedToast": "Secret copié — collez maintenant"
+        "copiedToast": "Secret copié — collez maintenant",
+        "attachmentLabel": "Fichier joint",
+        "download": "Télécharger",
+        "downloading": "Téléchargement…",
+        "previewLoading": "Préparation de l'aperçu…"
     },
     "burned": {
         "title1": "Ce secret",
@@ -178,7 +189,10 @@
         "copyFailed": "Impossible de copier dans le presse-papiers.",
         "qrRenderFailed": "Impossible de générer le QR code.",
         "qrDownloadFailed": "Impossible d'enregistrer le QR code.",
-        "passwordTooShort": "La phrase secrète doit comporter au moins {min, number} caractères."
+        "passwordTooShort": "La phrase secrète doit comporter au moins {min, number} caractères.",
+        "fileTooLarge": "Le fichier est trop volumineux ; maximum {max}.",
+        "downloadFailed": "Impossible de télécharger le fichier joint.",
+        "fileExpired": "Le fichier joint n'est plus disponible."
     },
     "theme": {
         "legend": "Thème",

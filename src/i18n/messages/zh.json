@@ -31,6 +31,12 @@
         "passphrasePh": "留空表示仅链接访问",
         "submit": "加密并生成链接",
         "clear": "清除",
+        "cancel": "取消",
+        "uploading": "上传中… {percent}%",
+        "attachFile": "附加文件",
+        "removeFile": "移除",
+        "dropOverlay": "拖放以附加文件",
+        "dropOverlayHint": "在浏览器中端到端加密",
         "shortcut": "⌘ + Enter",
         "info": "你的秘密在离开浏览器前已加密。解密密钥附加在链接的 # 之后 — 片段永远不会发送到我们的服务器。",
         "howItWorks": "工作原理 ↗",
@@ -49,7 +55,8 @@
         "charsLeft": "剩余 {count, number} 个字符",
         "formatLabel": "格式",
         "hidePassword": "隐藏密码",
-        "showPassword": "显示密码"
+        "showPassword": "显示密码",
+        "previewImageLabel": "在显示时展示图片预览"
     },
     "generated": {
         "title": "链接已就绪。",
@@ -129,7 +136,11 @@
         "copyClip": "复制到剪贴板",
         "shareBack": "回赠分享",
         "footnote": "本地解密 · 从不记录",
-        "copiedToast": "秘密已复制 — 立即粘贴"
+        "copiedToast": "秘密已复制 — 立即粘贴",
+        "attachmentLabel": "附件",
+        "download": "下载",
+        "downloading": "下载中…",
+        "previewLoading": "正在加载预览…"
     },
     "burned": {
         "title1": "这个秘密",
@@ -178,7 +189,10 @@
         "copyFailed": "无法复制到剪贴板。",
         "qrRenderFailed": "无法生成二维码。",
         "qrDownloadFailed": "无法保存二维码。",
-        "passwordTooShort": "密码至少需要 {min, number} 个字符。"
+        "passwordTooShort": "密码至少需要 {min, number} 个字符。",
+        "fileTooLarge": "文件过大；最大 {max}。",
+        "downloadFailed": "无法下载附件。",
+        "fileExpired": "附件已不可用。"
     },
     "theme": {
         "legend": "主题",

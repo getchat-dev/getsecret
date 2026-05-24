@@ -31,6 +31,12 @@
         "passphrasePh": "déjalo vacío para acceso solo por enlace",
         "submit": "Cifrar y generar enlace",
         "clear": "Limpiar",
+        "cancel": "Cancelar",
+        "uploading": "Subiendo… {percent}%",
+        "attachFile": "Adjuntar archivo",
+        "removeFile": "Quitar",
+        "dropOverlay": "Suelta para adjuntar",
+        "dropOverlayHint": "Cifrado de extremo a extremo en tu navegador",
         "shortcut": "⌘ + Enter",
         "info": "Tu secreto se cifra en este navegador antes de salir. La clave de descifrado se añade después del # en el enlace — los fragmentos nunca se envían a nuestros servidores.",
         "howItWorks": "Cómo funciona ↗",
@@ -49,7 +55,8 @@
         "charsLeft": "{count, number} caracteres restantes",
         "formatLabel": "Formato",
         "hidePassword": "Ocultar contraseña",
-        "showPassword": "Mostrar contraseña"
+        "showPassword": "Mostrar contraseña",
+        "previewImageLabel": "Mostrar vista previa de la imagen al revelar"
     },
     "generated": {
         "title": "Tu enlace está listo.",
@@ -129,7 +136,11 @@
         "copyClip": "Copiar al portapapeles",
         "shareBack": "Compartir de vuelta",
         "footnote": "descifrado localmente · nunca registrado",
-        "copiedToast": "Secreto copiado — pégalo ahora"
+        "copiedToast": "Secreto copiado — pégalo ahora",
+        "attachmentLabel": "Archivo adjunto",
+        "download": "Descargar",
+        "downloading": "Descargando…",
+        "previewLoading": "Cargando vista previa…"
     },
     "burned": {
         "title1": "Este secreto",
@@ -178,7 +189,10 @@
         "copyFailed": "No se pudo copiar al portapapeles.",
         "qrRenderFailed": "No se pudo generar el código QR.",
         "qrDownloadFailed": "No se pudo guardar el código QR.",
-        "passwordTooShort": "La contraseña debe tener al menos {min, number} caracteres."
+        "passwordTooShort": "La contraseña debe tener al menos {min, number} caracteres.",
+        "fileTooLarge": "El archivo es demasiado grande; máximo {max}.",
+        "downloadFailed": "No se pudo descargar el archivo adjunto.",
+        "fileExpired": "El archivo adjunto ya no está disponible."
     },
     "theme": {
         "legend": "Tema",

@@ -31,6 +31,12 @@
         "passphrasePh": "leer lassen für reinen Link-Zugang",
         "submit": "Verschlüsseln & Link erzeugen",
         "clear": "Leeren",
+        "cancel": "Abbrechen",
+        "uploading": "Lade hoch… {percent}%",
+        "attachFile": "Datei anhängen",
+        "removeFile": "Entfernen",
+        "dropOverlay": "Loslassen zum Anhängen",
+        "dropOverlayHint": "Ende-zu-Ende verschlüsselt im Browser",
         "shortcut": "⌘ + Enter",
         "info": "Dein Geheimnis wird in diesem Browser verschlüsselt, bevor es ihn verlässt. Der Schlüssel wird nach dem # im Link angehängt — Fragmente werden nie an unsere Server gesendet.",
         "howItWorks": "Wie es funktioniert ↗",
@@ -49,7 +55,8 @@
         "charsLeft": "{count, number} Zeichen übrig",
         "formatLabel": "Format",
         "hidePassword": "Passwort verbergen",
-        "showPassword": "Passwort anzeigen"
+        "showPassword": "Passwort anzeigen",
+        "previewImageLabel": "Bildvorschau beim Öffnen anzeigen"
     },
     "generated": {
         "title": "Dein Link ist bereit.",
@@ -129,7 +136,11 @@
         "copyClip": "In Zwischenablage",
         "shareBack": "Etwas zurückschicken",
         "footnote": "lokal entschlüsselt · nie geloggt",
-        "copiedToast": "Geheimnis kopiert — jetzt einfügen"
+        "copiedToast": "Geheimnis kopiert — jetzt einfügen",
+        "attachmentLabel": "Anhang",
+        "download": "Herunterladen",
+        "downloading": "Lade herunter…",
+        "previewLoading": "Vorschau wird entschlüsselt…"
     },
     "burned": {
         "title1": "Dieses Geheimnis",
@@ -178,7 +189,10 @@
         "copyFailed": "Konnte nicht in die Zwischenablage kopieren.",
         "qrRenderFailed": "QR-Code konnte nicht erzeugt werden.",
         "qrDownloadFailed": "QR-Code konnte nicht gespeichert werden.",
-        "passwordTooShort": "Das Passwort muss mindestens {min, number} Zeichen lang sein."
+        "passwordTooShort": "Das Passwort muss mindestens {min, number} Zeichen lang sein.",
+        "fileTooLarge": "Datei ist zu groß; maximal {max}.",
+        "downloadFailed": "Anhang konnte nicht heruntergeladen werden.",
+        "fileExpired": "Der Anhang ist nicht mehr verfügbar."
     },
     "theme": {
         "legend": "Design",

@@ -188,6 +188,37 @@ describe('plaintext envelope', () => {
         const bytes = new Uint8Array([0x00, ...new TextEncoder().encode(JSON.stringify({ fileRef }))]);
         expect(decodePlaintext(bytes)).toEqual({ text: '', fileRef });
     });
+
+    it('round-trips previewImage=true alongside fileRef', () => {
+        const encoded = encodePlaintext({ text: 't', fileRef, previewImage: true });
+        expect(decodePlaintext(encoded)).toEqual({ text: 't', fileRef, previewImage: true });
+    });
+
+    it('drops previewImage when there is no fileRef (flag is meaningless alone)', () => {
+        const encoded = encodePlaintext({ text: 't', previewImage: true });
+        expect(decodePlaintext(encoded)).toEqual({ text: 't' });
+    });
+
+    it('omits previewImage from the wire when it is false / undefined', () => {
+        const withFalse = encodePlaintext({ text: 't', fileRef, previewImage: false });
+        // The decoded payload must not carry the field at all so callers can
+        // rely on plain `payload.previewImage === true` checks.
+        expect(decodePlaintext(withFalse)).toEqual({ text: 't', fileRef });
+        const withUndefined = encodePlaintext({ text: 't', fileRef });
+        expect(decodePlaintext(withUndefined)).toEqual({ text: 't', fileRef });
+    });
+
+    it('rejects non-boolean previewImage values (strict true check)', () => {
+        // A hostile envelope can't smuggle truthy values past the strict
+        // `=== true` check inside decodePlaintext.
+        for (const sneaky of ['true', 1, {}, []]) {
+            const bytes = new Uint8Array([
+                0x00,
+                ...new TextEncoder().encode(JSON.stringify({ text: 't', fileRef, previewImage: sneaky })),
+            ]);
+            expect(decodePlaintext(bytes)).toEqual({ text: 't', fileRef });
+        }
+    });
 });
 
 describe('envelope-aware upload helpers', () => {

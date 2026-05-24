@@ -35,6 +35,11 @@ type ErrorReason = 'consumed' | 'wrong-password' | 'rate-limited' | 'service-una
 export type AttachedFile = {
     fileRef: FileRef;
     signedGetUrl: string;
+    // Mirrors the envelope's previewImage flag (already decrypted client-side).
+    // When true and the file decrypts to an image we can render, RevealedSecret
+    // auto-downloads and shows a thumbnail; when false the download stays
+    // strictly user-initiated.
+    previewImage: boolean;
 };
 
 type SecretState =
@@ -187,7 +192,13 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
                 const signedGetUrl =
                     data.file && typeof data.file.signedGetUrl === 'string' ? data.file.signedGetUrl : null;
                 const file: AttachedFile | null =
-                    payload.fileRef && signedGetUrl ? { fileRef: payload.fileRef, signedGetUrl } : null;
+                    payload.fileRef && signedGetUrl
+                        ? {
+                              fileRef: payload.fileRef,
+                              signedGetUrl,
+                              previewImage: payload.previewImage === true,
+                          }
+                        : null;
                 setSecretState({
                     status: 'revealed',
                     content: payload.text,

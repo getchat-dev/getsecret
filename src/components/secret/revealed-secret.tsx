@@ -7,6 +7,7 @@ import type { AttachedFile } from '@/components/secret/viewer';
 import { EyeIcon, EyeOffIcon, FileIcon, PlusIcon, UnlockIcon } from '@/components/ui/icons';
 import { useRouter } from '@/i18n/navigation';
 import { decodeContainer } from '@/lib/file-container';
+import { decodeImagePreview, type ImagePreviewHandle } from '@/lib/image-preview';
 import type { SecretFormat } from '@/lib/secret-formats';
 
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -32,6 +33,12 @@ type Props = {
     file?: AttachedFile | null;
 };
 
+type PreviewState =
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'ready'; url: string }
+    | { status: 'unavailable' };
+
 export function RevealedSecret({ content, format, viewsRemaining, file = null }: Props) {
     const t = useTranslations('revealed');
     const tErrors = useTranslations('errors');
@@ -40,6 +47,7 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
     const [highlightedHtml, setHighlightedHtml] = useState<string | null>(null);
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadError, setDownloadError] = useState<string | null>(null);
+    const [previewState, setPreviewState] = useState<PreviewState>({ status: 'idle' });
 
     useEffect(() => {
         if (format === 'plain') {
@@ -67,6 +75,60 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
     }, [content, format]);
 
     const showHighlighted = format !== 'plain' && highlightedHtml !== null && highlightedHtml.length > 0;
+
+    // Auto-preview path: when the sender opted in (file.previewImage = true)
+    // we fetch the encrypted container ourselves, decrypt it, and hand the
+    // bytes to the shared image-preview helper. Anything that goes wrong
+    // (network, container auth fail, not actually a decodable image, HEIC
+    // worker blocked) downgrades to the existing manual download button —
+    // we never block the recipient from seeing/saving the file just because
+    // we can't render a thumbnail. This effect runs at most once per reveal
+    // (file is set when the parent transitions to revealed and never mutates
+    // afterwards).
+    useEffect(() => {
+        if (!file?.previewImage) {
+            setPreviewState({ status: 'idle' });
+            return;
+        }
+        let cancelled = false;
+        let imageHandle: ImagePreviewHandle | null = null;
+        setPreviewState({ status: 'loading' });
+        void (async () => {
+            try {
+                const response = await fetch(file.signedGetUrl, { cache: 'no-store' });
+                if (!response.ok) {
+                    if (!cancelled) setPreviewState({ status: 'unavailable' });
+                    return;
+                }
+                const ciphertext = new Uint8Array(await response.arrayBuffer());
+                if (cancelled) return;
+                const keyBytes = decodeBase64Url(file.fileRef.keyB64);
+                const decoded = await decodeContainer(ciphertext, keyBytes);
+                if (cancelled) return;
+                const blob = new Blob([new Uint8Array(decoded.bytes)], {
+                    type: decoded.meta.mime || 'application/octet-stream',
+                });
+                imageHandle = decodeImagePreview(blob, {
+                    type: decoded.meta.mime,
+                    name: decoded.meta.filename,
+                });
+                if (!imageHandle) {
+                    setPreviewState({ status: 'unavailable' });
+                    return;
+                }
+                const url = await imageHandle.promise;
+                if (cancelled) return;
+                setPreviewState(url ? { status: 'ready', url } : { status: 'unavailable' });
+            } catch (err) {
+                console.error('[burnotes] auto-preview failed', err);
+                if (!cancelled) setPreviewState({ status: 'unavailable' });
+            }
+        })();
+        return () => {
+            cancelled = true;
+            if (imageHandle) imageHandle.abort();
+        };
+    }, [file]);
 
     async function handleDownload() {
         if (!file || isDownloading) return;
@@ -152,17 +214,25 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 ) : null}
                 {file ? (
                     <div className="attachment">
-                        <FileIcon size={16} />
-                        <span className="attachment-label">{t('attachmentLabel')}</span>
-                        <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
-                            onClick={handleDownload}
-                            disabled={isDownloading}
-                        >
-                            {isDownloading ? t('downloading') : t('download')}
-                        </button>
-                        {downloadError ? <span className="attachment-error">{downloadError}</span> : null}
+                        {previewState.status === 'ready' ? (
+                            <img src={previewState.url} alt={t('attachmentLabel')} className="attachment-preview" />
+                        ) : null}
+                        <div className="attachment-row">
+                            <FileIcon size={16} />
+                            <span className="attachment-label">{t('attachmentLabel')}</span>
+                            {previewState.status === 'loading' ? (
+                                <span className="attachment-preview-status">{t('previewLoading')}</span>
+                            ) : null}
+                            <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                onClick={handleDownload}
+                                disabled={isDownloading}
+                            >
+                                {isDownloading ? t('downloading') : t('download')}
+                            </button>
+                            {downloadError ? <span className="attachment-error">{downloadError}</span> : null}
+                        </div>
                     </div>
                 ) : null}
                 <div className="banner banner-success">

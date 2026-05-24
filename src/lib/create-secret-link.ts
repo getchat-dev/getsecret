@@ -24,6 +24,10 @@ type CreateSecretLinkOptions = {
     password?: string;
     fileRef?: FileRef;
     uploadToken?: string;
+    // Tells the viewer to auto-render an inline image preview after reveal.
+    // Only takes effect when fileRef is also set; ignored otherwise. Stored
+    // inside the encrypted envelope (server never learns the choice).
+    previewImage?: boolean;
 };
 
 function isPreparedWithPassword(
@@ -50,7 +54,7 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
         throw new Error('fileRef and uploadToken must be provided together');
     }
 
-    const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password } = options;
+    const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password, previewImage } = options;
     const usePassword = typeof password === 'string' && password.length > 0;
     // The reveal-side gate (LockScreen + Viewer) refuses to open with a
     // password that doesn't pass isValidPassword. If we let a weaker one
@@ -70,7 +74,13 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
         // `decryptSecretToPayload`, which handles envelope payloads directly;
         // `decodePlaintext` keeps a raw-string fallback so any in-flight
         // pre-envelope secret from older client builds still decodes.
-        const payload = fileRef ? { text: secret, fileRef } : { text: secret };
+        // previewImage is only meaningful with a file; encodePlaintext also
+        // strips it in that case, but filtering here keeps callers honest.
+        const payload = fileRef
+            ? previewImage
+                ? { text: secret, fileRef, previewImage: true }
+                : { text: secret, fileRef }
+            : { text: secret };
         prepared = usePassword
             ? await prepareSecretUploadWithPasswordEnvelope(payload, password)
             : await prepareSecretUploadEnvelope(payload);

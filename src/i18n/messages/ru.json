@@ -55,7 +55,8 @@
         "charsLeft": "осталось {count, number} символов",
         "formatLabel": "Формат",
         "hidePassword": "Скрыть пароль",
-        "showPassword": "Показать пароль"
+        "showPassword": "Показать пароль",
+        "previewImageLabel": "Показывать превью изображения при открытии"
     },
     "generated": {
         "title": "Ваша ссылка готова.",
@@ -138,7 +139,8 @@
         "copiedToast": "Секрет скопирован — вставьте сейчас",
         "attachmentLabel": "Вложение",
         "download": "Скачать",
-        "downloading": "Скачиваю…"
+        "downloading": "Скачиваю…",
+        "previewLoading": "Готовим превью…"
     },
     "burned": {
         "title1": "Этот секрет",

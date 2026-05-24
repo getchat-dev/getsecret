@@ -31,6 +31,12 @@
         "passphrasePh": "lascia vuoto per accesso solo tramite link",
         "submit": "Cifra e genera link",
         "clear": "Pulisci",
+        "cancel": "Annulla",
+        "uploading": "Caricamento… {percent}%",
+        "attachFile": "Allega file",
+        "removeFile": "Rimuovi",
+        "dropOverlay": "Rilascia per allegare",
+        "dropOverlayHint": "Cifrato end-to-end nel browser",
         "shortcut": "⌘ + Enter",
         "info": "Il tuo segreto è cifrato in questo browser prima di partire. La chiave di decifratura è aggiunta dopo il # nel link — i frammenti non vengono mai inviati ai nostri server.",
         "howItWorks": "Come funziona ↗",
@@ -49,7 +55,8 @@
         "charsLeft": "{count, number} caratteri rimanenti",
         "formatLabel": "Formato",
         "hidePassword": "Nascondi passphrase",
-        "showPassword": "Mostra passphrase"
+        "showPassword": "Mostra passphrase",
+        "previewImageLabel": "Mostra l'anteprima dell'immagine all'apertura"
     },
     "generated": {
         "title": "Il tuo link è pronto.",
@@ -129,7 +136,11 @@
         "copyClip": "Copia negli appunti",
         "shareBack": "Condividi qualcosa in risposta",
         "footnote": "decifrato localmente · mai registrato",
-        "copiedToast": "Segreto copiato — incollalo ora"
+        "copiedToast": "Segreto copiato — incollalo ora",
+        "attachmentLabel": "Allegato",
+        "download": "Scarica",
+        "downloading": "Download in corso…",
+        "previewLoading": "Caricamento anteprima…"
     },
     "burned": {
         "title1": "Questo segreto",
@@ -178,7 +189,10 @@
         "copyFailed": "Impossibile copiare negli appunti.",
         "qrRenderFailed": "Impossibile generare il codice QR.",
         "qrDownloadFailed": "Impossibile salvare il codice QR.",
-        "passwordTooShort": "La passphrase deve avere almeno {min, number} caratteri."
+        "passwordTooShort": "La passphrase deve avere almeno {min, number} caratteri.",
+        "fileTooLarge": "Il file è troppo grande; massimo {max}.",
+        "downloadFailed": "Impossibile scaricare l'allegato.",
+        "fileExpired": "L'allegato non è più disponibile."
     },
     "theme": {
         "legend": "Tema",

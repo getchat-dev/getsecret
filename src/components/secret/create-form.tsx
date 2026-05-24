@@ -12,6 +12,7 @@ import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
 import { AlertIcon, FileIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
+import { decodeImagePreview, isImageCandidate } from '@/lib/image-preview';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
@@ -25,32 +26,6 @@ import { type UploadProgress, uploadFile } from '@/lib/upload';
 const DRAFT_STORAGE_KEY = 'burnotes:create:draft';
 const FORMAT_STORAGE_KEY = 'burnotes:create:format';
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
-
-// Allowlist instead of `image/*` because Chrome/Firefox can't decode HEIC/HEIF
-// (Safari can), JPEG 2000, etc. Rendering them via <img> shows a broken-image
-// glyph. Stick to formats every evergreen browser handles natively. HEIC is
-// handled separately by decoding through `heic-to` (lazy-loaded WASM).
-const PREVIEWABLE_IMAGE_TYPES = new Set([
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/avif',
-    'image/svg+xml',
-    'image/bmp',
-    'image/x-icon',
-    'image/vnd.microsoft.icon',
-]);
-
-// Both MIME and extension because some upload paths (older drag sources, mobile
-// browsers, some Android pickers) leave `file.type` empty for HEIC/HEIF.
-function isHeicCandidate(file: File): boolean {
-    const type = file.type.toLowerCase();
-    if (type === 'image/heic' || type === 'image/heif') return true;
-    if (type === 'image/heic-sequence' || type === 'image/heif-sequence') return true;
-    const name = file.name.toLowerCase();
-    return name.endsWith('.heic') || name.endsWith('.heif');
-}
 
 function formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -79,6 +54,10 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     const [password, setPassword] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    // Default ON: when the sender attaches an image, the recipient sees a
+    // thumbnail inline after reveal. The checkbox only appears when there's
+    // an image to preview, so a non-image attachment never asks the user.
+    const [previewImage, setPreviewImage] = useState(true);
     const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -120,47 +99,19 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
             setImagePreviewUrl(null);
             return;
         }
-
-        if (PREVIEWABLE_IMAGE_TYPES.has(file.type)) {
-            const url = URL.createObjectURL(file);
-            setImagePreviewUrl(url);
-            return () => URL.revokeObjectURL(url);
-        }
-
-        if (!isHeicCandidate(file)) {
+        const handle = decodeImagePreview(file, { type: file.type, name: file.name });
+        if (!handle) {
             setImagePreviewUrl(null);
             return;
         }
-
-        // HEIC/HEIF: dynamic import keeps the libheif WASM bundle (~hundreds of
-        // KB) out of the initial JS payload — only users who actually drop a
-        // HEIC file pay the cost. Using the `/next` entry runs libheif inside
-        // a Web Worker so the main thread (and any in-flight encryption /
-        // upload) doesn't freeze for the 0.5–2s the decode typically takes.
-        // `cancelled` guards against a stale conversion resolving after the
-        // user picked a different file or cleared this one.
         let cancelled = false;
-        let convertedUrl: string | null = null;
         setImagePreviewUrl(null);
-        (async () => {
-            try {
-                const { heicTo, isHeic } = await import('heic-to/next');
-                if (cancelled) return;
-                if (!(await isHeic(file))) return;
-                const jpeg = await heicTo({ blob: file, type: 'image/jpeg', quality: 0.85 });
-                if (cancelled) return;
-                convertedUrl = URL.createObjectURL(jpeg);
-                setImagePreviewUrl(convertedUrl);
-            } catch (err) {
-                // Decode failure (corrupt file, unsupported HEIC variant, CSP
-                // blocking WASM / blob worker) — leave the icon fallback.
-                console.error('heic preview decode failed', err);
-            }
-        })();
-
+        handle.promise.then((url) => {
+            if (!cancelled) setImagePreviewUrl(url);
+        });
         return () => {
             cancelled = true;
-            if (convertedUrl) URL.revokeObjectURL(convertedUrl);
+            handle.abort();
         };
     }, [file]);
 
@@ -270,12 +221,18 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                 });
             }
 
+            // Only forward previewImage when there's actually an image to
+            // preview AND the user kept the checkbox checked. createSecretLink
+            // (and encodePlaintext below it) also strip the flag if there's
+            // no fileRef, but filtering here keeps the wire shape predictable.
+            const fileIsImage = file !== null && isImageCandidate({ type: file.type, name: file.name });
             const next = await createSecretLink(secret, {
                 expiresInSeconds,
                 format,
                 maxViews: effectiveMaxViews,
                 ...(effectivePassword.length > 0 ? { password: effectivePassword } : {}),
                 ...(uploadResult ? { fileRef: uploadResult.fileRef, uploadToken: uploadResult.uploadToken } : {}),
+                ...(uploadResult && fileIsImage && previewImage ? { previewImage: true } : {}),
             });
             window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
             window.sessionStorage.removeItem(FORMAT_STORAGE_KEY);
@@ -299,6 +256,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
         setLink('');
         setPassword('');
         setFile(null);
+        setPreviewImage(true);
         setError('');
     }
 
@@ -376,6 +334,17 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                                     {t('removeFile')}
                                 </button>
                             </div>
+                            {isImageCandidate({ type: file.type, name: file.name }) ? (
+                                <label className="file-info-preview-toggle">
+                                    <input
+                                        type="checkbox"
+                                        checked={previewImage}
+                                        onChange={(e) => setPreviewImage(e.target.checked)}
+                                        disabled={isSubmitting}
+                                    />
+                                    <span>{t('previewImageLabel')}</span>
+                                </label>
+                            ) : null}
                         </div>
                     ) : null}
                     {enableFileAttachments ? (
