@@ -57,6 +57,13 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
     const [isDownloading, setIsDownloading] = useState(false);
     const [downloadError, setDownloadError] = useState<string | null>(null);
     const [previewState, setPreviewState] = useState<PreviewState>({ status: 'idle' });
+    // Filename surfaces in the UI as soon as either the preview effect or the
+    // first manual download has decrypted the container. Until then we fall
+    // back to the generic "Attached file" label — the filename lives inside
+    // the encrypted container, not in the envelope, so it's literally unknown
+    // before we've fetched + AES-GCM-decrypted at least once. Reactive via
+    // state (rather than the ref below) because the label re-renders on it.
+    const [attachmentName, setAttachmentName] = useState<string | null>(null);
     // Cache the decrypted file once the auto-preview path has done the fetch +
     // container decode. The manual Download button reuses these bytes instead
     // of re-fetching from S3 and running the AES-GCM container decrypt a
@@ -167,6 +174,7 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 // file the user already paid for.
                 const cached: DecryptedFile = { blob, filename: decoded.meta.filename || 'attachment' };
                 decryptedFileRef.current = cached;
+                if (decoded.meta.filename) setAttachmentName(decoded.meta.filename);
                 resolveHandoff(cached);
                 imageHandle = decodeImagePreview(blob, {
                     type: decoded.meta.mime,
@@ -239,6 +247,7 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 // even without auto-preview, e.g. user downloads, decides to
                 // re-save under a different name).
                 decryptedFileRef.current = { blob, filename };
+                if (decoded.meta.filename) setAttachmentName(decoded.meta.filename);
             }
             blobUrl = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
@@ -310,11 +319,17 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 {file ? (
                     <div className="attachment">
                         {previewState.status === 'ready' ? (
-                            <img src={previewState.url} alt={t('attachmentLabel')} className="attachment-preview" />
+                            <img
+                                src={previewState.url}
+                                alt={attachmentName ?? t('attachmentLabel')}
+                                className="attachment-preview"
+                            />
                         ) : null}
                         <div className="attachment-row">
                             <FileIcon size={16} />
-                            <span className="attachment-label">{t('attachmentLabel')}</span>
+                            <span className="attachment-label" title={attachmentName ?? undefined}>
+                                {attachmentName ?? t('attachmentLabel')}
+                            </span>
                             {previewState.status === 'loading' ? (
                                 <span className="attachment-preview-status">{t('previewLoading')}</span>
                             ) : null}
