@@ -65,6 +65,8 @@
         "ready": "prêt",
         "copy": "Copier le lien",
         "copied": "Copié",
+        "shareNative": "Partager via le système",
+        "shareNativeText": "Un lien chiffré à usage unique depuis burnotes. Ouvre-le pour le voir — il disparaît après lecture.",
         "warnTitle": "Lecture unique.",
         "warnBody": "Toute personne qui ouvre ce lien le brûle. Ne le prévisualisez pas vous-même, et attention aux aperçus (Slack/iMessage) qui peuvent consommer le secret.",
         "expiresIn": "Expire dans",

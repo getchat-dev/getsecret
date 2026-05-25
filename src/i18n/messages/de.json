@@ -65,6 +65,8 @@
         "ready": "bereit",
         "copy": "Link kopieren",
         "copied": "Kopiert",
+        "shareNative": "Über das System teilen",
+        "shareNativeText": "Ein verschlüsselter Einmal-Link von burnotes. Öffne ihn, um den Inhalt zu sehen — nach dem Lesen ist er weg.",
         "warnTitle": "Einmaliger Aufruf.",
         "warnBody": "Wer auch immer diesen Link öffnet, verbrennt ihn. Schau ihn nicht selbst an, und warne Link-Vorschauen (Slack/iMessage) — auto-erweiterte URLs können das Geheimnis verbrauchen.",
         "expiresIn": "Läuft ab in",

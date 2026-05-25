@@ -65,6 +65,8 @@
         "ready": "listo",
         "copy": "Copiar enlace",
         "copied": "Copiado",
+        "shareNative": "Compartir con el sistema",
+        "shareNativeText": "Un enlace cifrado de un solo uso de burnotes. Ábrelo para verlo — desaparece tras leerlo.",
         "warnTitle": "Lectura única.",
         "warnBody": "Cualquiera que abra este enlace lo quemará. No lo previsualices tú mismo y advierte a los previsualizadores de enlaces (Slack/iMessage) que las URL autoexpandidas pueden consumir el secreto.",
         "expiresIn": "Expira en",

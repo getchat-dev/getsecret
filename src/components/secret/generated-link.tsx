@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { QrModal } from '@/components/secret/qr-modal';
 import {
@@ -12,6 +12,7 @@ import {
     KeyIcon,
     PlusIcon,
     QrCodeIcon,
+    ShareIcon,
     TrashIcon,
 } from '@/components/ui/icons';
 import type { TtlUnit } from '@/lib/expiration';
@@ -44,9 +45,35 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
     const { copyStatus, toast, copyText } = useClipboardCopy();
     const copyButtonRef = useRef<HTMLButtonElement | null>(null);
     const [qrOpen, setQrOpen] = useState(false);
+    // navigator.share is undefined during SSR and on browsers without the
+    // Web Share API (notably Firefox desktop, older Edge). We detect on mount
+    // to avoid a hydration mismatch and skip rendering the button when it
+    // wouldn't do anything. Also gated on a secure context — the API throws
+    // a NotAllowedError on insecure origins, and we'd rather hide the button
+    // than show a broken one.
+    const [canNativeShare, setCanNativeShare] = useState(false);
+    useEffect(() => {
+        setCanNativeShare(
+            typeof navigator !== 'undefined' && typeof navigator.share === 'function' && window.isSecureContext,
+        );
+    }, []);
 
     const parts = splitUrl(link);
     const isCopied = copyStatus === 'copied';
+
+    async function handleNativeShare() {
+        try {
+            await navigator.share({ url: link, title: 'burnotes', text: t('shareNativeText') });
+        } catch (err) {
+            // AbortError = user dismissed the share sheet, which is normal
+            // and shouldn't surface as a failure. Other errors (e.g. policy)
+            // get logged so a dev catches regressions, but we don't toast —
+            // the user has the visible Copy button right next door.
+            if (err instanceof Error && err.name !== 'AbortError') {
+                console.error('[burnotes] native share failed', err);
+            }
+        }
+    }
 
     const readsLabel = maxReads === null ? '∞' : String(maxReads ?? 1);
     const passphraseLabel = hasPassphrase ? t('required') : t('none');
@@ -76,6 +103,17 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                         {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
                         <span>{isCopied ? t('copied') : t('copy')}</span>
                     </button>
+                    {canNativeShare ? (
+                        <button
+                            type="button"
+                            className="share-btn"
+                            onClick={() => void handleNativeShare()}
+                            aria-label={t('shareNative')}
+                            title={t('shareNative')}
+                        >
+                            <ShareIcon size={14} />
+                        </button>
+                    ) : null}
                 </div>
                 <ToastMessage toast={toast?.kind === 'error' ? toast : null} anchorRef={copyButtonRef} />
                 <div className="banner banner-warn">

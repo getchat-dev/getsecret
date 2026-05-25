@@ -65,6 +65,8 @@
         "ready": "ready",
         "copy": "Copy link",
         "copied": "Copied",
+        "shareNative": "Share via system",
+        "shareNativeText": "An encrypted one-time link from burnotes. Open it to reveal — it disappears once read.",
         "warnTitle": "One-time read.",
         "warnBody": "Anyone who opens this link will burn it. Don't preview it yourself, and warn link previewers (Slack/iMessage) that auto-expand URLs may consume the secret.",
         "expiresIn": "Expires in",

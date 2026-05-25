@@ -1502,6 +1502,28 @@ h1.display .accent-word {
     color: white;
 }
 
+/* Web Share button — narrower icon-only sibling of copy-btn. Same vertical
+   rhythm (stretch to box height, left border separator) but tighter so the
+   primary action (Copy) stays visually dominant. Only rendered when
+   navigator.share is available; gone otherwise — no width tradeoff. */
+.link-box .share-btn {
+    background: var(--bg-3);
+    border: 0;
+    border-left: 1px solid var(--border-default);
+    color: var(--fg-default);
+    padding: 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.link-box .share-btn:hover {
+    background: var(--bg-4);
+}
+
 /* ============================================================
    STATS
 ============================================================ */
