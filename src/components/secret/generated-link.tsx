@@ -112,6 +112,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                             title={t('shareNative')}
                         >
                             <ShareIcon size={14} />
+                            <span className="share-btn-label">{t('shareNative')}</span>
                         </button>
                     ) : null}
                 </div>
