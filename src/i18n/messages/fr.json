@@ -68,7 +68,7 @@
         "shareNative": "Partager via le système",
         "shareNativeText": "Un lien chiffré à usage unique depuis burnotes. Ouvre-le pour le voir — il disparaît après lecture.",
         "warnTitle": "Lecture unique.",
-        "warnBody": "Toute personne qui ouvre ce lien le brûle. Ne le prévisualisez pas vous-même, et attention aux aperçus (Slack/iMessage) qui peuvent consommer le secret.",
+        "warnBody": "Toute personne qui ouvre ce lien le brûle.",
         "expiresIn": "Expire dans",
         "readsLeft": "Lectures restantes",
         "passphrase": "Phrase de passe",

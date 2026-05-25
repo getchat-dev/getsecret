@@ -68,7 +68,7 @@
         "shareNative": "Condividi tramite il sistema",
         "shareNativeText": "Un link cifrato monouso da burnotes. Aprilo per vederlo — sparisce dopo la lettura.",
         "warnTitle": "Lettura una sola volta.",
-        "warnBody": "Chiunque apra questo link lo brucerà. Non visualizzarlo tu stesso e avvisa i preview dei link (Slack/iMessage) che gli URL auto-espansi possono consumare il segreto.",
+        "warnBody": "Chiunque apra questo link lo brucerà.",
         "expiresIn": "Scade tra",
         "readsLeft": "Letture rimanenti",
         "passphrase": "Passphrase",
