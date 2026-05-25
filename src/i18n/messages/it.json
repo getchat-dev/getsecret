@@ -2,7 +2,7 @@
     "label": "Italiano",
     "flag": "🇮🇹",
     "meta": {
-        "tagline": "Condividi segreti che svaniscono alla lettura",
+        "tagline": "Note cifrate che si bruciano dopo la lettura",
         "description": "Invia password, token API e file come link cifrati monouso. Cifratura nel browser; la chiave non raggiunge mai i nostri server.",
         "homeDescription": "Invia password, token API e file tramite link cifrati monouso. Tutto avviene nel tuo browser — i nostri server non vedono né il contenuto né la chiave.",
         "secretViewTitle": "Apri un segreto monouso"

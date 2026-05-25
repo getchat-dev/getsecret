@@ -2,7 +2,7 @@
     "label": "Español",
     "flag": "🇪🇸",
     "meta": {
-        "tagline": "Comparte secretos que desaparecen al leerse",
+        "tagline": "Notas cifradas que se queman tras leerlas",
         "description": "Envía contraseñas, tokens API y archivos como enlaces cifrados de un solo uso. Cifrado en el navegador; la clave nunca llega a nuestros servidores.",
         "homeDescription": "Envía contraseñas, tokens API y archivos mediante enlaces cifrados de un solo uso. Todo ocurre en tu navegador — nuestros servidores no ven el contenido ni la clave.",
         "secretViewTitle": "Abrir un secreto de un solo uso"
