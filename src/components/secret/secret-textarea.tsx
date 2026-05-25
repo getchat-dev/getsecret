@@ -1,7 +1,15 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type ClipboardEvent, type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+    type ClipboardEvent,
+    type KeyboardEvent,
+    type ReactNode,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+    useState,
+} from 'react';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { SECRET_FORMAT_PLACEHOLDERS, type SecretFormat } from '@/lib/secret-formats';
 
@@ -19,9 +27,13 @@ type Props = {
     onFormatDetected?: (format: SecretFormat) => void;
     format: SecretFormat;
     autoFocus?: boolean;
+    // Left-aligned slot inside the textarea's bottom toolbar. CreateForm uses
+    // it for the Attach-file affordance so the action sits visually attached
+    // to the input it modifies, instead of floating down in the card footer.
+    toolbarStart?: ReactNode;
 };
 
-export function SecretTextarea({ value, onChange, onFormatDetected, format, autoFocus }: Props) {
+export function SecretTextarea({ value, onChange, onFormatDetected, format, autoFocus, toolbarStart }: Props) {
     const t = useTranslations('create');
     const textareaRef = useRef<HTMLTextAreaElement | null>(null);
     const overlayRef = useRef<HTMLPreElement | null>(null);
@@ -170,19 +182,22 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
                     />
                 </pre>
             ) : null}
-            <span className="textarea-meta">
-                {remaining < SHOW_COUNT_THRESHOLD ? (
-                    <span className={`count${remaining < WARN_COUNT_THRESHOLD ? ' warn' : ''}`}>
-                        {t('charsLeft', { count: remaining })}
-                    </span>
-                ) : null}
-                {keyboardHint && value.length > 0 ? (
-                    <span className="shortcut-hint" title={t('submitHint')}>
-                        <kbd>{keyboardHint.isMac ? '⌘' : 'Ctrl'}</kbd>
-                        <kbd>Enter</kbd>
-                    </span>
-                ) : null}
-            </span>
+            <div className="textarea-toolbar">
+                <div className="textarea-toolbar-start">{toolbarStart}</div>
+                <div className="textarea-toolbar-end">
+                    {remaining < SHOW_COUNT_THRESHOLD ? (
+                        <span className={`count${remaining < WARN_COUNT_THRESHOLD ? ' warn' : ''}`}>
+                            {t('charsLeft', { count: remaining })}
+                        </span>
+                    ) : null}
+                    {keyboardHint && value.length > 0 ? (
+                        <span className="shortcut-hint" title={t('submitHint')}>
+                            <kbd>{keyboardHint.isMac ? '⌘' : 'Ctrl'}</kbd>
+                            <kbd>Enter</kbd>
+                        </span>
+                    ) : null}
+                </div>
+            </div>
         </div>
     );
 }

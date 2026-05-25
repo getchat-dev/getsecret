@@ -368,6 +368,18 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         onFormatDetected={setFormat}
                         format={format}
                         autoFocus
+                        toolbarStart={
+                            enableFileAttachments && file === null ? (
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost btn-sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isSubmitting}
+                                >
+                                    <FileIcon size={14} /> {t('attachFile')}
+                                </button>
+                            ) : null
+                        }
                     />
                     {enableFileAttachments && file ? (
                         <div className="file-info-card">
@@ -438,16 +450,6 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                     ) : null}
                 </div>
                 <footer className="card-footer">
-                    {enableFileAttachments ? (
-                        <button
-                            type="button"
-                            className="btn btn-ghost btn-sm"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isSubmitting || file !== null}
-                        >
-                            <FileIcon size={14} /> {t('attachFile')}
-                        </button>
-                    ) : null}
                     {secret.length > 0 || file ? (
                         <button
                             type="button"

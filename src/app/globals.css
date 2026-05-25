@@ -914,7 +914,7 @@ h1.display .accent-word {
     font-family: var(--font-mono);
     font-size: 13.5px;
     line-height: 1.6;
-    padding: 14px 16px 36px;
+    padding: 14px 16px;
     min-height: 180px;
     display: block;
     position: relative;
@@ -958,7 +958,7 @@ h1.display .accent-word {
     z-index: 1;
     pointer-events: none;
     overflow: hidden;
-    padding: 14px 16px 36px;
+    padding: 14px 16px;
     border: 1px solid transparent;
     border-radius: var(--radius-md);
     background: transparent;
@@ -977,40 +977,58 @@ h1.display .accent-word {
     display: block;
 }
 
-.textarea-meta {
-    position: absolute;
-    bottom: 8px;
-    left: 14px;
-    right: 14px;
+/* Toolbar pinned to the bottom of the textarea-wrap (inside its border).
+   Composes input + actions into a single visual control: textarea on top,
+   actions strip on bottom. Start slot is filled by the parent (CreateForm
+   passes the Attach-file button); end slot owns the char counter and the
+   keyboard-submit hint. */
+.textarea-toolbar {
+    position: relative;
+    z-index: 3;
     display: flex;
-    justify-content: flex-end;
-    align-items: baseline;
+    align-items: center;
+    justify-content: space-between;
     gap: 14px;
+    min-height: 36px;
+    padding: 6px 10px;
+    border-top: 1px solid var(--border-default);
+    background: var(--bg-2);
+    border-bottom-left-radius: var(--radius-md);
+    border-bottom-right-radius: var(--radius-md);
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--fg-subtle);
-    pointer-events: none;
-    z-index: 3;
 }
 
-.textarea-meta .count.warn {
+.textarea-toolbar-start {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    /* Empty when no toolbarStart prop is passed; reserve no space. */
+    min-width: 0;
+}
+
+.textarea-toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.textarea-toolbar .count.warn {
     color: var(--ember);
 }
 
 /* Keyboard-submit hint — rendered only on desktops with a real keyboard
-   (see the matchMedia gate in secret-textarea.tsx). Sits to the right of
-   the char counter; the kbd children look like physical key caps to make
-   the affordance recognizable at a glance. Override pointer-events from
-   the parent .textarea-meta so the native `title` tooltip fires on hover. */
-.textarea-meta .shortcut-hint {
+   (see the matchMedia gate in secret-textarea.tsx). The kbd children look
+   like physical key caps to make the affordance recognizable at a glance. */
+.textarea-toolbar .shortcut-hint {
     display: inline-flex;
     align-items: center;
     gap: 4px;
     white-space: nowrap;
-    pointer-events: auto;
 }
 
-.textarea-meta .shortcut-hint kbd {
+.textarea-toolbar .shortcut-hint kbd {
     display: inline-block;
     padding: 1px 6px;
     min-width: 18px;
