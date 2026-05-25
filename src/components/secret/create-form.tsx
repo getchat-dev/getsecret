@@ -4,7 +4,9 @@ import { useTranslations } from 'next-intl';
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { FormatSelect } from '@/components/secret/format-select';
 import { GeneratedLink } from '@/components/secret/generated-link';
-import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
+// Hidden for now; re-enable by uncommenting this import and the two
+// <LifecycleSteps activeStep={activeStep} /> usages below.
+// import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
 import { MaxViewsControl } from '@/components/secret/max-views-control';
 import { PasswordField } from '@/components/secret/password-field';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
@@ -96,7 +98,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     const passwordTouched = enablePassword && password.length > 0;
     const passwordValid = !passwordTouched || isValidPassword(password);
 
-    const activeStep = link ? 2 : 1;
+    // const activeStep = link ? 2 : 1; // re-enable with the LifecycleSteps usages
     const hasContent = secret.trim().length > 0 || file !== null;
 
     useEffect(() => {
@@ -322,7 +324,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     if (link) {
         return (
             <>
-                <LifecycleSteps activeStep={activeStep} />
+                {/* <LifecycleSteps activeStep={activeStep} /> */}
                 <GeneratedLink
                     link={link}
                     expiresIn={{ value: ttlValue, unit: ttlUnit }}
@@ -336,7 +338,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
 
     return (
         <>
-            <LifecycleSteps activeStep={activeStep} />
+            {/* <LifecycleSteps activeStep={activeStep} /> */}
             {enableFileAttachments && isDragging ? (
                 <div className="drop-overlay" aria-hidden="true">
                     <div className="drop-overlay-message">

@@ -1,7 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
+// Hidden for now; re-enable by uncommenting this import and the
+// <LifecycleSteps activeStep={5} /> usage below.
+// import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
 import { FlameIcon, LockIcon } from '@/components/ui/icons';
 import { Link } from '@/i18n/navigation';
 
@@ -15,7 +17,7 @@ export function BurnedScreen({ reason: _reason }: Props = {}) {
 
     return (
         <>
-            <LifecycleSteps activeStep={5} />
+            {/* <LifecycleSteps activeStep={5} /> */}
             <span className="eyebrow">
                 <FlameIcon size={12} className="flame" /> {t('gone')}
             </span>
