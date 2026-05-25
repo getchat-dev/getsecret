@@ -1,62 +1,63 @@
 project: burnotes
 configVersion: 1
 
+# Two-image build:
+#   1. `builder` — full alpine with build deps; installs all deps and runs
+#      `next build`. Cached by stapel's beforeInstall → install → setup
+#      stages with file-level `stageDependencies` so e.g. a src/ change
+#      doesn't invalidate `pnpm install`. Not deployed.
+#   2. `app` — bare alpine runtime; pulls only .next/standalone, .next/static,
+#      and public from the builder via `import:`. Final image is around
+#      ~200 MB (vs ~2.9 GB for the previous single-image build).
+
 ---
-image: base-build-node
-from: node:22-bookworm
+image: builder
+from: node:22-alpine
 imageSpec:
   config:
-    workDir: /app
+    workingDir: /app
     env:
-      TERM: xterm
+      NEXT_TELEMETRY_DISABLED: "1"
 shell:
   beforeInstall:
-    - |
-      set -e
-      export DEBIAN_FRONTEND=noninteractive
-      apt-get update
-      apt-get install -y build-essential python3 tzdata
-      rm -f /etc/localtime
-      ln -s /usr/share/zoneinfo/UTC /etc/localtime
-      useradd --system --create-home --home-dir /home/burnotes --shell /usr/sbin/nologin --uid 10001 burnotes
-      # Enable Corepack so `pnpm` resolves to the version pinned in
-      # package.json's `packageManager` field. Bundled with Node since 16.9
-      # but disabled by default; the activation is a one-shot.
-      corepack enable
----
-image: app
-fromImage: base-build-node
-imageSpec:
-  config:
-    user: burnotes
-shell:
+    # Native postinstall fallbacks (sharp, @swc/core, etc. mostly ship
+    # prebuilt musl binaries, but keep these as a deterministic safety net).
+    # `libc6-compat` provides the glibc shim some prebuilt binaries link
+    # against. Corepack activates the pnpm version pinned in package.json's
+    # `packageManager` field.
+    # bash в дополнение к BusyBox sh — нужен для удобства exec'а в dev-контейнер
+    # (`docker compose exec app bash`), для скриптов с bash-only синтаксисом и
+    # для отладки. В runtime-образе `app` его сознательно нет: меньше шелла —
+    # меньше живущих-с-земли при потенциальном RCE.
+    - apk add --no-cache bash python3 make g++ libc6-compat
+    - corepack enable
   install:
     - cd /app
+    # --frozen-lockfile is the pnpm equivalent of `npm ci`: refuses to start
+    # if pnpm-lock.yaml is missing or out of sync with package.json.
     - pnpm install --frozen-lockfile
   setup:
     - cd /app
     - pnpm build
-    # `pnpm prune --prod` walks the dep graph and removes anything reachable
-    # only from devDependencies, mirroring `npm prune --omit=dev`.
-    - pnpm prune --prod
-    - chown -R burnotes:burnotes /app
 git:
 - add: /
   to: /app
-  excludePaths:
-  - .git
-  - .env.example
-  - .helm
-  - .werf
-  - .next
-  - node_modules
-  - werf.yaml
-  - werf-giterminism.yaml
-  - docker-compose.yml
-  - docker-compose.dev.yml
-  - docker-compose.infra.yml
-  - .gitlab-ci.yml
+  # Allow-list ровно того, что нужно `pnpm install` + `next build`. Подход
+  # default-deny — компромисс между короткой портянкой и риском что новый
+  # файл в корне (например `instrumentation.ts` или `middleware.ts`) тихо
+  # не попадёт в образ. Если что-то понадобится — допишем явно.
+  includePaths:
+  - package.json
+  - pnpm-lock.yaml
+  - next.config.ts
+  - tsconfig.json
+  - next-env.d.ts
+  - src
+  - public
   stageDependencies:
+    # File-level rebuild triggers. werf hashes only the listed paths to
+    # decide whether the stage's cache is still valid — far more precise
+    # than Docker's COPY-line invalidation.
     install:
       - package.json
       - pnpm-lock.yaml
@@ -66,3 +67,58 @@ git:
       - next.config.ts
       - tsconfig.json
       - next-env.d.ts
+
+---
+image: app
+from: node:22-alpine
+imageSpec:
+  config:
+    user: burnotes
+    workingDir: /app
+    env:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    cmd:
+      - node
+      - server.js
+shell:
+  beforeInstall:
+    # tzdata so server-side timestamps aren't stuck on UTC by default; we
+    # still pin UTC explicitly to match the production posture in vitest.setup
+    # and src/i18n/request.ts.
+    - apk add --no-cache tzdata
+    - ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+    # Non-root user (uid 10001, matched to the one referenced in
+    # docker-compose.yml's read_only/tmpfs constraints).
+    - addgroup -S -g 10001 burnotes
+    - adduser -S -G burnotes -u 10001 -h /home/burnotes -s /sbin/nologin burnotes
+# Pull artifacts from the builder image into the runtime image. werf's
+# `import:` is the multi-stage analogue of Dockerfile's COPY --from=stage,
+# but it composes with stapel's stage cache: if the builder's setup stage
+# cache hit, the import is also instantaneous.
+#
+# Next.js `output: 'standalone'` (next.config.ts:21) emits these three
+# artifact roots; nothing else from the repo needs to ship with the image.
+#   - .next/standalone/  → server.js + minimal traced node_modules
+#   - .next/static/      → compiled JS/CSS chunks (not in standalone)
+#   - public/            → public assets referenced by server.js
+import:
+- image: builder
+  add: /app/.next/standalone
+  to: /app
+  after: install
+  owner: burnotes
+  group: burnotes
+- image: builder
+  add: /app/.next/static
+  to: /app/.next/static
+  after: install
+  owner: burnotes
+  group: burnotes
+- image: builder
+  add: /app/public
+  to: /app/public
+  after: install
+  owner: burnotes
+  group: burnotes

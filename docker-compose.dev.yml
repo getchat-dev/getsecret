@@ -7,7 +7,7 @@ networks:
 
 services:
   app:
-    image: ${WERF_APP_DOCKER_IMAGE_NAME:-burnotes:latest}
+    image: ${WERF_BUILDER_DOCKER_IMAGE_NAME:-burnotes-builder:latest}
     command: ["tail", "-f", "/dev/null"]
     # command: ["pnpm", "dev"]
     volumes:
