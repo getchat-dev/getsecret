@@ -28,26 +28,29 @@ One-time secret sharing app on Node.js + Next.js.
 
 ## Local run
 
+Burnotes uses **pnpm**. The exact version is pinned via `packageManager` in `package.json` and resolved through Corepack — `corepack enable` (once per machine) gets you the right `pnpm` on `PATH`.
+
 ```bash
-npm install
-npm run hooks:install
-npm run dev
+corepack enable
+pnpm install
+pnpm hooks:install
+pnpm dev
 ```
 
 Open `http://localhost:3000`.
 
-If `npm run check` or `npm test` later fails with `Cannot find module '@biomejs/cli-…'` or `'@rolldown/binding-…'`, that's the npm optionalDependencies bug ([npm/cli#4828](https://github.com/npm/cli/issues/4828)) — platform-specific native binaries occasionally fail to install. Recover with `npm run setup:bindings` (works on host or inside the Docker container). Do **not** delete `package-lock.json`; the lockfile is fine.
+If `pnpm check` or `pnpm test` later fails with `Cannot find module '@biomejs/cli-…'` (or another platform-specific native binary), run `pnpm setup:bindings` — it re-installs everything with `--force` and re-fetches optional native deps for the current OS/arch. Works on host or inside the Docker container.
 
 ## Git hooks
 
 Install repository hooks once per clone:
 
 ```bash
-npm run hooks:install
+pnpm hooks:install
 ```
 
-This enables the versioned pre-commit hook from `.githooks/`. Before each commit it runs `npm run check`, which executes `biome check` and blocks the commit if formatting, lint, or assist checks fail.
-It also runs `npm test`, which executes the Vitest suite and blocks the commit if core behavior regresses.
+This enables the versioned pre-commit hook from `.githooks/`. Before each commit it runs `pnpm check`, which executes `biome check` and blocks the commit if formatting, lint, or assist checks fail.
+It also runs `pnpm test`, which executes the Vitest suite and blocks the commit if core behavior regresses.
 
 ## Docker dev mode
 
@@ -124,7 +127,7 @@ docker run --rm \
   alpine tar czf /backup/valkey-backup.tgz /data
 ```
 
-### Running the app on the host (`npm run dev`) against Dockerised Valkey
+### Running the app on the host (`pnpm dev`) against Dockerised Valkey
 
 Uncomment the `ports:` block in `docker-compose.infra.yml` (binds `127.0.0.1:6379`)
 and set `VALKEY_URL=redis://localhost:6379/0` in `.env`.

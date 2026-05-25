@@ -10,7 +10,7 @@ networks:
 services:
   app:
     image: $WERF_APP_DOCKER_IMAGE_NAME
-    command: ["npm", "start"]
+    command: ["pnpm", "start"]
     init: true
     restart: unless-stopped
     env_file: .env
@@ -31,7 +31,10 @@ services:
       - /tmp:size=16m,mode=1777,noexec,nosuid,nodev
       - /var/tmp:size=16m,mode=1777,noexec,nosuid,nodev
       - /app/.next/cache:size=64m,mode=0755,noexec,nosuid,nodev
-      - /home/burnotes/.npm:size=8m,mode=0755,noexec,nosuid,nodev
+      # Generic cache dir for the runtime shim (corepack/pnpm writes state
+      # here on first invocation). Used to be /.npm under npm; renamed to
+      # /.cache so it survives any future package-manager change.
+      - /home/burnotes/.cache:size=8m,mode=0755,noexec,nosuid,nodev
     cap_drop:
       - ALL
     security_opt:

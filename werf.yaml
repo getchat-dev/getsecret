@@ -18,6 +18,10 @@ shell:
       rm -f /etc/localtime
       ln -s /usr/share/zoneinfo/UTC /etc/localtime
       useradd --system --create-home --home-dir /home/burnotes --shell /usr/sbin/nologin --uid 10001 burnotes
+      # Enable Corepack so `pnpm` resolves to the version pinned in
+      # package.json's `packageManager` field. Bundled with Node since 16.9
+      # but disabled by default; the activation is a one-shot.
+      corepack enable
 ---
 image: app
 fromImage: base-build-node
@@ -26,11 +30,13 @@ docker:
 shell:
   install:
     - cd /app
-    - if [ -f package-lock.json ]; then npm ci; else npm install; fi
+    - pnpm install --frozen-lockfile
   setup:
     - cd /app
-    - npm run build
-    - npm prune --omit=dev
+    - pnpm build
+    # `pnpm prune --prod` walks the dep graph and removes anything reachable
+    # only from devDependencies, mirroring `npm prune --omit=dev`.
+    - pnpm prune --prod
     - chown -R burnotes:burnotes /app
 git:
 - add: /
@@ -51,7 +57,7 @@ git:
   stageDependencies:
     install:
       - package.json
-      - package-lock.json
+      - pnpm-lock.yaml
     setup:
       - src
       - public

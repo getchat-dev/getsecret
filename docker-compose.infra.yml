@@ -28,7 +28,7 @@ services:
     networks:
       - infra
     # Valkey is not exposed to the host by default — the app reaches it via the
-    # `burnotes-infra` network. Uncomment for local `npm run dev` on the host:
+    # `burnotes-infra` network. Uncomment for local `pnpm dev` on the host:
     # ports:
     #   - "127.0.0.1:6379:6379"
     healthcheck:

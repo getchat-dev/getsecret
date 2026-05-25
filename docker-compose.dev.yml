@@ -9,7 +9,7 @@ services:
   app:
     image: ${WERF_APP_DOCKER_IMAGE_NAME:-burnotes:latest}
     command: ["tail", "-f", "/dev/null"]
-    # command: ["npm", "run", "dev"]
+    # command: ["pnpm", "dev"]
     volumes:
       - ./:/app
       - app_node_modules:/app/node_modules

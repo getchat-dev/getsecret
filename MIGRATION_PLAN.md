@@ -121,7 +121,7 @@ src/
 - `toast.tsx` — обобщить `ToastMessage` из `src/components/copy-button.tsx`. `useClipboardCopy` оставляем там же.
 
 ### 1.3 i18n инфраструктура (next-intl)
-- `npm install next-intl`
+- `pnpm add next-intl`
 - `src/i18n/routing.ts`: `locales = ['en', 'zh', 'ru', 'es', 'it', 'de', 'fr']`, defaultLocale `'en'`, pathnames для локализованных URL-сегментов (`/security` ⇄ `/seguridad` опционально, на старте один путь).
 - `src/i18n/request.ts`: `getRequestConfig` подгружает messages из `src/i18n/messages/{locale}.json`.
 - `src/proxy.ts`: использовать `createMiddleware` из next-intl. **Важно:** проект уже на конвенции `proxy.ts` (см. commit b609980). Нужно совместить с этим — экспортировать единый middleware-handler.
@@ -156,7 +156,7 @@ src/
 - Подсветка синтаксиса остаётся как есть (`secret-form.tsx` строки 43-65, `secret-viewer.tsx` соответствующая логика после reveal). Просто новая обёртка стилей.
 
 ### 1.8 Verification (этап 1)
-- `npm run check && npm test` — все существующие тесты должны пройти без изменений (никакой бизнес-логики не тронуто).
+- `pnpm check && pnpm test` — все существующие тесты должны пройти без изменений (никакой бизнес-логики не тронуто).
 - Локально: создать секрет → перейти по ссылке → раскрыть. Проверить во всех 7 локалях через `LangPicker`. Проверить переключение тем. Проверить что highlight.js работает при выборе формата.
 - Проверить SSR: `view-source:` главной страницы должен содержать локализованный H1 и meta description.
 - `curl https://localhost:3000/sitemap.xml` — все URL × 7 локалей с hreflang.
@@ -295,7 +295,7 @@ function deriveStep(link: LinkState, secret: SecretState, isExpired: boolean): 1
 - Серверная валидация в `/api/secrets/route.ts` через уже существующий `isValidExpirationSeconds` — без правок.
 
 ### 2.8 Verification (этап 2)
-- `npm run check && npm test` — тесты `secret-crypto`, `secret-store`, API routes проходят без изменений (бизнес-логика не трогается).
+- `pnpm check && pnpm test` — тесты `secret-crypto`, `secret-store`, API routes проходят без изменений (бизнес-логика не трогается).
 - **Lifecycle steps**: пройти весь сценарий руками: создать секрет → проверить активный 1, после submit → 2, кликнуть generated link → 3, reveal → 4, перезагрузить → 5. На каждом шаге убедиться, что paginator подсвечивает корректный.
 - **Text coverage**: `grep -nE '"[A-Z][a-zA-Z ]{8,}"' src/components/secret/*.tsx` не должна находить UI-строк (только идентификаторы типа `'AES-GCM'`).
 - **i18n smoke**: переключиться через LangPicker с en на ru → ВСЕ строки на странице (paginator, lock-screen, footer, ошибки если форсированы) меняются. Открыть кривую ссылку без fragment → ошибка тоже на ru.
@@ -391,7 +391,7 @@ TS-обёртка `consume()` конвертирует Lua-возврат `'-1'`
 - Передаётся в `createSecretLink` как опция.
 
 ### 3.7 Verification (этап 3)
-- `npm run check && npm test`.
+- `pnpm check && pnpm test`.
 - Создать секрет с maxViews=3, открыть в трёх разных tab'ах → все три раза успех + viewsRemaining корректно. Четвёртый tab → 404.
 - Создать с maxViews=∞, открыть 20 раз → всё работает.
 - Один tab, refresh после reveal → попадает на lock-screen с уменьшенным счётчиком.
@@ -528,7 +528,7 @@ TS-обёртка `consume()` конвертирует Lua-возврат `'-1'`
 - `src/app/api/secrets/routes.test.ts`: full E2E с password.
 
 ### 4.9 Verification (этап 4)
-- `npm run check && npm test`.
+- `pnpm check && pnpm test`.
 - Локально: создать с password → URL открывает lock-screen с password input → wrong password 5 раз → секрет недоступен. Right password → reveal с правильным plaintext.
 - Проверить combination password + maxViews + format=json → подсветка на revealed экране, корректный счётчик.
 - Backward compat: создать v1 секрет (закомитить feature flag перед PR4? нет, проще — создать через старый API на main, deploy nu PR4 → существующий v1 hash должен открыться).
@@ -604,7 +604,7 @@ TS-обёртка `consume()` конвертирует Lua-возврат `'-1'`
 - QR-PNG скачанный пользователем содержит fragment ключа в payload — это нормально, ровно то же, что и буфер обмена. Предупредить в `qr.subtitle` (i18n).
 
 ### 5.8 Verification (этап 5)
-- `npm run check && npm test`.
+- `pnpm check && pnpm test`.
 - Создать секрет → нажать "QR code" → отсканировать телефоном (любым QR-сканером) → ссылка открывается на телефоне → reveal работает.
 - Скачать SVG, открыть в `<img>` или браузере → QR корректно отображается. То же с PNG.
 - Тёмная и светлая темы: QR читается в обоих.

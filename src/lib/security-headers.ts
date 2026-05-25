@@ -7,7 +7,7 @@ const BASELINE_HEADERS: ReadonlyArray<SecurityHeader> = [
     { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
 ];
 
-// HSTS is intentionally prod-only. Shipping it from `npm run dev` would mean
+// HSTS is intentionally prod-only. Shipping it from `pnpm dev` would mean
 // a developer who once touched `https://burnotes.local` gets their browser
 // locked into HTTPS for two years (`preload + includeSubDomains`), at which
 // point `http://burnotes.local` silently 307s and the dev stack stops

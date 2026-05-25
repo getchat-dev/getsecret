@@ -10,4 +10,4 @@ fi
 cd "$repo_root" || exit 1
 
 echo "Running Biome check before commit..."
-npm run check
+pnpm check
