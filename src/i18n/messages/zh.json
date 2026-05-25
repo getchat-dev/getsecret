@@ -30,6 +30,7 @@
         "passphraseHint": "— 接收者必须输入才能解锁",
         "passphrasePh": "留空表示仅链接访问",
         "submit": "加密并生成链接",
+        "submitHint": "创建密文",
         "clear": "清除",
         "cancel": "取消",
         "uploading": "上传中… {percent}%",

@@ -30,6 +30,7 @@
         "passphraseHint": "— le destinataire doit la saisir pour déverrouiller",
         "passphrasePh": "laissez vide pour accès lien uniquement",
         "submit": "Chiffrer et générer le lien",
+        "submitHint": "créer le secret",
         "clear": "Effacer",
         "cancel": "Annuler",
         "uploading": "Téléversement… {percent}%",

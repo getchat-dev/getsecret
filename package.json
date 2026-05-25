@@ -1,6 +1,6 @@
 {
     "name": "burnotes",
-    "version": "2.33.4",
+    "version": "2.34.0",
     "private": true,
     "packageManager": "pnpm@10.33.2",
     "scripts": {

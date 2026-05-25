@@ -30,6 +30,7 @@
         "passphraseHint": "— recipient must enter to unlock",
         "passphrasePh": "leave empty for link-only access",
         "submit": "Encrypt & generate link",
+        "submitHint": "create secret",
         "clear": "Clear",
         "cancel": "Cancel",
         "uploading": "Uploading… {percent}%",

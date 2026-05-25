@@ -30,6 +30,7 @@
         "passphraseHint": "— Empfänger muss sie zum Entsperren eingeben",
         "passphrasePh": "leer lassen für reinen Link-Zugang",
         "submit": "Verschlüsseln & Link erzeugen",
+        "submitHint": "Geheimnis erstellen",
         "clear": "Leeren",
         "cancel": "Abbrechen",
         "uploading": "Lade hoch… {percent}%",

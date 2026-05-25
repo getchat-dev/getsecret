@@ -984,6 +984,8 @@ h1.display .accent-word {
     right: 14px;
     display: flex;
     justify-content: flex-end;
+    align-items: baseline;
+    gap: 14px;
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--fg-subtle);
@@ -993,6 +995,35 @@ h1.display .accent-word {
 
 .textarea-meta .count.warn {
     color: var(--ember);
+}
+
+/* Keyboard-submit hint — rendered only on desktops with a real keyboard
+   (see the matchMedia gate in secret-textarea.tsx). Sits to the right of
+   the char counter; the kbd children look like physical key caps to make
+   the affordance recognizable at a glance. Override pointer-events from
+   the parent .textarea-meta so the native `title` tooltip fires on hover. */
+.textarea-meta .shortcut-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    pointer-events: auto;
+}
+
+.textarea-meta .shortcut-hint kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    min-width: 18px;
+    text-align: center;
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    background: var(--bg-1);
+    color: var(--fg-default);
+    font-family: inherit;
+    font-size: 11px;
+    line-height: 1.4;
+    /* Bottom-edge "depth" so the cap reads as pressable, not as a tag. */
+    box-shadow: 0 1px 0 var(--border-default);
 }
 
 /* ============================================================

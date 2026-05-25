@@ -30,6 +30,7 @@
         "passphraseHint": "— el destinatario debe ingresarla para desbloquear",
         "passphrasePh": "déjalo vacío para acceso solo por enlace",
         "submit": "Cifrar y generar enlace",
+        "submitHint": "crear secreto",
         "clear": "Limpiar",
         "cancel": "Cancelar",
         "uploading": "Subiendo… {percent}%",

@@ -1,9 +1,17 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type ClipboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type ClipboardEvent, type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { SECRET_FORMAT_PLACEHOLDERS, type SecretFormat } from '@/lib/secret-formats';
+
+// Thresholds for the bottom-right char counter.
+// Below SHOW_COUNT_THRESHOLD the counter appears at all (otherwise hidden —
+// typical secrets are < 200 chars long, showing "10,000 left" is pure noise).
+// Below WARN_COUNT_THRESHOLD it switches to the ember/danger color so the
+// user gets a visible cue before hitting the wall.
+const SHOW_COUNT_THRESHOLD = 1000;
+const WARN_COUNT_THRESHOLD = 200;
 
 type Props = {
     value: string;
@@ -34,6 +42,27 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
             '(hover: hover) and (pointer: fine), (hover: none) and (pointer: coarse) and (orientation: portrait) and (max-width: 768px)',
         );
         const update = () => setAutoGrow(mql.matches);
+        update();
+        mql.addEventListener('change', update);
+        return () => mql.removeEventListener('change', update);
+    }, []);
+
+    // `keyboardHint` is set only on devices that almost certainly have a real
+    // keyboard — strict (hover: hover) AND (pointer: fine). That excludes both
+    // pure-touch tablets and phones, where ⌘/Ctrl+Enter is meaningless. Set in
+    // an effect (never during render) so SSR markup doesn't differ from the
+    // first client paint.
+    const [keyboardHint, setKeyboardHint] = useState<{ isMac: boolean } | null>(null);
+    useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) return;
+        const mql = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const update = () => {
+            if (mql.matches) {
+                setKeyboardHint({ isMac: /Mac/i.test(navigator.userAgent) });
+            } else {
+                setKeyboardHint(null);
+            }
+        };
         update();
         mql.addEventListener('change', update);
         return () => mql.removeEventListener('change', update);
@@ -85,6 +114,18 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
         }
     }
 
+    function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+        // ⌘/Ctrl + Enter submits the enclosing form. requestSubmit() fires the
+        // form's submit event (same path as clicking the submit button) and
+        // respects React handlers. Doesn't bypass the disabled state of the
+        // submit button by spec — but our handleSubmit has its own
+        // hasContent/isSubmitting guards, so a stray invocation is harmless.
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+            event.preventDefault();
+            event.currentTarget.form?.requestSubmit();
+        }
+    }
+
     function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
         if (!onFormatDetected) return;
         const ta = event.currentTarget;
@@ -112,6 +153,7 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
                 onChange={(event) => onChange(event.target.value)}
                 onScroll={handleScroll}
                 onPaste={handlePaste}
+                onKeyDown={handleKeyDown}
                 maxLength={MAX_SECRET_LENGTH}
                 autoComplete="off"
                 spellCheck={false}
@@ -129,7 +171,17 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
                 </pre>
             ) : null}
             <span className="textarea-meta">
-                <span className="count">{t('charsLeft', { count: remaining })}</span>
+                {remaining < SHOW_COUNT_THRESHOLD ? (
+                    <span className={`count${remaining < WARN_COUNT_THRESHOLD ? ' warn' : ''}`}>
+                        {t('charsLeft', { count: remaining })}
+                    </span>
+                ) : null}
+                {keyboardHint && value.length > 0 ? (
+                    <span className="shortcut-hint" title={t('submitHint')}>
+                        <kbd>{keyboardHint.isMac ? '⌘' : 'Ctrl'}</kbd>
+                        <kbd>Enter</kbd>
+                    </span>
+                ) : null}
             </span>
         </div>
     );
