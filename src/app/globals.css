@@ -775,9 +775,32 @@ h1.display .accent-word {
 }
 
 .attachment-preview-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 12px;
     color: var(--fg-subtle);
     margin-right: auto;
+}
+
+/* CSS-only spinner — a thin ring with a darker top arc that rotates.
+   Inserted via ::before so callers (RevealedSecret) don't need to ship
+   an SVG or change JSX. Sized to align with the surrounding 12px text. */
+.attachment-preview-status::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border-default);
+    border-top-color: var(--fg-default);
+    border-radius: 50%;
+    animation: attachment-preview-spin 0.8s linear infinite;
+}
+
+@keyframes attachment-preview-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .attachment-error {
