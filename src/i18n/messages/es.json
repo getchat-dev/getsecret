@@ -119,7 +119,9 @@
         "showPassword": "Mostrar contraseña",
         "errorRateLimited": "Demasiados intentos desde esta red. Espera un minuto e inténtalo de nuevo.",
         "errorServiceUnavailable": "El servidor no está disponible temporalmente. Inténtalo en un momento.",
-        "errorNetwork": "No se pudo conectar al servidor. Verifica tu conexión e inténtalo de nuevo."
+        "errorNetwork": "No se pudo conectar al servidor. Verifica tu conexión e inténtalo de nuevo.",
+        "ownSecretTitle": "Creaste este enlace.",
+        "ownSecretBody": "Abrirlo en este navegador lo destruirá para el destinatario. Cierra la pestaña si solo querías comprobar el enlace."
     },
     "revealed": {
         "title1": "Aquí está.",

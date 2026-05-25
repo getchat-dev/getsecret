@@ -119,7 +119,9 @@
         "showPassword": "显示密码",
         "errorRateLimited": "此网络的尝试次数过多。请等待一分钟后重试。",
         "errorServiceUnavailable": "服务器暂时不可用。请稍后再试。",
-        "errorNetwork": "无法连接到服务器。请检查您的连接并重试。"
+        "errorNetwork": "无法连接到服务器。请检查您的连接并重试。",
+        "ownSecretTitle": "你创建了这个链接。",
+        "ownSecretBody": "在此浏览器中打开会为接收者销毁它。如果只是想验证链接，请关闭此标签页。"
     },
     "revealed": {
         "title1": "在这里。",

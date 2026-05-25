@@ -119,7 +119,9 @@
         "showPassword": "Passwort anzeigen",
         "errorRateLimited": "Zu viele Versuche aus diesem Netzwerk. Warte eine Minute und versuche es erneut.",
         "errorServiceUnavailable": "Server ist vorübergehend nicht verfügbar. Versuche es in einem Moment.",
-        "errorNetwork": "Konnte den Server nicht erreichen. Prüfe deine Verbindung und versuche es erneut."
+        "errorNetwork": "Konnte den Server nicht erreichen. Prüfe deine Verbindung und versuche es erneut.",
+        "ownSecretTitle": "Du hast diesen Link erstellt.",
+        "ownSecretBody": "Wenn du ihn in diesem Browser öffnest, wird er für den Empfänger verbrannt. Schließe den Tab, wenn du nur den Link prüfen wolltest."
     },
     "revealed": {
         "title1": "Hier ist es.",

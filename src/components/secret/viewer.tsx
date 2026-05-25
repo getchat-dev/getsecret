@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { BurnedScreen } from '@/components/secret/burned-screen';
 import { LockScreen } from '@/components/secret/lock-screen';
 import { RevealedSecret } from '@/components/secret/revealed-secret';
+import { AlertIcon } from '@/components/ui/icons';
+import { isOwnSecret } from '@/lib/own-secrets';
 import type { PasswordParams } from '@/lib/password-derive';
 import { isValidPassword } from '@/lib/password-policy';
 import {
@@ -68,7 +70,14 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
     const [linkState, setLinkState] = useState<LinkState>({ status: 'checking' });
     const [secretState, setSecretState] = useState<SecretState>({ status: 'idle' });
     const [password, setPassword] = useState('');
+    // Set on mount once. Reading localStorage during render would cause a
+    // hydration mismatch; the warning is purely client-side anyway.
+    const [ownSecret, setOwnSecret] = useState(false);
     const requestedRef = useRef(false);
+
+    useEffect(() => {
+        setOwnSecret(isOwnSecret(id));
+    }, [id]);
 
     const passwordRequired = passwordParams !== null;
     const readsRemainingBeforeOpen = maxViews === null ? null : Math.max(0, maxViews - viewsUsed);
@@ -260,23 +269,33 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
         secretState.status === 'error' && secretState.reason !== 'consumed' ? secretState.reason : null;
 
     return (
-        <LockScreen
-            expiresAtUtc={expiresAtUtc}
-            isLoading={secretState.status === 'loading'}
-            isExpired={isExpired}
-            isValidating={false}
-            readsRemaining={readsRemainingBeforeOpen}
-            passwordRequired={passwordRequired}
-            password={password}
-            errorReason={errorReason}
-            onPasswordChange={(value) => {
-                setPassword(value);
-                // Clear an active wrong-password error as soon as the
-                // user starts typing again. Transient errors clear on
-                // the next reveal attempt.
-                if (errorReason === 'wrong-password') setSecretState({ status: 'idle' });
-            }}
-            onReveal={() => void revealSecret()}
-        />
+        <>
+            {ownSecret ? (
+                <div className="banner banner-danger own-secret-banner" role="alert">
+                    <AlertIcon size={16} className="icon" />
+                    <span>
+                        <strong>{t('ownSecretTitle')}</strong> {t('ownSecretBody')}
+                    </span>
+                </div>
+            ) : null}
+            <LockScreen
+                expiresAtUtc={expiresAtUtc}
+                isLoading={secretState.status === 'loading'}
+                isExpired={isExpired}
+                isValidating={false}
+                readsRemaining={readsRemainingBeforeOpen}
+                passwordRequired={passwordRequired}
+                password={password}
+                errorReason={errorReason}
+                onPasswordChange={(value) => {
+                    setPassword(value);
+                    // Clear an active wrong-password error as soon as the
+                    // user starts typing again. Transient errors clear on
+                    // the next reveal attempt.
+                    if (errorReason === 'wrong-password') setSecretState({ status: 'idle' });
+                }}
+                onReveal={() => void revealSecret()}
+            />
+        </>
     );
 }

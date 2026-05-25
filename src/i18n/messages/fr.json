@@ -119,7 +119,9 @@
         "showPassword": "Afficher la phrase secrète",
         "errorRateLimited": "Trop de tentatives depuis ce réseau. Attendez une minute et réessayez.",
         "errorServiceUnavailable": "Le serveur est temporairement indisponible. Réessayez dans un instant.",
-        "errorNetwork": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez."
+        "errorNetwork": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+        "ownSecretTitle": "Vous avez créé ce lien.",
+        "ownSecretBody": "L'ouvrir dans ce navigateur le brûlera pour le destinataire. Fermez l'onglet si vous vouliez seulement vérifier le lien."
     },
     "revealed": {
         "title1": "Le voici.",

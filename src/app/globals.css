@@ -1811,6 +1811,13 @@ h1.display .accent-word {
     font-weight: 600;
 }
 
+/* Sits above the LockScreen card as its own block. Margin pushes the
+   following card down so the banner reads as a top-level warning, not
+   as part of the lock UI. */
+.own-secret-banner {
+    margin-bottom: 16px;
+}
+
 /* ============================================================
    FOOTER
 ============================================================ */

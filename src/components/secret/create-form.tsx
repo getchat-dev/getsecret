@@ -14,6 +14,7 @@ import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { decodeImagePreview, isImageCandidate } from '@/lib/image-preview';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
+import { markOwnSecret } from '@/lib/own-secrets';
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 import {
     DEFAULT_SECRET_FORMAT,
@@ -280,6 +281,20 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
             });
             window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
             window.sessionStorage.removeItem(FORMAT_STORAGE_KEY);
+            // Remember this id locally so if the sender later opens their own
+            // link in the same browser the viewer can warn before they burn
+            // it. Pure UX safety net — does nothing for a sender on another
+            // device / browser / incognito session. id is parsed back from
+            // the returned URL because createSecretLink doesn't surface it.
+            try {
+                const path = new URL(next).pathname;
+                const id = /\/s\/([^/]+)$/.exec(path)?.[1];
+                if (id) markOwnSecret(id, Date.now() + expiresInSeconds * 1000);
+            } catch {
+                // Malformed URL is unreachable in practice (we just built it
+                // ourselves) — failure here only means the local marker isn't
+                // set, which downgrades the warning, not correctness.
+            }
             setLink(next);
         } catch (err) {
             setError(err instanceof Error ? err.message : tErrors('createFailed'));

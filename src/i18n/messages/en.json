@@ -119,7 +119,9 @@
         "showPassword": "Show passphrase",
         "errorRateLimited": "Too many attempts from this network. Wait a minute and try again.",
         "errorServiceUnavailable": "Server is temporarily unavailable. Try again in a moment.",
-        "errorNetwork": "Could not reach the server. Check your connection and try again."
+        "errorNetwork": "Could not reach the server. Check your connection and try again.",
+        "ownSecretTitle": "You created this link.",
+        "ownSecretBody": "Opening it in this browser will burn it for the recipient. Close the tab if you only meant to verify the link."
     },
     "revealed": {
         "title1": "Here it is.",

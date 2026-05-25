@@ -119,7 +119,9 @@
         "showPassword": "Mostra passphrase",
         "errorRateLimited": "Troppi tentativi da questa rete. Aspetta un minuto e riprova.",
         "errorServiceUnavailable": "Il server non è temporaneamente disponibile. Riprova tra un momento.",
-        "errorNetwork": "Impossibile raggiungere il server. Controlla la connessione e riprova."
+        "errorNetwork": "Impossibile raggiungere il server. Controlla la connessione e riprova.",
+        "ownSecretTitle": "Hai creato tu questo link.",
+        "ownSecretBody": "Aprirlo in questo browser lo brucerà per il destinatario. Chiudi la scheda se volevi solo verificare il link."
     },
     "revealed": {
         "title1": "Eccolo.",
