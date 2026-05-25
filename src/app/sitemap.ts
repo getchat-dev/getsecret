@@ -1,12 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
+import { siteOrigin } from '@/lib/site-meta';
 
 const STATIC_PATHS = ['', '/docs', '/security', '/developers', '/faq'] as const;
-
-function siteOrigin(): string {
-    const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '');
-    return fromEnv || 'http://localhost:3000';
-}
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const origin = siteOrigin();

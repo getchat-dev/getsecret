@@ -1,18 +1,20 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { loadContent } from '@/lib/content';
+import { buildPageMetadata } from '@/lib/site-meta';
 
 const NAV_KEY = 'api';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
     const { frontmatter } = await loadContent('developers', locale);
-    const title = `${frontmatter.title} · Burnotes`;
-    return {
-        title,
+    return buildPageMetadata({
+        locale,
+        path: '/developers',
+        title: frontmatter.title,
         description: frontmatter.metaDescription,
-        openGraph: { title, description: frontmatter.metaDescription },
-    };
+        type: 'article',
+    });
 }
 
 export default async function DevelopersPage({ params }: { params: Promise<{ locale: string }> }) {

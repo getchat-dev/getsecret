@@ -1,18 +1,22 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { loadContent } from '@/lib/content';
+import { buildPageMetadata } from '@/lib/site-meta';
 
 const NAV_KEY = 'security';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
     const { frontmatter } = await loadContent('security', locale);
-    const title = `${frontmatter.title} · Burnotes`;
-    return {
-        title,
+    // No "· Burnotes" suffix here — the root layout sets title.template
+    // which composes "%s · Burnotes" automatically.
+    return buildPageMetadata({
+        locale,
+        path: '/security',
+        title: frontmatter.title,
         description: frontmatter.metaDescription,
-        openGraph: { title, description: frontmatter.metaDescription },
-    };
+        type: 'article',
+    });
 }
 
 export default async function SecurityPage({ params }: { params: Promise<{ locale: string }> }) {

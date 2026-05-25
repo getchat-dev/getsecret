@@ -1,14 +1,64 @@
+import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { hasLocale } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { ClientLocaleProvider } from '@/components/layout/client-locale-provider';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { type Locale, routing } from '@/i18n/routing';
+import { localizedAlternates, SITE_NAME, siteOrigin } from '@/lib/site-meta';
 import '../globals.css';
+
+// Root metadata for every page under /[locale]. Per-page `generateMetadata`
+// overrides title/description/alternates as needed; everything not overridden
+// (template, siteName, twitter card defaults, theme color, robots) falls back
+// to what we set here.
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+    const { locale } = await params;
+    const t = await getTranslations({ locale, namespace: 'meta' });
+    const tagline = t('tagline');
+    const description = t('description');
+    const alternates = localizedAlternates('/', locale);
+
+    return {
+        // metadataBase lets Next resolve relative URLs (OG/twitter images,
+        // canonical) into absolutes. Required as of Next 14+.
+        metadataBase: new URL(siteOrigin()),
+        applicationName: SITE_NAME,
+        title: {
+            template: `%s · ${SITE_NAME}`,
+            default: `${SITE_NAME} — ${tagline}`,
+        },
+        description,
+        // Pages that don't override alternates (e.g. a 404) at least get the
+        // home page's hreflang map. Better than nothing for crawlers.
+        alternates,
+        openGraph: {
+            type: 'website',
+            siteName: SITE_NAME,
+            title: `${SITE_NAME} — ${tagline}`,
+            description,
+            url: typeof alternates.canonical === 'string' ? alternates.canonical : undefined,
+            locale,
+            alternateLocale: routing.locales.filter((l) => l !== locale),
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${SITE_NAME} — ${tagline}`,
+            description,
+        },
+        robots: { index: true, follow: true },
+        // Aligned with --accent in globals.css (the green brand color used
+        // for the submit button and the brand mark).
+        themeColor: [
+            { media: '(prefers-color-scheme: light)', color: '#1f8a64' },
+            { media: '(prefers-color-scheme: dark)', color: '#2da17a' },
+        ],
+    };
+}
 
 const inter = Inter({
     subsets: ['latin', 'cyrillic'],

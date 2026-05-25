@@ -1,6 +1,11 @@
 {
     "label": "Deutsch",
     "flag": "🇩🇪",
+    "meta": {
+        "tagline": "Geheimnisse teilen, die beim Lesen verschwinden",
+        "description": "Verschlüsselte Einmal-Links, vollständig im Browser erzeugt. Der Entschlüsselungsschlüssel berührt nie unsere Server.",
+        "secretViewTitle": "Einmal-Geheimnis öffnen"
+    },
     "nav": {
         "docs": "Doku",
         "security": "Sicherheit",

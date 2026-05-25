@@ -1,6 +1,11 @@
 {
     "label": "English",
     "flag": "🇬🇧",
+    "meta": {
+        "tagline": "Share secrets that vanish on read",
+        "description": "Encrypted, one-time secret links generated entirely in your browser. The decryption key never reaches our servers.",
+        "secretViewTitle": "Open a one-time secret"
+    },
     "nav": {
         "docs": "Docs",
         "security": "Security",

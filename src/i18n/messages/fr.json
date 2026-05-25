@@ -1,6 +1,11 @@
 {
     "label": "Français",
     "flag": "🇫🇷",
+    "meta": {
+        "tagline": "Partagez des secrets qui s'effacent à la lecture",
+        "description": "Liens chiffrés à usage unique, générés entièrement dans votre navigateur. La clé de déchiffrement n'atteint jamais nos serveurs.",
+        "secretViewTitle": "Ouvrir un secret à usage unique"
+    },
     "nav": {
         "docs": "Docs",
         "security": "Sécurité",
