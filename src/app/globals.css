@@ -1076,10 +1076,38 @@ h1.display .accent-word {
     border-color: var(--danger);
 }
 
+/* Ghost flavor of btn-danger: same red semantic, but borderless to fit
+   inside dense cards (e.g. the "Remove" action on a file-info card).
+   Specificity beats both .btn-ghost and .btn-ghost:hover so the override
+   works regardless of source order. */
+.btn-ghost.btn-danger {
+    color: var(--danger);
+    border-color: transparent;
+}
+
+.btn-ghost.btn-danger:hover:not(:disabled) {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: transparent;
+}
+
 .btn-icon {
     padding: 8px;
     width: 32px;
     height: 32px;
+}
+
+/* Compact icon-only button — used for inline actions inside dense cards
+   like the "remove attached file" affordance, where the 32px .btn-icon
+   would overpower the surrounding text. Matches the visual weight of
+   chip-style close buttons in mobile OS pickers. */
+.btn-icon-sm {
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-icon[data-state="success"] {

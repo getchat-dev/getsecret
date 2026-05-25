@@ -9,7 +9,7 @@ import { MaxViewsControl } from '@/components/secret/max-views-control';
 import { PasswordField } from '@/components/secret/password-field';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
-import { AlertIcon, FileIcon, ZapIcon } from '@/components/ui/icons';
+import { AlertIcon, FileIcon, XIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { decodeImagePreview, isImageCandidate } from '@/lib/image-preview';
@@ -371,11 +371,13 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                                 </span>
                                 <button
                                     type="button"
-                                    className="btn btn-ghost btn-sm"
+                                    className="btn btn-ghost btn-danger btn-icon-sm"
                                     onClick={() => chooseFile(null)}
                                     disabled={isSubmitting}
+                                    aria-label={t('removeFile')}
+                                    title={t('removeFile')}
                                 >
-                                    {t('removeFile')}
+                                    <XIcon size={14} />
                                 </button>
                             </div>
                             {isImageCandidate({ type: file.type, name: file.name }) ? (
