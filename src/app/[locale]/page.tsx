@@ -10,11 +10,15 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
     const t = await getTranslations({ locale, namespace: 'create' });
+    const tMeta = await getTranslations({ locale, namespace: 'meta' });
     return buildPageMetadata({
         locale,
         path: '/',
         title: `${t('title1')} ${t('title2')}`.trim(),
-        description: t('lede'),
+        // Dedicated SEO-tuned description (~150 chars). create.lede is the
+        // on-page intro paragraph (~270 chars) and gets cut mid-sentence by
+        // SERP truncation — using it here would waste the description slot.
+        description: tMeta('homeDescription'),
     });
 }
 

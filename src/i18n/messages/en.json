@@ -4,6 +4,7 @@
     "meta": {
         "tagline": "Share secrets that vanish on read",
         "description": "Encrypted, one-time secret links generated entirely in your browser. The decryption key never reaches our servers.",
+        "homeDescription": "Send passwords, API tokens, and files via encrypted one-time links. Everything happens in your browser — our servers never see the plaintext or the decryption key.",
         "secretViewTitle": "Open a one-time secret"
     },
     "nav": {
