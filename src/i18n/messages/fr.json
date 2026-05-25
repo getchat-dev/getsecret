@@ -3,7 +3,7 @@
     "flag": "🇫🇷",
     "meta": {
         "tagline": "Partagez des secrets qui s'effacent à la lecture",
-        "description": "Liens chiffrés à usage unique, générés entièrement dans votre navigateur. La clé de déchiffrement n'atteint jamais nos serveurs.",
+        "description": "Envoyez mots de passe, jetons d'API et fichiers via des liens chiffrés à usage unique. Chiffrement dans le navigateur ; la clé n'atteint jamais nos serveurs.",
         "homeDescription": "Envoyez mots de passe, jetons d'API et fichiers via des liens chiffrés à usage unique. Tout se passe dans votre navigateur — nos serveurs ne voient ni le contenu ni la clé.",
         "secretViewTitle": "Ouvrir un secret à usage unique"
     },

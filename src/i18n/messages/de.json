@@ -3,7 +3,7 @@
     "flag": "🇩🇪",
     "meta": {
         "tagline": "Geheimnisse teilen, die beim Lesen verschwinden",
-        "description": "Verschlüsselte Einmal-Links, vollständig im Browser erzeugt. Der Entschlüsselungsschlüssel berührt nie unsere Server.",
+        "description": "Versende Passwörter, API-Tokens und Dateien als verschlüsselte Einmal-Links. Verschlüsselung im Browser; der Schlüssel erreicht nie unsere Server.",
         "homeDescription": "Versende Passwörter, API-Tokens und Dateien als verschlüsselte Einmal-Links. Alles läuft im Browser — unsere Server sehen weder den Klartext noch den Schlüssel.",
         "secretViewTitle": "Einmal-Geheimnis öffnen"
     },

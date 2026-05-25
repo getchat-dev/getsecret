@@ -3,7 +3,7 @@
     "flag": "🇮🇹",
     "meta": {
         "tagline": "Condividi segreti che svaniscono alla lettura",
-        "description": "Link cifrati monouso, generati interamente nel tuo browser. La chiave di decifratura non raggiunge mai i nostri server.",
+        "description": "Invia password, token API e file come link cifrati monouso. Cifratura nel browser; la chiave non raggiunge mai i nostri server.",
         "homeDescription": "Invia password, token API e file tramite link cifrati monouso. Tutto avviene nel tuo browser — i nostri server non vedono né il contenuto né la chiave.",
         "secretViewTitle": "Apri un segreto monouso"
     },
