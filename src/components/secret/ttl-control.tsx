@@ -19,8 +19,21 @@ export function TtlControl({ value, unit, onChange }: Props) {
     const numeric = Number.isInteger(parsed) ? parsed : null;
 
     function setValue(next: string) {
-        const digitsOnly = next.replace(/\D+/g, '');
-        onChange({ value: digitsOnly, unit });
+        // 1. Strip non-digits (keeps the field numeric even if the user
+        //    pastes "1d", spaces, etc.).
+        // 2. Strip leading zeros — `0000` would otherwise render verbatim
+        //    and confuse the recipient into thinking they picked a real TTL.
+        //    Keep a lone "0" so mid-typing ("0" → "07" → "7") stays smooth;
+        //    a final "0" still fails ttlValueToSeconds at submit time.
+        // 3. Clamp to the unit's max — typing `9999 days` shouldn't be
+        //    visible if the server is going to refuse it anyway. Lets the
+        //    stepper's `numeric >= max` disabled state stay honest.
+        let digits = next.replace(/\D+/g, '').replace(/^0+(?=\d)/, '');
+        if (digits.length > 0) {
+            const parsedNext = Number.parseInt(digits, 10);
+            if (Number.isInteger(parsedNext) && parsedNext > max) digits = String(max);
+        }
+        onChange({ value: digits, unit });
     }
 
     function setUnit(next: TtlUnit) {
