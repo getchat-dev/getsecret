@@ -19,6 +19,11 @@ const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
 // has waited enough — start the second fetch in parallel and accept the cost.
 const PREVIEW_HANDOFF_TIMEOUT_MS = 5000;
 
+// While the secret is revealed, leaving the tab/window starts this countdown;
+// if the viewer doesn't come back before it elapses, the secret is re-masked
+// so an abandoned, unlocked tab doesn't leave plaintext on screen.
+const AUTO_HIDE_MS = 10_000;
+
 type DecryptedFile = { blob: Blob; filename: string };
 
 function decodeBase64Url(value: string): Uint8Array {
@@ -201,6 +206,55 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
             if (imageHandle) imageHandle.abort();
         };
     }, [file]);
+
+    // Auto-conceal on inattention. While the secret is revealed, leaving the
+    // tab (visibilitychange → hidden) or the window (blur) starts a countdown;
+    // if the viewer comes back (focus / visible) before AUTO_HIDE_MS we stand
+    // down, otherwise we re-mask. The setTimeout fires reliably for the
+    // blur-but-still-visible case (a tab left on screen while the user steps
+    // away — the actual shoulder-surf risk). A backgrounded tab can throttle
+    // or freeze the timer, so the return handler re-checks the real elapsed
+    // time and conceals anyway if it crossed the threshold.
+    useEffect(() => {
+        if (hidden || content.length === 0) return;
+
+        let awayTimer: ReturnType<typeof setTimeout> | null = null;
+        let awaySince: number | null = null;
+
+        const conceal = () => {
+            awayTimer = null;
+            awaySince = null;
+            setHidden(true);
+        };
+        const leave = () => {
+            if (awaySince !== null) return; // already counting down
+            awaySince = Date.now();
+            awayTimer = setTimeout(conceal, AUTO_HIDE_MS);
+        };
+        const cancel = () => {
+            if (awayTimer) clearTimeout(awayTimer);
+            awayTimer = null;
+            awaySince = null;
+        };
+        const ret = () => {
+            if (awaySince !== null && Date.now() - awaySince >= AUTO_HIDE_MS) conceal();
+            else cancel();
+        };
+        const onVisibility = () => {
+            if (document.hidden) leave();
+            else ret();
+        };
+
+        window.addEventListener('blur', leave);
+        window.addEventListener('focus', ret);
+        document.addEventListener('visibilitychange', onVisibility);
+        return () => {
+            cancel();
+            window.removeEventListener('blur', leave);
+            window.removeEventListener('focus', ret);
+            document.removeEventListener('visibilitychange', onVisibility);
+        };
+    }, [hidden, content]);
 
     async function handleDownload() {
         if (!file || isDownloading) return;
