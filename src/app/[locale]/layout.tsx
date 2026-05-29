@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
@@ -14,7 +14,7 @@ import '../globals.css';
 
 // Root metadata for every page under /[locale]. Per-page `generateMetadata`
 // overrides title/description/alternates as needed; everything not overridden
-// (template, siteName, twitter card defaults, theme color, robots) falls back
+// (template, siteName, twitter card defaults, robots) falls back
 // to what we set here.
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
@@ -51,14 +51,18 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
             description,
         },
         robots: { index: true, follow: true },
-        // Aligned with --accent in globals.css (the green brand color used
-        // for the submit button and the brand mark).
-        themeColor: [
-            { media: '(prefers-color-scheme: light)', color: '#1f8a64' },
-            { media: '(prefers-color-scheme: dark)', color: '#2da17a' },
-        ],
     };
 }
+
+// Theme color belongs to the viewport export (Next 14+ moved it out of
+// metadata). Aligned with --accent in globals.css (the green brand color
+// used for the submit button and the brand mark).
+export const viewport: Viewport = {
+    themeColor: [
+        { media: '(prefers-color-scheme: light)', color: '#1f8a64' },
+        { media: '(prefers-color-scheme: dark)', color: '#2da17a' },
+    ],
+};
 
 const inter = Inter({
     subsets: ['latin', 'cyrillic'],
