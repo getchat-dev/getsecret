@@ -1,13 +1,122 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# pre-commit:
+#   1. Biome check (lint + format) — если падает, дальше не идём.
+#   2. Если package.json#version совпадает с версией в HEAD — просим тип бампа
+#      (major/minor/patch), показываем рекомендацию от Ollama. На пустой ввод
+#      принимаем её. Без TTY (CI / IDE) тихо пропускаем.
+set -e
 
 repo_root="$(git rev-parse --show-toplevel)"
-
 if [ -z "$repo_root" ]; then
-    echo "Unable to determine repository root"
-    exit 1
+  echo "Unable to determine repository root" >&2
+  exit 1
 fi
-
 cd "$repo_root" || exit 1
 
+# ─── 1. Biome ────────────────────────────────────────────────────────────────
 echo "Running Biome check before commit..."
 pnpm check
+
+# ─── 2. Автобамп package.json#version ────────────────────────────────────────
+get_version() {
+  grep -m1 '"version"' "$1" 2>/dev/null | sed -E 's/.*"version": *"([^"]+)".*/\1/'
+}
+
+if ! git rev-parse --verify HEAD >/dev/null 2>&1; then exit 0; fi
+[ -f package.json ] || exit 0
+
+CURRENT=$(get_version package.json)
+PREV=$(git show HEAD:package.json 2>/dev/null \
+  | grep -m1 '"version"' \
+  | sed -E 's/.*"version": *"([^"]+)".*/\1/' || true)
+
+if [ -z "$CURRENT" ] || [ -z "$PREV" ]; then
+  echo "[hook] не удалось прочитать версию из package.json — пропускаю." >&2
+  exit 0
+fi
+
+if [ "$CURRENT" != "$PREV" ]; then
+  echo "[hook] package.json#version: $PREV → $CURRENT, бамп уже сделан."
+  exit 0
+fi
+
+if [ ! -e /dev/tty ]; then
+  echo "[hook] версия не менялась ($CURRENT), но нет TTY — пропускаю." >&2
+  exit 0
+fi
+
+bump() {
+  node -e "
+    const [a,b,c] = '$CURRENT'.split('.').map(Number);
+    const r = '$1' === 'major' ? [a+1, 0, 0]
+            : '$1' === 'minor' ? [a, b+1, 0]
+            : [a, b, c+1];
+    console.log(r.join('.'));
+  "
+}
+
+MAJOR=$(bump major)
+MINOR=$(bump minor)
+PATCH=$(bump patch)
+
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
+SUGGESTION=""
+SUGGEST_LABEL=""
+if [ -f "$SCRIPT_DIR/llm-bump.mjs" ] && command -v node >/dev/null 2>&1; then
+  echo "[hook] спрашиваю Ollama про тип бампа…"
+  if SUGGESTION=$(node "$SCRIPT_DIR/llm-bump.mjs" 2>/tmp/.llm-bump.err); then
+    :
+  else
+    cat /tmp/.llm-bump.err >&2
+    SUGGESTION=""
+  fi
+  rm -f /tmp/.llm-bump.err
+  case "$SUGGESTION" in
+    1) SUGGEST_LABEL="major → $MAJOR" ;;
+    2) SUGGEST_LABEL="minor → $MINOR" ;;
+    3) SUGGEST_LABEL="patch → $PATCH" ;;
+    *) SUGGESTION="" ;;
+  esac
+fi
+
+exec < /dev/tty
+echo ""
+echo "package.json#version не менялась с прошлого коммита (сейчас $CURRENT)."
+echo "Тип бампа:"
+echo "  [1] major  → $MAJOR"
+echo "  [2] minor  → $MINOR"
+echo "  [3] patch  → $PATCH"
+echo "  [s] skip   (закоммитить без бампа)"
+if [ -n "$SUGGEST_LABEL" ]; then
+  echo ""
+  echo "LLM рекомендует: $SUGGEST_LABEL  (Enter — принять)"
+fi
+echo ""
+
+BUMP=""
+for _ in 1 2 3; do
+  if [ -n "$SUGGESTION" ]; then
+    printf "Выбор [1/2/3/s, Enter=%s]: " "$SUGGESTION"
+  else
+    printf "Выбор [1/2/3/s]: "
+  fi
+  read -r choice
+  [ -z "$choice" ] && [ -n "$SUGGESTION" ] && choice="$SUGGESTION"
+  case "$choice" in
+    1|major)  BUMP=major; break ;;
+    2|minor)  BUMP=minor; break ;;
+    3|patch)  BUMP=patch; break ;;
+    s|S|skip) echo "[hook] пропускаю бамп."; exit 0 ;;
+    *)        echo "Неверный ввод." ;;
+  esac
+done
+
+if [ -z "$BUMP" ]; then
+  echo "[hook] три неверных ввода — отменяю коммит." >&2
+  exit 1
+fi
+
+pnpm version "$BUMP" --no-git-tag-version >/dev/null
+NEW=$(get_version package.json)
+git add package.json
+echo "[hook] package.json#version: $CURRENT → $NEW (добавлено в коммит)."
