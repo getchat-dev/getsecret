@@ -385,6 +385,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         <div className="file-info-card">
                             <div className="file-info">
                                 {imagePreviewUrl ? (
+                                    // biome-ignore lint/performance/noImgElement: blob:-URL клиентского файла, next/image не подходит.
                                     <img
                                         src={imagePreviewUrl}
                                         alt={file.name}

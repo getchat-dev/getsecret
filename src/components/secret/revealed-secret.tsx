@@ -373,6 +373,7 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 {file ? (
                     <div className="attachment">
                         {previewState.status === 'ready' ? (
+                            // biome-ignore lint/performance/noImgElement: blob:-URL расшифрованного аттачмента, next/image не подходит.
                             <img
                                 src={previewState.url}
                                 alt={attachmentName ?? t('attachmentLabel')}
