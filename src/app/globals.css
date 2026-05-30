@@ -173,6 +173,9 @@ body {
         radial-gradient(ellipse 80% 50% at 50% -10%, var(--grad-1), transparent 60%),
         radial-gradient(ellipse 60% 40% at 100% 100%, var(--grad-2), transparent 60%), var(--bg-1);
     background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
 }
 
 button {
@@ -204,10 +207,12 @@ code {
 
 .page {
     max-width: 920px;
+    width: 100%;
     margin: 0 auto;
     padding: 56px 28px 80px;
     position: relative;
     z-index: 1;
+    flex: 1 0 auto;
 }
 
 .bg-grid {

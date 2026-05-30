@@ -13,9 +13,9 @@ export async function SiteFooter() {
 
     return (
         <footer className={styles.foot}>
-            <span>
-                v{VERSION}
-                {LICENSE ? ` · open source under ${LICENSE} license` : ''}
+            <span className={styles.meta}>
+                <span>v{VERSION}</span>
+                {LICENSE ? <span className={styles.license}>open source under {LICENSE} license</span> : null}
             </span>
             <nav className={styles.links} aria-label="Footer">
                 <Link href="/security#privacy">{t('privacy')}</Link>

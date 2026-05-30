@@ -1,5 +1,6 @@
 .foot {
     max-width: 1100px;
+    width: 100%;
     margin: 80px auto 0;
     padding: 24px 28px 40px;
     border-top: 1px solid var(--border-subtle);
@@ -52,20 +53,69 @@
     animation: pulse 2s ease-in-out infinite;
 }
 
+/* The version line is two spans so the phone layout can pin the version
+   flush-left and the license flush-right. On desktop/tablet they read as one
+   inline string joined by the middot. */
+.license::before {
+    content: " · ";
+}
+
 @media (max-width: 920px) {
+    /* Tablet: two rows. With only two nav links, links + status pill fit the
+       first row (links left, status pushed right); the version line wraps onto
+       its own row below a hairline divider. The base row+wrap is kept — meta's
+       width:100% is what forces the wrap. */
     .foot {
-        padding: 20px 16px 32px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
+        padding: 24px 16px 28px;
+        gap: 16px 24px;
     }
 
     .links {
+        order: 1;
         margin-left: 0;
+        gap: 24px;
     }
 
     .status {
+        order: 2;
+        margin-left: auto;
+    }
+
+    .meta {
+        order: 3;
+        width: 100%;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-subtle);
+        font-size: 11px;
+        color: var(--fg-faint);
+    }
+}
+
+@media (max-width: 480px) {
+    /* Phones: break the tablet row back into a centered column of three rows —
+       nav links centered, status pill centered, and the version line split so
+       the version is flush-left and the license flush-right. */
+    .foot {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .status {
+        /* override the tablet's margin-left:auto, which would shove the pill to
+           the right edge on the cross axis instead of centering it. */
         margin-left: 0;
+    }
+
+    .meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+    }
+
+    .license::before {
+        content: "";
     }
 }
 
