@@ -7,11 +7,11 @@
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     color: var(--fg-default);
-    padding: 5px 10px;
+    padding: var(--space-half) var(--space-1);
     font-size: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--space-1);
     cursor: pointer;
     transition:
         border-color 0.15s,
@@ -25,13 +25,13 @@
 
 .menu {
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + var(--space-1));
     right: 0;
     background: var(--bg-2);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-pop);
-    padding: 4px;
+    padding: var(--space-half);
     min-width: 160px;
     z-index: 100;
     /* fadeUp is a global keyframe defined in globals.css (no local @keyframes here,
@@ -42,12 +42,12 @@
 .option {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-1);
     width: 100%;
     background: transparent;
     border: 0;
     color: var(--fg-default);
-    padding: 7px 10px;
+    padding: var(--space-1) var(--space-1);
     font-size: 13px;
     border-radius: 5px;
     cursor: pointer;

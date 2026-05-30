@@ -2,7 +2,7 @@
    LockScreen and BurnedScreen (applied alongside the card primitive). */
 .card {
     text-align: center;
-    padding: 48px 24px;
+    padding: var(--space-6) var(--space-3);
     position: relative;
     overflow: hidden;
 }
@@ -23,7 +23,7 @@
     border: 1px solid var(--border-default);
     display: grid;
     place-items: center;
-    margin: 0 auto 20px;
+    margin: 0 auto var(--space-3);
     position: relative;
 }
 
@@ -46,14 +46,14 @@
     font-size: 22px;
     font-weight: 700;
     letter-spacing: -0.01em;
-    margin: 0 0 8px;
+    margin: 0 0 var(--space-1);
     position: relative;
 }
 
 .sub {
     color: var(--fg-muted);
     font-size: 14px;
-    margin: 0 auto 28px;
+    margin: 0 auto var(--space-4);
     max-width: 44ch;
     position: relative;
 }
@@ -61,8 +61,8 @@
 .meta {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 24px;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
     flex-wrap: wrap;
     position: relative;
 }
@@ -70,7 +70,7 @@
 .actions {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-1);
     position: relative;
     align-items: center;
 }
@@ -78,7 +78,7 @@
 .countdown {
     color: var(--fg-muted);
     font-size: 13px;
-    margin: 0 auto 14px;
+    margin: 0 auto var(--space-2);
     text-align: center;
     position: relative;
 }
@@ -96,7 +96,7 @@
 
 @media (max-width: 920px) {
     .card {
-        padding: 36px 16px;
+        padding: var(--space-5) var(--space-2);
     }
 
     .lockIcon {

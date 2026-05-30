@@ -2,8 +2,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 9px 14px;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
     border-radius: var(--radius-md);
     font-size: 13px;
     font-weight: 600;
@@ -91,7 +91,7 @@
 }
 
 .btnIcon {
-    padding: 8px;
+    padding: var(--space-1);
     width: 32px;
     height: 32px;
 }

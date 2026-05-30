@@ -10,8 +10,8 @@
 .header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 14px 18px;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2);
     border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-3);
 }
@@ -22,7 +22,7 @@
     color: var(--fg-default);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-1);
 }
 
 .headerTitle .fileIcon {
@@ -33,24 +33,24 @@
     margin-left: auto;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-2);
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--fg-subtle);
 }
 
 .body {
-    padding: 18px;
+    padding: var(--space-2);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-2);
 }
 
 .footer {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-2);
     border-top: 1px solid var(--border-subtle);
     background: var(--bg-2);
 }
@@ -58,8 +58,8 @@
 .info {
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 12px 18px;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2);
     background: var(--bg-1);
     border-top: 1px solid var(--border-subtle);
     font-size: 12px;
@@ -78,7 +78,7 @@
     font-size: 11px;
     background: var(--bg-3);
     border: 1px solid var(--border-subtle);
-    padding: 1px 5px;
+    padding: 1px var(--space-half);
     border-radius: 4px;
     color: var(--fg-default);
 }
@@ -86,18 +86,18 @@
 @media (max-width: 920px) {
     .header {
         flex-wrap: wrap;
-        padding: 12px 14px;
-        gap: 8px;
+        padding: var(--space-2) var(--space-2);
+        gap: var(--space-1);
     }
 
     .body {
-        padding: 14px;
+        padding: var(--space-2);
     }
 
     .footer {
-        padding: 12px 14px;
+        padding: var(--space-2) var(--space-2);
         flex-wrap: wrap;
-        gap: 8px;
+        gap: var(--space-1);
     }
 }
 

@@ -1,12 +1,12 @@
 .foot {
     max-width: 1100px;
     width: 100%;
-    margin: 80px auto 0;
-    padding: 24px 28px 40px;
+    margin: var(--space-10) auto 0;
+    padding: var(--space-3) var(--space-4) var(--space-5);
     border-top: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: var(--space-2);
     font-size: 12px;
     color: var(--fg-subtle);
     font-family: var(--font-mono);
@@ -18,7 +18,7 @@
 .links {
     margin-left: auto;
     display: flex;
-    gap: 16px;
+    gap: var(--space-2);
 }
 
 .links a {
@@ -34,11 +34,11 @@
 .status {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-left: 24px;
+    gap: var(--space-1);
+    margin-left: var(--space-3);
     font-size: 12px;
     color: var(--fg-muted);
-    padding: 4px 10px;
+    padding: var(--space-half) var(--space-1);
     border: 1px solid var(--border-subtle);
     border-radius: 999px;
 }
@@ -66,14 +66,14 @@
        its own row below a hairline divider. The base row+wrap is kept — meta's
        width:100% is what forces the wrap. */
     .foot {
-        padding: 24px 16px 28px;
-        gap: 16px 24px;
+        padding: var(--space-3) var(--space-2) var(--space-4);
+        gap: var(--space-2) var(--space-3);
     }
 
     .links {
         order: 1;
         margin-left: 0;
-        gap: 24px;
+        gap: var(--space-3);
     }
 
     .status {
@@ -84,7 +84,7 @@
     .meta {
         order: 3;
         width: 100%;
-        padding-top: 16px;
+        padding-top: var(--space-2);
         border-top: 1px solid var(--border-subtle);
         font-size: 11px;
         color: var(--fg-faint);
@@ -98,7 +98,7 @@
     .foot {
         flex-direction: column;
         align-items: center;
-        gap: 20px;
+        gap: var(--space-3);
     }
 
     .status {
@@ -111,7 +111,7 @@
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        gap: 12px;
+        gap: var(--space-2);
     }
 
     .license::before {

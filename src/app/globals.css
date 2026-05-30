@@ -52,6 +52,21 @@
     --radius-md: 8px;
     --radius-lg: 12px;
 
+    /* Spacing scale — 8px base unit (4px half-step for tight spots). The token
+       number is the multiple of --unit (so --space-3 = 3 × 8 = 24px). Use these
+       for every gap, margin, and padding so spacing stays on one grid. */
+    --unit: 8px;
+    --space-half: 4px;
+    --space-1: var(--unit); /* 8 */
+    --space-2: calc(var(--unit) * 2); /* 16 */
+    --space-3: calc(var(--unit) * 3); /* 24 */
+    --space-4: calc(var(--unit) * 4); /* 32 */
+    --space-5: calc(var(--unit) * 5); /* 40 */
+    --space-6: calc(var(--unit) * 6); /* 48 */
+    --space-7: calc(var(--unit) * 7); /* 56 */
+    --space-8: calc(var(--unit) * 8); /* 64 */
+    --space-10: calc(var(--unit) * 10); /* 80 */
+
     /* Shadows */
     --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 4px 16px rgba(15, 23, 42, 0.06);
     --shadow-pop: 0 0 0 1px var(--border-default), 0 12px 32px rgba(15, 23, 42, 0.12);
@@ -209,7 +224,7 @@ code {
     max-width: 920px;
     width: 100%;
     margin: 0 auto;
-    padding: 56px 28px 80px;
+    padding: var(--space-7) var(--space-4) var(--space-10);
     position: relative;
     z-index: 1;
     flex: 1 0 auto;
@@ -251,17 +266,17 @@ code {
 .eyebrow {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-1);
     font-family: var(--font-mono);
     font-size: 11px;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--fg-muted);
-    padding: 4px 10px;
+    padding: var(--space-half) var(--space-1);
     border: 1px solid var(--border-subtle);
     border-radius: 999px;
     background: var(--bg-2);
-    margin-bottom: 20px;
+    margin-bottom: var(--space-3);
 }
 
 .eyebrow .ember-dot {
@@ -277,7 +292,7 @@ h1.display {
     font-weight: 700;
     letter-spacing: -0.025em;
     line-height: 1.05;
-    margin: 0 0 14px;
+    margin: 0 0 var(--space-2);
 }
 
 h1.display .accent-word {
@@ -291,7 +306,7 @@ h1.display .accent-word {
     color: var(--fg-muted);
     font-size: 16px;
     line-height: 1.55;
-    margin: 0 0 36px;
+    margin: 0 0 var(--space-5);
     max-width: 56ch;
 }
 
@@ -361,7 +376,7 @@ h1.display .accent-word {
 
 @media (max-width: 920px) {
     .page {
-        padding: 32px 16px 60px;
+        padding: var(--space-4) var(--space-2) var(--space-7);
     }
 
     h1.display {
@@ -375,7 +390,7 @@ h1.display .accent-word {
 
     .eyebrow {
         font-size: 10px;
-        padding: 3px 8px;
+        padding: var(--space-half) var(--space-1);
     }
 }
 
@@ -389,7 +404,7 @@ h1.display .accent-word {
     }
 
     .page {
-        padding: 24px 14px 48px;
+        padding: var(--space-3) var(--space-2) var(--space-6);
     }
 
     .eyebrow {
@@ -415,7 +430,7 @@ h1.display .accent-word {
     letter-spacing: -0.015em;
     line-height: 1.25;
     color: var(--fg-default);
-    margin: 44px 0 14px;
+    margin: var(--space-6) 0 var(--space-2);
 }
 
 .page-prose h2:first-child {
@@ -424,19 +439,19 @@ h1.display .accent-word {
 
 .page-prose p {
     color: var(--fg-default);
-    margin: 0 0 14px;
+    margin: 0 0 var(--space-2);
 }
 
 .page-prose ul,
 .page-prose ol {
-    margin: 0 0 18px;
-    padding-left: 22px;
+    margin: 0 0 var(--space-2);
+    padding-left: var(--space-3);
     color: var(--fg-default);
 }
 
 .page-prose ul li,
 .page-prose ol li {
-    margin: 0 0 6px;
+    margin: 0 0 var(--space-1);
 }
 
 .page-prose ul li::marker {
@@ -457,7 +472,7 @@ h1.display .accent-word {
 .page-prose code {
     font-family: var(--font-mono);
     font-size: 0.92em;
-    padding: 1px 6px;
+    padding: 1px var(--space-1);
     border-radius: var(--radius-sm);
     background: var(--bg-3);
     border: 1px solid var(--border-subtle);
@@ -468,8 +483,8 @@ h1.display .accent-word {
     display: block;
     font-family: var(--font-mono);
     font-size: 14px;
-    padding: 12px 14px;
-    margin: 4px 0 18px;
+    padding: var(--space-2) var(--space-2);
+    margin: var(--space-half) 0 var(--space-2);
     border-radius: var(--radius-md);
     background: var(--bg-3);
     border: 1px solid var(--border-subtle);
