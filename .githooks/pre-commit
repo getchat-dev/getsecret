@@ -18,6 +18,16 @@ echo "Running Biome check before commit..."
 pnpm check
 
 # ─── 2. Автобамп package.json#version ────────────────────────────────────────
+
+# --amend переписывает текущий HEAD — версия в нём уже бампнута, второй раз не нужно.
+# pre-commit запускается как прямой потомок git, поэтому смотрим argv родителя.
+case "$(ps -o args= -p "$PPID" 2>/dev/null)" in
+  *' --amend'*)
+    echo "[hook] commit --amend — версию не трогаю."
+    exit 0
+    ;;
+esac
+
 get_version() {
   grep -m1 '"version"' "$1" 2>/dev/null | sed -E 's/.*"version": *"([^"]+)".*/\1/'
 }
