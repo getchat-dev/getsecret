@@ -25,6 +25,11 @@ import {
     type SecretFormat,
 } from '@/lib/secret-formats';
 import { type UploadProgress, uploadFile } from '@/lib/upload';
+import banner from '@/styles/primitives/banner.module.css';
+import btn from '@/styles/primitives/button.module.css';
+import card from '@/styles/primitives/card.module.css';
+import field from '@/styles/primitives/field.module.css';
+import styles from './create-form.module.css';
 
 const DRAFT_STORAGE_KEY = 'burnotes:create:draft';
 const FORMAT_STORAGE_KEY = 'burnotes:create:format';
@@ -340,25 +345,25 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
         <>
             {/* <LifecycleSteps activeStep={activeStep} /> */}
             {enableFileAttachments && isDragging ? (
-                <div className="drop-overlay" aria-hidden="true">
-                    <div className="drop-overlay-message">
+                <div className={styles.dropOverlay} aria-hidden="true">
+                    <div className={styles.dropOverlayMessage}>
                         <FileIcon size={32} />
                         <strong>{t('dropOverlay')}</strong>
-                        <span className="drop-overlay-hint">{t('dropOverlayHint')}</span>
+                        <span className={styles.dropOverlayHint}>{t('dropOverlayHint')}</span>
                     </div>
                 </div>
             ) : null}
-            <form onSubmit={handleSubmit} className="card fade-up" noValidate>
-                <header className="card-header">
-                    <span className="card-header-title">
-                        <FileIcon size={14} className="file-icon" />
+            <form onSubmit={handleSubmit} className={`${card.card} fade-up`} noValidate>
+                <header className={card.header}>
+                    <span className={card.headerTitle}>
+                        <FileIcon size={14} className={card.fileIcon} />
                         secret.{SECRET_FORMAT_EXTENSIONS[format]}
                     </span>
-                    <span className="card-header-meta">
+                    <span className={card.headerMeta}>
                         <FormatSelect value={format} onChange={setFormat} label={t('formatLabel')} />
                     </span>
                 </header>
-                <div className="card-body">
+                <div className={card.body}>
                     <SecretTextarea
                         value={secret}
                         onChange={(next) => {
@@ -372,7 +377,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                             enableFileAttachments && file === null ? (
                                 <button
                                     type="button"
-                                    className="btn btn-ghost btn-sm"
+                                    className={`${btn.btn} ${btn.btnGhost}`}
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isSubmitting}
                                 >
@@ -382,26 +387,26 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         }
                     />
                     {enableFileAttachments && file ? (
-                        <div className="file-info-card">
-                            <div className="file-info">
+                        <div className={styles.fileInfoCard}>
+                            <div className={styles.fileInfo}>
                                 {imagePreviewUrl ? (
                                     // biome-ignore lint/performance/noImgElement: blob:-URL клиентского файла, next/image не подходит.
                                     <img
                                         src={imagePreviewUrl}
                                         alt={file.name}
-                                        className="file-info-preview"
+                                        className={styles.fileInfoPreview}
                                         onError={() => setImagePreviewUrl(null)}
                                     />
                                 ) : (
                                     <FileIcon size={16} />
                                 )}
-                                <span className="file-info-name">{file.name}</span>
-                                <span className="file-info-meta">
+                                <span className={styles.fileInfoName}>{file.name}</span>
+                                <span className={styles.fileInfoMeta}>
                                     {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
                                 </span>
                                 <button
                                     type="button"
-                                    className="btn btn-ghost btn-danger btn-icon-sm"
+                                    className={`${btn.btn} ${btn.btnGhost} ${btn.btnDanger} ${btn.btnIconSm}`}
                                     onClick={() => chooseFile(null)}
                                     disabled={isSubmitting}
                                     aria-label={t('removeFile')}
@@ -411,7 +416,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                                 </button>
                             </div>
                             {isImageCandidate({ type: file.type, name: file.name }) ? (
-                                <label className="file-info-preview-toggle">
+                                <label className={styles.fileInfoPreviewToggle}>
                                     <input
                                         type="checkbox"
                                         checked={previewImage}
@@ -431,7 +436,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                             onChange={(e) => chooseFile(e.target.files?.[0] ?? null)}
                         />
                     ) : null}
-                    <div className="field-pair">
+                    <div className={field.pair}>
                         <TtlControl
                             value={ttlValue}
                             unit={ttlUnit}
@@ -444,17 +449,17 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                     </div>
                     {enablePassword ? <PasswordField value={password} onChange={setPassword} /> : null}
                     {error ? (
-                        <div className="banner banner-danger" role="alert">
-                            <AlertIcon size={16} className="icon" />
+                        <div className={`${banner.banner} ${banner.danger}`} role="alert">
+                            <AlertIcon size={16} className={banner.icon} />
                             <span>{error}</span>
                         </div>
                     ) : null}
                 </div>
-                <footer className="card-footer">
+                <footer className={card.footer}>
                     {secret.length > 0 || file ? (
                         <button
                             type="button"
-                            className="btn btn-ghost"
+                            className={`${btn.btn} ${btn.btnGhost}`}
                             onClick={() => {
                                 setSecret('');
                                 setFormat(DEFAULT_SECRET_FORMAT);
@@ -466,11 +471,15 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         </button>
                     ) : null}
                     {isSubmitting && uploadProgress ? (
-                        <button type="button" className="btn btn-ghost" onClick={cancelSubmit}>
+                        <button type="button" className={`${btn.btn} ${btn.btnGhost}`} onClick={cancelSubmit}>
                             {t('cancel')}
                         </button>
                     ) : null}
-                    <button type="submit" className="btn btn-primary" disabled={isSubmitting || !hasContent}>
+                    <button
+                        type="submit"
+                        className={`${btn.btn} ${btn.btnPrimary} ${styles.submit}`}
+                        disabled={isSubmitting || !hasContent}
+                    >
                         <ZapIcon size={14} />
                         {isSubmitting
                             ? uploadProgress

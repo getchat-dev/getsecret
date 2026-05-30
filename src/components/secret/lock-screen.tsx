@@ -4,6 +4,11 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { EyeIcon, EyeOffIcon, KeyIcon, LockIcon, ZapIcon } from '@/components/ui/icons';
 import { isValidPassword, MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import btn from '@/styles/primitives/button.module.css';
+import card from '@/styles/primitives/card.module.css';
+import controls from '@/styles/primitives/controls.module.css';
+import field from '@/styles/primitives/field.module.css';
+import reveal from '@/styles/primitives/reveal.module.css';
 
 function useUtcNow(intervalMs = 1000) {
     const [now, setNow] = useState(() => Date.now());
@@ -77,31 +82,37 @@ export function LockScreen({
 
     function readsPill() {
         if (readsRemaining === null) {
-            return <span className="pill pill-accent">{t('unlimitedReads')}</span>;
+            return <span className={`${controls.pill} ${controls.pillAccent}`}>{t('unlimitedReads')}</span>;
         }
         if (readsRemaining > 1) {
-            return <span className="pill pill-accent">{t('readsRemaining', { count: readsRemaining })}</span>;
+            return (
+                <span className={`${controls.pill} ${controls.pillAccent}`}>
+                    {t('readsRemaining', { count: readsRemaining })}
+                </span>
+            );
         }
-        return <span className="pill pill-ember">{t('burnsOnRead')}</span>;
+        return <span className={`${controls.pill} ${controls.pillEmber}`}>{t('burnsOnRead')}</span>;
     }
 
     return (
-        <section className="card reveal-card fade-up">
-            <div className="lock-icon">
+        <section className={`${card.card} ${reveal.card} fade-up`}>
+            <div className={reveal.lockIcon}>
                 <LockIcon size={28} />
             </div>
-            <p className="reveal-sub">{passwordRequired ? t('passwordPromptSub') : t('lockedSub')}</p>
-            <div className="reveal-meta">
-                {passwordRequired ? <span className="pill pill-accent">{t('passwordPill')}</span> : null}
+            <p className={reveal.sub}>{passwordRequired ? t('passwordPromptSub') : t('lockedSub')}</p>
+            <div className={reveal.meta}>
+                {passwordRequired ? (
+                    <span className={`${controls.pill} ${controls.pillAccent}`}>{t('passwordPill')}</span>
+                ) : null}
                 {readsPill()}
             </div>
             {passwordRequired ? (
-                <div className="field">
-                    <label className="field-label" htmlFor="reveal-password">
+                <div className={field.field}>
+                    <label className={field.label} htmlFor="reveal-password">
                         <KeyIcon size={12} /> {t('passwordPromptLabel')}
                     </label>
-                    <div className="field-row">
-                        <div className="password-wrap">
+                    <div className={field.row}>
+                        <div className={field.passwordWrap}>
                             <input
                                 id="reveal-password"
                                 type={showPassword ? 'text' : 'password'}
@@ -117,11 +128,11 @@ export function LockScreen({
                                     }
                                 }}
                                 placeholder={t('passwordPromptPlaceholder')}
-                                className={`password-input ${isWrongPassword ? 'has-error' : ''}`.trim()}
+                                className={`${field.passwordInput} ${isWrongPassword ? field.hasError : ''}`.trim()}
                             />
                             <button
                                 type="button"
-                                className="btn btn-ghost btn-icon password-toggle"
+                                className={`${btn.btn} ${btn.btnGhost} ${btn.btnIcon} ${field.passwordToggle}`}
                                 onClick={() => setShowPassword((v) => !v)}
                                 aria-label={showPassword ? t('hidePassword') : t('showPassword')}
                             >
@@ -130,14 +141,14 @@ export function LockScreen({
                         </div>
                     </div>
                     {isWrongPassword ? (
-                        <p className="hint hint-error">{t('passwordWrong')}</p>
+                        <p className={`${field.hint} ${field.hintError}`}>{t('passwordWrong')}</p>
                     ) : (
-                        <p className="hint">{t('passwordPromptHint', { min: MIN_PASSWORD_LENGTH })}</p>
+                        <p className={field.hint}>{t('passwordPromptHint', { min: MIN_PASSWORD_LENGTH })}</p>
                     )}
                 </div>
             ) : null}
             {transientError ? (
-                <p className="hint hint-error">
+                <p className={`${field.hint} ${field.hintError}`}>
                     {transientError === 'rate-limited'
                         ? t('errorRateLimited')
                         : transientError === 'service-unavailable'
@@ -146,17 +157,17 @@ export function LockScreen({
                 </p>
             ) : null}
             {!isExpired && Number.isFinite(expiresAtMs) ? (
-                <p className="countdown">{t(remainingBucket.key, { count: remainingBucket.count })}</p>
+                <p className={reveal.countdown}>{t(remainingBucket.key, { count: remainingBucket.count })}</p>
             ) : null}
-            <div className="reveal-actions">
-                <button type="button" className="btn btn-primary" onClick={onReveal} disabled={disabled}>
+            <div className={reveal.actions}>
+                <button type="button" className={`${btn.btn} ${btn.btnPrimary}`} onClick={onReveal} disabled={disabled}>
                     <ZapIcon size={14} />
                     {buttonLabel}
                 </button>
                 {readsRemaining === null ? null : readsRemaining > 1 ? (
-                    <span className="reveal-hint">{t('revealHintRemaining', { count: readsRemaining - 1 })}</span>
+                    <span className={reveal.hint}>{t('revealHintRemaining', { count: readsRemaining - 1 })}</span>
                 ) : (
-                    <span className="reveal-hint">{t('revealHint')}</span>
+                    <span className={reveal.hint}>{t('revealHint')}</span>
                 )}
             </div>
         </section>

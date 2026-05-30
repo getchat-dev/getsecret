@@ -4,6 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { EyeIcon, EyeOffIcon, KeyIcon } from '@/components/ui/icons';
 import { MAX_PASSWORD_LENGTH } from '@/lib/password-policy';
+import btn from '@/styles/primitives/button.module.css';
+import field from '@/styles/primitives/field.module.css';
 
 type Props = {
     value: string;
@@ -15,13 +17,13 @@ export function PasswordField({ value, onChange }: Props) {
     const [shown, setShown] = useState(false);
 
     return (
-        <div className="field">
-            <label className="field-label" htmlFor="passphrase">
+        <div className={field.field}>
+            <label className={field.label} htmlFor="passphrase">
                 <KeyIcon size={12} /> {t('passphrase')}
-                <span className="field-label-hint"> {t('passphraseHint')}</span>
+                <span className={field.labelHint}> {t('passphraseHint')}</span>
             </label>
-            <div className="field-row">
-                <div className="password-wrap">
+            <div className={field.row}>
+                <div className={field.passwordWrap}>
                     <input
                         id="passphrase"
                         type={shown ? 'text' : 'password'}
@@ -31,11 +33,11 @@ export function PasswordField({ value, onChange }: Props) {
                         maxLength={MAX_PASSWORD_LENGTH}
                         onChange={(event) => onChange(event.target.value)}
                         placeholder={t('passphrasePh')}
-                        className="password-input"
+                        className={field.passwordInput}
                     />
                     <button
                         type="button"
-                        className="btn btn-ghost btn-icon password-toggle"
+                        className={`${btn.btn} ${btn.btnGhost} ${btn.btnIcon} ${field.passwordToggle}`}
                         onClick={() => setShown((v) => !v)}
                         aria-label={shown ? t('hidePassword') : t('showPassword')}
                     >

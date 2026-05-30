@@ -2,6 +2,8 @@
 
 import { useTranslations } from 'next-intl';
 import { MAX_VIEW_PRESETS } from '@/lib/max-views';
+import controls from '@/styles/primitives/controls.module.css';
+import field from '@/styles/primitives/field.module.css';
 
 type Props = {
     value: number | null;
@@ -21,10 +23,10 @@ export function MaxViewsControl({ value, onChange }: Props) {
     ];
 
     return (
-        <div className="field">
-            <span className="field-label">{t('maxReads')}</span>
-            <div className="field-row">
-                <div className="segmented">
+        <div className={field.field}>
+            <span className={field.label}>{t('maxReads')}</span>
+            <div className={field.row}>
+                <div className={controls.segmented}>
                     {options.map((option) => {
                         const pressed = option.value === value;
                         return (

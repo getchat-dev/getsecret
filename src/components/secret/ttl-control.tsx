@@ -3,6 +3,8 @@
 import { useTranslations } from 'next-intl';
 import { MinusIcon, PlusIcon } from '@/components/ui/icons';
 import { maxValueForUnit, TTL_UNITS, type TtlUnit, unitSeconds } from '@/lib/expiration';
+import controls from '@/styles/primitives/controls.module.css';
+import field from '@/styles/primitives/field.module.css';
 
 type Props = {
     value: string;
@@ -50,12 +52,12 @@ export function TtlControl({ value, unit, onChange }: Props) {
     }
 
     return (
-        <div className="field">
-            <label className="field-label" htmlFor="ttl-value">
+        <div className={field.field}>
+            <label className={field.label} htmlFor="ttl-value">
                 {t('expiresIn')}
             </label>
-            <div className="field-row">
-                <div className="stepper">
+            <div className={field.row}>
+                <div className={controls.stepper}>
                     <button
                         type="button"
                         onClick={() => step(-1)}
@@ -82,7 +84,7 @@ export function TtlControl({ value, unit, onChange }: Props) {
                         <PlusIcon size={12} />
                     </button>
                 </div>
-                <div className="segmented">
+                <div className={controls.segmented}>
                     {TTL_UNITS.map((option) => (
                         <button
                             key={option}

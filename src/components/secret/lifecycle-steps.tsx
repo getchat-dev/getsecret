@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import styles from './lifecycle-steps.module.css';
 
 const STEP_KEYS = ['create', 'generated', 'locked', 'revealed', 'burned'] as const;
 
@@ -16,20 +17,20 @@ export function LifecycleSteps({ activeStep }: Props) {
     const legend = root('tabsLegend');
 
     return (
-        <div className="lifecycle">
-            <div className="lifecycle-legend">
+        <div className={styles.lifecycle}>
+            <div className={styles.legend}>
                 <span>{legend}</span>
-                <span className="lifecycle-legend-rule" aria-hidden="true" />
+                <span className={styles.legendRule} aria-hidden="true" />
             </div>
-            <ol className="screen-tabs lifecycle-list" aria-label={legend}>
+            <ol className={`${styles.tabs} ${styles.list}`} aria-label={legend}>
                 {STEP_KEYS.map((key, index) => {
                     const stepNumber = index + 1;
                     const isActive = stepNumber === activeStep;
                     const isPast = stepNumber < activeStep;
-                    const className = isActive ? 'active' : isPast ? 'past' : '';
+                    const className = isActive ? styles.active : isPast ? styles.past : '';
                     return (
                         <li key={key} className={className} aria-current={isActive ? 'step' : undefined}>
-                            <span className="num">{String(stepNumber).padStart(2, '0')}</span>
+                            <span className={styles.num}>{String(stepNumber).padStart(2, '0')}</span>
                             <span>{tabs(key)}</span>
                         </li>
                     );

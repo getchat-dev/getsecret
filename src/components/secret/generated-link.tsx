@@ -16,6 +16,10 @@ import {
     TrashIcon,
 } from '@/components/ui/icons';
 import type { TtlUnit } from '@/lib/expiration';
+import banner from '@/styles/primitives/banner.module.css';
+import btn from '@/styles/primitives/button.module.css';
+import card from '@/styles/primitives/card.module.css';
+import styles from './generated-link.module.css';
 
 type Props = {
     link: string;
@@ -63,7 +67,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
 
     async function handleNativeShare() {
         try {
-            await navigator.share({ url: link, title: 'burnotes', text: t('shareNativeText') });
+            await navigator.share({ url: link, title: 'Burnotes – share secrets', text: t('shareNativeText') });
         } catch (err) {
             // AbortError = user dismissed the share sheet, which is normal
             // and shouldn't surface as a failure. Other errors (e.g. policy)
@@ -79,19 +83,19 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
     const passphraseLabel = hasPassphrase ? t('required') : t('none');
 
     return (
-        <section className="card fade-up">
-            <div className="card-body">
-                <div className="link-box">
-                    <div className="link-text">
-                        <span className="scheme">{parts.scheme}</span>
-                        <span className="host">{parts.host}</span>
-                        <span className="path">{parts.path}</span>
-                        <span className="frag">{parts.fragment}</span>
+        <section className={`${card.card} fade-up`}>
+            <div className={card.body}>
+                <div className={styles.linkBox}>
+                    <div className={styles.linkText}>
+                        <span className={styles.scheme}>{parts.scheme}</span>
+                        <span className={styles.host}>{parts.host}</span>
+                        <span className={styles.path}>{parts.path}</span>
+                        <span className={styles.frag}>{parts.fragment}</span>
                     </div>
                     <button
                         ref={copyButtonRef}
                         type="button"
-                        className={`copy-btn ${isCopied ? 'copied' : ''}`.trim()}
+                        className={`${styles.copyBtn} ${isCopied ? styles.copied : ''}`.trim()}
                         onClick={() =>
                             void copyText(link, {
                                 successMessage: t('copied'),
@@ -106,54 +110,56 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                     {canNativeShare ? (
                         <button
                             type="button"
-                            className="share-btn"
+                            className={styles.shareBtn}
                             onClick={() => void handleNativeShare()}
                             aria-label={t('shareNative')}
                             title={t('shareNative')}
                         >
                             <ShareIcon size={14} />
-                            <span className="share-btn-label">{t('shareNative')}</span>
+                            <span className={styles.shareBtnLabel}>{t('shareNative')}</span>
                         </button>
                     ) : null}
                 </div>
                 <ToastMessage toast={toast?.kind === 'error' ? toast : null} anchorRef={copyButtonRef} />
-                <div className="banner banner-warn">
-                    <EyeIcon size={16} className="icon" />
+                <div className={`${banner.banner} ${banner.warn}`}>
+                    <EyeIcon size={16} className={banner.icon} />
                     <span>
                         <strong>{t('warnTitle')}</strong> {t('warnBody')}
                     </span>
                 </div>
-                <div className="stats">
-                    <div className="stat">
-                        <div className="stat-label">
+                <div className={styles.stats}>
+                    <div className={styles.stat}>
+                        <div className={styles.statLabel}>
                             <ClockIcon size={12} /> {t('expiresIn')}
                         </div>
-                        <div className="stat-value">
+                        <div className={styles.statValue}>
                             {expiresIn.value} {tUnits(expiresIn.unit)}
                         </div>
                     </div>
-                    <div className="stat">
-                        <div className="stat-label">
+                    <div className={styles.stat}>
+                        <div className={styles.statLabel}>
                             <EyeIcon size={12} /> {t('readsLeft')}
                         </div>
-                        <div className="stat-value accent">{readsLabel}</div>
+                        <div className={`${styles.statValue} ${styles.accent}`}>{readsLabel}</div>
                     </div>
-                    <div className="stat">
-                        <div className="stat-label">
+                    <div className={styles.stat}>
+                        <div className={styles.statLabel}>
                             <KeyIcon size={12} /> {t('passphrase')}
                         </div>
-                        <div className={`stat-value ${hasPassphrase ? 'accent' : ''}`.trim()}>{passphraseLabel}</div>
+                        <div className={`${styles.statValue} ${hasPassphrase ? styles.accent : ''}`.trim()}>
+                            {passphraseLabel}
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className="card-footer">
-                <button type="button" className="btn btn-secondary" onClick={onShareAnother}>
+            <div className={card.footer}>
+                <button type="button" className={`${btn.btn} ${btn.btnSecondary}`} onClick={onShareAnother}>
                     <PlusIcon size={14} /> {t('shareAnother')}
                 </button>
-                <button type="button" className="btn btn-ghost" onClick={() => setQrOpen(true)}>
+                <button type="button" className={`${btn.btn} ${btn.btnGhost}`} onClick={() => setQrOpen(true)}>
                     <QrCodeIcon size={14} /> {t('qr')}
                 </button>
-                <button type="button" className="btn btn-danger" disabled aria-disabled="true">
+                <button type="button" className={`${btn.btn} ${btn.btnDanger}`} disabled aria-disabled="true">
                     <TrashIcon size={14} /> {t('burnNow')}
                 </button>
             </div>

@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
+import styles from './site-footer.module.css';
 
 // Версия и лицензия инжектятся через next.config.ts → process.env.NEXT_PUBLIC_*
 // (читаются один раз при сборке/старте dev). Никаких импортов package.json
@@ -11,17 +12,17 @@ export async function SiteFooter() {
     const t = await getTranslations('foot');
 
     return (
-        <footer className="foot">
+        <footer className={styles.foot}>
             <span>
                 v{VERSION}
                 {LICENSE ? ` · open source under ${LICENSE} license` : ''}
             </span>
-            <nav className="foot-links" aria-label="Footer">
+            <nav className={styles.links} aria-label="Footer">
                 <Link href="/security#privacy">{t('privacy')}</Link>
                 <Link href="/security#terms">{t('terms')}</Link>
             </nav>
-            <span className="foot-status" role="status">
-                <span className="status-dot" aria-hidden="true" />
+            <span className={styles.status} role="status">
+                <span className={styles.statusDot} aria-hidden="true" />
                 {t('statusOk')}
             </span>
         </footer>

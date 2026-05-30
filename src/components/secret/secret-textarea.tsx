@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { MAX_SECRET_LENGTH } from '@/lib/secret-crypto';
 import { SECRET_FORMAT_PLACEHOLDERS, type SecretFormat } from '@/lib/secret-formats';
+import styles from './secret-textarea.module.css';
 
 // Thresholds for the bottom-right char counter.
 // Below SHOW_COUNT_THRESHOLD the counter appears at all (otherwise hidden —
@@ -157,10 +158,10 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
     const showOverlay = format !== 'plain' && highlightedHtml.length > 0;
 
     return (
-        <div className={`textarea-wrap${autoGrow ? ' auto-grow' : ''}`}>
+        <div className={`${styles.wrap}${autoGrow ? ` ${styles.autoGrow}` : ''}`}>
             <textarea
                 ref={textareaRef}
-                className={showOverlay ? 'textarea-transparent' : undefined}
+                className={showOverlay ? styles.transparent : undefined}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
                 onScroll={handleScroll}
@@ -174,7 +175,7 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
                 required
             />
             {showOverlay ? (
-                <pre ref={overlayRef} className="textarea-overlay" aria-hidden="true">
+                <pre ref={overlayRef} className={styles.overlay} aria-hidden="true">
                     <code
                         className={`hljs language-${format}`}
                         // biome-ignore lint/security/noDangerouslySetInnerHtml: highlight.js escapes content; only span tags are injected.
@@ -182,16 +183,16 @@ export function SecretTextarea({ value, onChange, onFormatDetected, format, auto
                     />
                 </pre>
             ) : null}
-            <div className="textarea-toolbar">
-                <div className="textarea-toolbar-start">{toolbarStart}</div>
-                <div className="textarea-toolbar-end">
+            <div className={styles.toolbar}>
+                <div className={styles.toolbarStart}>{toolbarStart}</div>
+                <div className={styles.toolbarEnd}>
                     {remaining < SHOW_COUNT_THRESHOLD ? (
-                        <span className={`count${remaining < WARN_COUNT_THRESHOLD ? ' warn' : ''}`}>
+                        <span className={`${styles.count}${remaining < WARN_COUNT_THRESHOLD ? ` ${styles.warn}` : ''}`}>
                             {t('charsLeft', { count: remaining })}
                         </span>
                     ) : null}
                     {keyboardHint && value.length > 0 ? (
-                        <span className="shortcut-hint" title={t('submitHint')}>
+                        <span className={styles.shortcutHint} title={t('submitHint')}>
                             <kbd>{keyboardHint.isMac ? '⌘' : 'Ctrl'}</kbd>
                             <kbd>Enter</kbd>
                         </span>

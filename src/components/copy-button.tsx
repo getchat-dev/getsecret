@@ -3,6 +3,8 @@
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertIcon, CheckIcon, CopyIcon } from '@/components/ui/icons';
+import btn from '@/styles/primitives/button.module.css';
+import styles from './copy-button.module.css';
 
 export type CopyStatus = 'idle' | 'copied' | 'error';
 export type ToastState = {
@@ -179,11 +181,11 @@ export function ToastMessage({ toast, anchorRef }: ToastMessageProps) {
     const node = (
         <div
             ref={ref}
-            className={`toast ${toast.kind === 'success' ? 'toast-success' : 'toast-error'}`}
+            className={`${styles.toast} ${toast.kind === 'success' ? styles.toastSuccess : styles.toastError}`}
             role={toast.kind === 'success' ? 'status' : 'alert'}
             style={style}
         >
-            {toast.kind === 'success' ? <CheckIcon size={14} className="check" /> : <AlertIcon size={14} />}
+            {toast.kind === 'success' ? <CheckIcon size={14} className={styles.check} /> : <AlertIcon size={14} />}
             <span>{toast.message}</span>
         </div>
     );
@@ -205,7 +207,7 @@ export function CopyButton({ textToCopy, copyLabel, copiedLabel, successMessage,
         <>
             <button
                 ref={buttonRef}
-                className="btn btn-ghost btn-icon"
+                className={`${btn.btn} ${btn.btnGhost} ${btn.btnIcon}`}
                 data-state={dataState}
                 onClick={() => void copyText(textToCopy, { successMessage, errorMessage })}
                 type="button"

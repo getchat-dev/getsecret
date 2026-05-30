@@ -8,6 +8,7 @@ import {
     SECRET_FORMATS,
     type SecretFormat,
 } from '@/lib/secret-formats';
+import styles from './format-select.module.css';
 
 type Props = {
     value: SecretFormat;
@@ -40,17 +41,17 @@ export function FormatSelect({ value, onChange, label }: Props) {
     const ext = SECRET_FORMAT_EXTENSIONS[value];
 
     return (
-        <div ref={containerRef} className="format-select-wrap">
+        <div ref={containerRef} className={styles.wrap}>
             <button
                 type="button"
-                className="format-select-trigger"
+                className={styles.trigger}
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 aria-label={label}
                 onClick={() => setOpen((prev) => !prev)}
             >
-                <span className="format-select-label">{SECRET_FORMAT_LABELS[value]}</span>
-                <span className="format-select-ext">.{ext}</span>
+                <span className={styles.label}>{SECRET_FORMAT_LABELS[value]}</span>
+                <span className={styles.ext}>.{ext}</span>
                 <svg
                     width="10"
                     height="10"
@@ -60,14 +61,14 @@ export function FormatSelect({ value, onChange, label }: Props) {
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`format-select-chevron ${open ? 'open' : ''}`.trim()}
+                    className={`${styles.chevron} ${open ? styles.open : ''}`.trim()}
                     aria-hidden="true"
                 >
                     <polyline points="6 9 12 15 18 9" />
                 </svg>
             </button>
             {open ? (
-                <div role="listbox" className="format-select-menu">
+                <div role="listbox" className={styles.menu}>
                     {SECRET_FORMATS.map((id) => {
                         const isActive = id === value;
                         return (
@@ -76,14 +77,14 @@ export function FormatSelect({ value, onChange, label }: Props) {
                                 type="button"
                                 role="option"
                                 aria-selected={isActive}
-                                className={`format-select-option ${isActive ? 'active' : ''}`.trim()}
+                                className={`${styles.option} ${isActive ? styles.active : ''}`.trim()}
                                 onClick={() => {
                                     onChange(id);
                                     setOpen(false);
                                 }}
                             >
-                                <span className="format-select-option-label">{SECRET_FORMAT_LABELS[id]}</span>
-                                <span className="format-select-option-ext">.{SECRET_FORMAT_EXTENSIONS[id]}</span>
+                                <span className={styles.optionLabel}>{SECRET_FORMAT_LABELS[id]}</span>
+                                <span className={styles.optionExt}>.{SECRET_FORMAT_EXTENSIONS[id]}</span>
                                 {isActive ? <CheckIcon size={12} /> : null}
                             </button>
                         );

@@ -1,0 +1,114 @@
+/* Reveal/lock/burned screen layout — a centered "card" variant shared by
+   LockScreen and BurnedScreen (applied alongside the card primitive). */
+.card {
+    text-align: center;
+    padding: 48px 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, var(--ember-soft), transparent 60%);
+    pointer-events: none;
+}
+
+.lockIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--bg-3);
+    border: 1px solid var(--border-default);
+    display: grid;
+    place-items: center;
+    margin: 0 auto 20px;
+    position: relative;
+}
+
+.lockIcon::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--ember-border), transparent 50%, var(--accent-border));
+    z-index: -1;
+}
+
+.lockIcon svg {
+    color: var(--fg-default);
+    width: 28px;
+    height: 28px;
+}
+
+.title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    position: relative;
+}
+
+.sub {
+    color: var(--fg-muted);
+    font-size: 14px;
+    margin: 0 auto 28px;
+    max-width: 44ch;
+    position: relative;
+}
+
+.meta {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    position: relative;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    align-items: center;
+}
+
+.countdown {
+    color: var(--fg-muted);
+    font-size: 13px;
+    margin: 0 auto 14px;
+    text-align: center;
+    position: relative;
+}
+
+.countdownExpired {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+.hint {
+    color: var(--fg-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 920px) {
+    .card {
+        padding: 36px 16px;
+    }
+
+    .lockIcon {
+        width: 56px;
+        height: 56px;
+    }
+
+    .title {
+        font-size: 19px;
+    }
+
+    .sub {
+        font-size: 13px;
+    }
+}

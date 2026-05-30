@@ -5,6 +5,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { CheckIcon, CopyIcon } from '@/components/ui/icons';
 import { renderQrPngDataUrl, renderQrSvg } from '@/lib/qr';
+import btn from '@/styles/primitives/button.module.css';
+import field from '@/styles/primitives/field.module.css';
+import styles from './qr-modal.module.css';
 
 type Props = {
     link: string;
@@ -147,54 +150,54 @@ export function QrModal({ link, open, onClose }: Props) {
 
     return (
         // biome-ignore lint/a11y/useKeyWithClickEvents: backdrop click-to-close; <dialog> handles Esc natively
-        <dialog ref={dialogRef} className="qr-modal" aria-labelledby={titleId} onClick={handleDialogClick}>
-            <div className="qr-modal-inner">
-                <header className="qr-modal-header">
-                    <h2 id={titleId} className="qr-modal-title">
+        <dialog ref={dialogRef} className={styles.modal} aria-labelledby={titleId} onClick={handleDialogClick}>
+            <div className={styles.inner}>
+                <header className={styles.header}>
+                    <h2 id={titleId} className={styles.title}>
                         {t('qrTitle')}
                     </h2>
                     <button
                         type="button"
-                        className="btn btn-ghost btn-icon"
+                        className={`${btn.btn} ${btn.btnGhost} ${btn.btnIcon} ${styles.closeBtn}`}
                         onClick={onClose}
                         aria-label={t('qrClose')}
                     >
                         <span aria-hidden="true">×</span>
                     </button>
                 </header>
-                <div className="qr-modal-body">
+                <div className={styles.body}>
                     {svg ? (
                         <div
-                            className="qr-canvas"
+                            className={styles.canvas}
                             role="img"
                             aria-label={t('qrTitle')}
                             // biome-ignore lint/security/noDangerouslySetInnerHtml: qrcode lib output is structural SVG of <rect> nodes; payload is encoded as modules, not as markup
                             dangerouslySetInnerHTML={{ __html: svg }}
                         />
                     ) : error ? (
-                        <div className="qr-canvas qr-canvas-error" role="alert">
-                            <span className="qr-canvas-warning" aria-hidden="true">
+                        <div className={`${styles.canvas} ${styles.canvasError}`} role="alert">
+                            <span className={styles.warning} aria-hidden="true">
                                 ⚠
                             </span>
-                            <span className="qr-canvas-error-text">{error}</span>
+                            <span className={styles.errorText}>{error}</span>
                         </div>
                     ) : (
-                        <div className="qr-canvas" aria-hidden="true">
-                            <span className="qr-canvas-placeholder">…</span>
+                        <div className={styles.canvas} aria-hidden="true">
+                            <span className={styles.placeholder}>…</span>
                         </div>
                     )}
-                    <p className="qr-modal-subtitle">{t('qrSubtitle')}</p>
+                    <p className={styles.subtitle}>{t('qrSubtitle')}</p>
                     {svg && error ? (
-                        <p className="error" role="alert">
+                        <p className={field.error} role="alert">
                             {error}
                         </p>
                     ) : null}
                 </div>
-                <footer className="qr-modal-footer">
+                <footer className={styles.footer}>
                     <button
                         ref={copyButtonRef}
                         type="button"
-                        className="btn btn-secondary"
+                        className={`${btn.btn} ${btn.btnSecondary} ${styles.footerBtn}`}
                         onClick={() =>
                             void copyText(link, {
                                 successMessage: t('copied'),
@@ -205,10 +208,18 @@ export function QrModal({ link, open, onClose }: Props) {
                         {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
                         <span>{isCopied ? t('copied') : t('copy')}</span>
                     </button>
-                    <button type="button" className="btn btn-ghost" onClick={() => void handleDownloadSvg()}>
+                    <button
+                        type="button"
+                        className={`${btn.btn} ${btn.btnGhost} ${styles.footerBtn}`}
+                        onClick={() => void handleDownloadSvg()}
+                    >
                         {t('qrDownloadSvg')}
                     </button>
-                    <button type="button" className="btn btn-ghost" onClick={() => void handleDownloadPng()}>
+                    <button
+                        type="button"
+                        className={`${btn.btn} ${btn.btnGhost} ${styles.footerBtn}`}
+                        onClick={() => void handleDownloadPng()}
+                    >
                         {t('qrDownloadPng')}
                     </button>
                 </footer>

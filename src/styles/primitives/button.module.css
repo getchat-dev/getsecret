@@ -1,0 +1,126 @@
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    text-decoration: none;
+    white-space: nowrap;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.btnPrimary {
+    background: var(--accent);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.15) inset,
+        0 4px 12px var(--accent-glow);
+}
+
+.btnPrimary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 6px 16px var(--accent-glow);
+}
+
+.btnPrimary:active:not(:disabled) {
+    background: var(--accent-active);
+    transform: translateY(0);
+}
+
+.btnSecondary {
+    background: var(--bg-3);
+    color: var(--fg-default);
+    border-color: var(--border-default);
+}
+
+.btnSecondary:hover:not(:disabled) {
+    background: var(--bg-4);
+    border-color: var(--border-strong);
+}
+
+.btnGhost {
+    background: transparent;
+    color: var(--fg-muted);
+    border-color: transparent;
+}
+
+.btnGhost:hover:not(:disabled) {
+    background: var(--bg-3);
+    color: var(--fg-default);
+}
+
+.btnDanger {
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--border-default);
+}
+
+.btnDanger:hover:not(:disabled) {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+}
+
+/* Ghost flavor of btnDanger: same red semantic, but borderless to fit
+   inside dense cards (e.g. the "Remove" action on a file-info card).
+   Specificity beats both .btnGhost and .btnGhost:hover so the override
+   works regardless of source order. */
+.btnGhost.btnDanger {
+    color: var(--danger);
+    border-color: transparent;
+}
+
+.btnGhost.btnDanger:hover:not(:disabled) {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: transparent;
+}
+
+.btnIcon {
+    padding: 8px;
+    width: 32px;
+    height: 32px;
+}
+
+/* Compact icon-only button — used for inline actions inside dense cards
+   like the "remove attached file" affordance, where the 32px .btnIcon
+   would overpower the surrounding text. */
+.btnIconSm {
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btnIcon[data-state="success"] {
+    background: var(--accent-bg-soft);
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+.btnIcon[data-state="error"] {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}

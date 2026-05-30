@@ -9,6 +9,10 @@ import { useRouter } from '@/i18n/navigation';
 import { decodeContainer } from '@/lib/file-container';
 import { decodeImagePreview, type ImagePreviewHandle } from '@/lib/image-preview';
 import type { SecretFormat } from '@/lib/secret-formats';
+import banner from '@/styles/primitives/banner.module.css';
+import btn from '@/styles/primitives/button.module.css';
+import card from '@/styles/primitives/card.module.css';
+import styles from './revealed-secret.module.css';
 
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
 
@@ -329,15 +333,15 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
     const hasText = content.length > 0;
 
     return (
-        <section className="card fade-up">
-            <header className="card-header">
-                <span className="card-header-title">{t('plaintext')}</span>
-                <span className="card-header-meta">
+        <section className={`${card.card} fade-up`}>
+            <header className={card.header}>
+                <span className={card.headerTitle}>{t('plaintext')}</span>
+                <span className={card.headerMeta}>
                     {hasText ? (
                         <>
                             <button
                                 type="button"
-                                className="btn btn-ghost btn-icon"
+                                className={`${btn.btn} ${btn.btnGhost} ${btn.btnIcon}`}
                                 onClick={() => setHidden((v) => !v)}
                                 aria-label={hidden ? 'show' : 'hide'}
                             >
@@ -354,10 +358,10 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                     ) : null}
                 </span>
             </header>
-            <div className="card-body">
+            <div className={card.body}>
                 {hasText ? (
-                    <div className="secret-output">
-                        <pre className={`secret-output-content ${hidden ? 'masked' : ''}`.trim()}>
+                    <div className={styles.output}>
+                        <pre className={`${styles.content} ${hidden ? styles.masked : ''}`.trim()}>
                             {showHighlighted ? (
                                 <code
                                     className={`hljs language-${format}`}
@@ -371,37 +375,37 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                     </div>
                 ) : null}
                 {file ? (
-                    <div className="attachment">
+                    <div className={styles.attachment}>
                         {previewState.status === 'ready' ? (
                             // biome-ignore lint/performance/noImgElement: blob:-URL расшифрованного аттачмента, next/image не подходит.
                             <img
                                 src={previewState.url}
                                 alt={attachmentName ?? t('attachmentLabel')}
-                                className="attachment-preview"
+                                className={styles.attachmentPreview}
                             />
                         ) : null}
-                        <div className="attachment-row">
+                        <div className={styles.attachmentRow}>
                             <FileIcon size={16} />
-                            <span className="attachment-label" title={attachmentName ?? undefined}>
+                            <span className={styles.attachmentLabel} title={attachmentName ?? undefined}>
                                 {attachmentName ?? t('attachmentLabel')}
                             </span>
                             {previewState.status === 'loading' ? (
-                                <span className="attachment-preview-status">{t('previewLoading')}</span>
+                                <span className={styles.attachmentPreviewStatus}>{t('previewLoading')}</span>
                             ) : null}
                             <button
                                 type="button"
-                                className="btn btn-secondary btn-sm"
+                                className={`${btn.btn} ${btn.btnSecondary}`}
                                 onClick={handleDownload}
                                 disabled={isDownloading}
                             >
                                 {isDownloading ? t('downloading') : t('download')}
                             </button>
-                            {downloadError ? <span className="attachment-error">{downloadError}</span> : null}
+                            {downloadError ? <span className={styles.attachmentError}>{downloadError}</span> : null}
                         </div>
                     </div>
                 ) : null}
-                <div className="banner banner-success">
-                    <UnlockIcon size={16} className="icon" />
+                <div className={`${banner.banner} ${banner.success}`}>
+                    <UnlockIcon size={16} className={banner.icon} />
                     <span>
                         {viewsRemaining === null ? (
                             <>
@@ -419,8 +423,8 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                     </span>
                 </div>
             </div>
-            <footer className="card-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => router.push('/')}>
+            <footer className={card.footer}>
+                <button type="button" className={`${btn.btn} ${btn.btnSecondary}`} onClick={() => router.push('/')}>
                     <PlusIcon size={14} /> {t('shareBack')}
                 </button>
             </footer>

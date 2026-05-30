@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSwitchLocale } from '@/components/layout/client-locale-provider';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { type Locale, routing } from '@/i18n/routing';
+import styles from './lang-picker.module.css';
 
 const LOCALE_PREFIX_RE = new RegExp(`^/(${routing.locales.join('|')})(?=/|$)`);
 
@@ -70,21 +71,21 @@ export function LangPicker() {
     }
 
     return (
-        <div ref={containerRef} className="lang-picker">
+        <div ref={containerRef} className={styles.langPicker}>
             <button
                 type="button"
-                className="lang-picker-trigger"
+                className={styles.trigger}
                 aria-haspopup="listbox"
                 aria-expanded={open}
                 onClick={() => setOpen((prev) => !prev)}
             >
-                <span className="flag" aria-hidden="true">
+                <span className={styles.flag} aria-hidden="true">
                     {current.flag}
                 </span>
                 <span>{current.code.toUpperCase()}</span>
             </button>
             {open ? (
-                <div role="listbox" className="lang-picker-menu">
+                <div role="listbox" className={styles.menu}>
                     {routing.locales.map((code) => {
                         const meta = LOCALE_META[code];
                         const isActive = code === locale;
@@ -94,10 +95,10 @@ export function LangPicker() {
                                 type="button"
                                 role="option"
                                 aria-selected={isActive}
-                                className={`lang-picker-option ${isActive ? 'active' : ''}`.trim()}
+                                className={`${styles.option} ${isActive ? styles.active : ''}`.trim()}
                                 onClick={() => selectLocale(code)}
                             >
-                                <span className="flag" aria-hidden="true">
+                                <span className={styles.flag} aria-hidden="true">
                                     {meta.flag}
                                 </span>
                                 <span>{meta.label}</span>

@@ -1,0 +1,51 @@
+.themeSwitch {
+    display: inline-flex;
+    background: var(--bg-2);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 2px;
+    gap: 1px;
+    margin: 0;
+    min-width: 0;
+}
+
+/* visually-hidden for the fieldset legend (scoped; no global util needed) */
+.themeSwitch legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.themeSwitch button {
+    background: transparent;
+    border: 0;
+    width: 26px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 4px;
+    color: var(--fg-subtle);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.themeSwitch button:hover {
+    color: var(--fg-default);
+}
+
+/* Active pill is driven by [data-theme-choice] on <html> (set pre-hydration);
+   the root attribute selector stays global, the button stays scoped. */
+.themeSwitch button.active,
+:global(:root[data-theme-choice="system"]) .themeSwitch button[data-option="system"],
+:global(:root[data-theme-choice="light"]) .themeSwitch button[data-option="light"],
+:global(:root[data-theme-choice="dark"]) .themeSwitch button[data-option="dark"] {
+    background: var(--bg-4);
+    color: var(--fg-default);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}

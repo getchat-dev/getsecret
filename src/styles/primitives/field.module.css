@@ -1,0 +1,182 @@
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fg-default);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.labelHint {
+    color: var(--fg-muted);
+    font-weight: 400;
+    font-size: 12px;
+}
+
+.fieldHint {
+    font-size: 11.5px;
+    color: var(--fg-subtle);
+    font-family: var(--font-mono);
+}
+
+.row {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.pair {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+}
+
+.pair > .field {
+    flex: 0 0 auto;
+}
+
+.input {
+    width: 100%;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 9px 12px;
+    color: var(--fg-default);
+    font-size: 13.5px;
+    outline: 0;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+
+.input.mono {
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.input:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg-soft);
+}
+
+.input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.inputWithAction {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputWithAction .input {
+    padding-right: 38px;
+}
+
+.inputAction {
+    position: absolute;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    color: var(--fg-subtle);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition:
+        color 0.15s,
+        background 0.15s;
+}
+
+.inputAction:hover {
+    color: var(--fg-default);
+    background: var(--bg-3);
+}
+
+.error {
+    color: var(--danger);
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.hint {
+    color: var(--fg-muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.hintError {
+    color: var(--danger);
+}
+
+/* Password input (shared by PasswordField create UI and LockScreen entry). */
+.passwordWrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.passwordInput {
+    width: 100%;
+    padding: 9px 44px 9px 14px;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--fg-default);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    outline: 0;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+
+.passwordInput::placeholder {
+    color: var(--fg-faint);
+}
+
+.passwordInput:focus-visible {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg-soft);
+}
+
+.passwordInput.hasError {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.passwordToggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+}
+
+@media (max-width: 920px) {
+    .row {
+        gap: 8px;
+    }
+}
+
+/* Prevent iOS Safari auto-zoom: inputs must be ≥16px on coarse pointers. */
+@media (hover: none) and (pointer: coarse) {
+    .input,
+    .input.mono,
+    .passwordInput {
+        font-size: 16px;
+    }
+}

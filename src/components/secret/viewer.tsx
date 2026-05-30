@@ -21,6 +21,10 @@ import {
     SECRET_VERSION_V2,
 } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, isSecretFormat, type SecretFormat } from '@/lib/secret-formats';
+import banner from '@/styles/primitives/banner.module.css';
+import card from '@/styles/primitives/card.module.css';
+import field from '@/styles/primitives/field.module.css';
+import styles from './viewer.module.css';
 
 type LinkState =
     | { status: 'checking' }
@@ -255,8 +259,8 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
 
     if (linkState.status === 'checking') {
         return (
-            <section className="card">
-                <p className="hint" style={{ padding: 18 }}>
+            <section className={card.card}>
+                <p className={field.hint} style={{ padding: 18 }}>
                     {t('validating')}
                 </p>
             </section>
@@ -271,8 +275,8 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
     return (
         <>
             {ownSecret ? (
-                <div className="banner banner-danger own-secret-banner" role="alert">
-                    <AlertIcon size={16} className="icon" />
+                <div className={`${banner.banner} ${banner.danger} ${styles.ownSecretBanner}`} role="alert">
+                    <AlertIcon size={16} className={banner.icon} />
                     <span>
                         <strong>{t('ownSecretTitle')}</strong> {t('ownSecretBody')}
                     </span>

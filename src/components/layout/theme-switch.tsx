@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import styles from './theme-switch.module.css';
 
 const ICONS = {
     system: (
@@ -69,8 +70,8 @@ export function ThemeSwitch() {
     // pre-hydration script before first paint — so the right button is shown
     // pressed instantly, with no post-mount jump.
     return (
-        <fieldset className="theme-switch">
-            <legend className="visually-hidden">{t('legend')}</legend>
+        <fieldset className={styles.themeSwitch}>
+            <legend>{t('legend')}</legend>
             {(['system', 'light', 'dark'] as const).map((option) => {
                 const label = t(option);
                 return (
