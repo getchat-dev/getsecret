@@ -81,6 +81,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
 
     const readsLabel = maxReads === null ? '∞' : String(maxReads ?? 1);
     const passphraseLabel = hasPassphrase ? t('required') : t('none');
+    const isSingleRead = maxReads !== null && (maxReads ?? 1) === 1;
 
     return (
         <section className={`${card.card} fade-up`}>
@@ -121,12 +122,14 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                     ) : null}
                 </div>
                 <ToastMessage toast={toast?.kind === 'error' ? toast : null} anchorRef={copyButtonRef} />
-                <div className={`${banner.banner} ${banner.warn}`}>
-                    <EyeIcon size={16} className={banner.icon} />
-                    <span>
-                        <strong>{t('warnTitle')}</strong> {t('warnBody')}
-                    </span>
-                </div>
+                {isSingleRead ? (
+                    <div className={`${banner.banner} ${banner.warn}`}>
+                        <EyeIcon size={16} className={banner.icon} />
+                        <span>
+                            <strong>{t('warnTitle')}</strong> {t('warnBody')}
+                        </span>
+                    </div>
+                ) : null}
                 <div className={styles.stats}>
                     <div className={styles.stat}>
                         <div className={styles.statLabel}>

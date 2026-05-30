@@ -2,10 +2,12 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { ClientLocaleProvider } from '@/components/layout/client-locale-provider';
+import { NavShell } from '@/components/layout/nav-shell';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { pickLocaleFromAcceptLanguage } from '@/lib/accept-language';
+import { localeDirection } from '@/lib/locale-direction';
 import '../globals.css';
 
 const inter = Inter({
@@ -33,7 +35,12 @@ export default async function SecretRouteLayout({ children }: { children: React.
     const nonce = headerList.get('x-nonce') ?? undefined;
 
     return (
-        <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
+        <html
+            lang={locale}
+            dir={localeDirection(locale)}
+            suppressHydrationWarning
+            className={`${inter.variable} ${jetbrainsMono.variable}`}
+        >
             <head>
                 {/* Apply the user's saved theme before first paint (see [locale]/layout.tsx for details). */}
                 <script
@@ -48,10 +55,9 @@ export default async function SecretRouteLayout({ children }: { children: React.
             <body>
                 <ClientLocaleProvider initialLocale={locale} initialMessages={messages}>
                     <ThemeProvider nonce={nonce}>
-                        <div className="bg-grid" aria-hidden="true" />
-                        <SiteHeader />
-                        {children}
-                        <SiteFooter />
+                        <NavShell header={<SiteHeader />} footer={<SiteFooter />}>
+                            {children}
+                        </NavShell>
                     </ThemeProvider>
                 </ClientLocaleProvider>
             </body>

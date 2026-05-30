@@ -3,6 +3,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { type ComponentProps, createContext, useCallback, useContext, useState } from 'react';
 import { type Locale, routing } from '@/i18n/routing';
+import { localeDirection } from '@/lib/locale-direction';
 
 type Messages = NonNullable<ComponentProps<typeof NextIntlClientProvider>['messages']>;
 
@@ -48,6 +49,9 @@ export function ClientLocaleProvider({ initialLocale, initialMessages, children 
                     window.history.replaceState(null, '', newPath + search + hash);
                 }
                 document.documentElement.lang = next;
+                // Keep dir in step with the locale so the mobile push-drawer (and
+                // any RTL layout) flips sides on a soft switch, matching SSR.
+                document.documentElement.dir = localeDirection(next);
             }
         },
         [locale],

@@ -11,7 +11,11 @@
         "docs": "Docs",
         "security": "Security",
         "api": "API",
-        "source": "Source"
+        "source": "Source",
+        "menu": "Menu",
+        "openMenu": "Open menu",
+        "closeMenu": "Close menu",
+        "language": "Language"
     },
     "eyebrow": {
         "create": "End-to-end encrypted · zero-knowledge",

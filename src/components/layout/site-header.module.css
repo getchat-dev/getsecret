@@ -95,19 +95,51 @@
     background: var(--bg-3);
 }
 
+/* Hamburger — hidden until the mobile breakpoint, where it replaces the inline
+   nav (see the 640px block below). */
+.menuTrigger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-left: auto;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-2);
+    color: var(--fg-default);
+    transition:
+        border-color 0.15s,
+        background 0.15s,
+        color 0.15s;
+}
+
+.menuTrigger:hover {
+    background: var(--bg-3);
+    border-color: var(--border-strong);
+}
+
+.menuTrigger:active {
+    background: var(--bg-4);
+}
+
 @media (max-width: 920px) {
     .inner {
         padding: var(--space-2) var(--space-2);
         gap: var(--space-2);
     }
+}
 
-    .links > .link {
+/* Mobile: collapse the inline nav into the hamburger, which drives <NavShell>'s
+   push drawer. Keep this breakpoint in sync with the 640px gates in
+   nav-shell.module.css (drawer/scrim) and MOBILE_QUERY in nav-shell.tsx. */
+@media (max-width: 640px) {
+    .links {
         display: none;
     }
 
-    .links > .link:last-of-type {
+    .menuTrigger {
         display: inline-flex;
-        padding: var(--space-1) var(--space-1);
     }
 }
 

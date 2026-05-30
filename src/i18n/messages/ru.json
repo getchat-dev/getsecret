@@ -11,7 +11,11 @@
         "docs": "Документы",
         "security": "Безопасность",
         "api": "API",
-        "source": "Исходники"
+        "source": "Исходники",
+        "menu": "Меню",
+        "openMenu": "Открыть меню",
+        "closeMenu": "Закрыть меню",
+        "language": "Язык"
     },
     "eyebrow": {
         "create": "Сквозное шифрование · zero-knowledge",

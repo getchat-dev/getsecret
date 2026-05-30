@@ -52,6 +52,13 @@
     --radius-md: 8px;
     --radius-lg: 12px;
 
+    /* Mobile nav drawer — width of the push panel and the slide timing.
+       --nav-anim is mirrored by ANIM_MS in nav-shell.tsx (the close sequence
+       waits this long before releasing the scroll lock). */
+    --nav-width: min(82vw, 320px);
+    --nav-anim: 280ms;
+    --nav-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
     /* Spacing scale — 8px base unit (4px half-step for tight spots). The token
        number is the multiple of --unit (so --space-3 = 3 × 8 = 24px). Use these
        for every gap, margin, and padding so spacing stays on one grid. */
@@ -188,9 +195,9 @@ body {
         radial-gradient(ellipse 80% 50% at 50% -10%, var(--grad-1), transparent 60%),
         radial-gradient(ellipse 60% 40% at 100% 100%, var(--grad-2), transparent 60%), var(--bg-1);
     background-attachment: fixed;
-    display: flex;
-    flex-direction: column;
     min-height: 100dvh;
+    /* The flex column that pins the footer now lives on .shell (NavShell), which
+       wraps header + page + footer so the whole page can slide as one unit. */
 }
 
 button {
@@ -228,6 +235,20 @@ code {
     position: relative;
     z-index: 1;
     flex: 1 0 auto;
+}
+
+/* Scroll lock applied by <NavShell> while the mobile drawer is open. overflow
+   :hidden preserves the current scroll offset (no jump-to-top, no jitter); the
+   scrollbar pad keeps content from lurching sideways when the bar disappears.
+   On mobile (the only place the drawer opens) overlay scrollbars report 0, so
+   the pad is a no-op there. */
+html.nav-locked {
+    overflow: hidden;
+    padding-right: var(--nav-scrollbar, 0);
+}
+
+html.nav-locked body {
+    overflow: hidden;
 }
 
 .bg-grid {

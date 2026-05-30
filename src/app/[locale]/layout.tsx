@@ -5,10 +5,12 @@ import { notFound } from 'next/navigation';
 import { hasLocale } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { ClientLocaleProvider } from '@/components/layout/client-locale-provider';
+import { NavShell } from '@/components/layout/nav-shell';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteHeader } from '@/components/layout/site-header';
 import { ThemeProvider } from '@/components/theme-provider';
 import { type Locale, routing } from '@/i18n/routing';
+import { localeDirection } from '@/lib/locale-direction';
 import { localizedAlternates, SITE_NAME, siteOrigin } from '@/lib/site-meta';
 import '../globals.css';
 
@@ -99,7 +101,12 @@ export default async function LocaleLayout({
     const nonce = (await headers()).get('x-nonce') ?? undefined;
 
     return (
-        <html lang={locale} suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
+        <html
+            lang={locale}
+            dir={localeDirection(locale)}
+            suppressHydrationWarning
+            className={`${inter.variable} ${jetbrainsMono.variable}`}
+        >
             <head>
                 {/* Apply the user's saved theme before first paint to avoid a flash
                     when the explicit choice differs from the system preference.
@@ -117,10 +124,9 @@ export default async function LocaleLayout({
             <body>
                 <ClientLocaleProvider initialLocale={locale as Locale} initialMessages={messages}>
                     <ThemeProvider nonce={nonce}>
-                        <div className="bg-grid" aria-hidden="true" />
-                        <SiteHeader />
-                        {children}
-                        <SiteFooter />
+                        <NavShell header={<SiteHeader />} footer={<SiteFooter />}>
+                            {children}
+                        </NavShell>
                     </ThemeProvider>
                 </ClientLocaleProvider>
             </body>

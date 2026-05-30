@@ -1,0 +1,199 @@
+/* ============================================================
+   NAV SHELL — mobile off-canvas "push" drawer
+   The shell holds the whole page (header + content + footer) and is the flex
+   column that pins the footer to the viewport bottom. On mobile it slides aside
+   to reveal the drawer; the drawer is a sibling parked off-canvas at the
+   inline-end edge. Direction is CSS-only: --nav-x flips under [dir="rtl"], so
+   LTR pushes left / panel-from-right and RTL pushes right / panel-from-left.
+============================================================ */
+
+.shell {
+    /* Owns the column layout that used to live on <body>, so the footer keeps
+       sitting at the bottom of the viewport on short pages. */
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+}
+
+@media (max-width: 640px) {
+    .shell {
+        /* No transform / will-change in the resting state: an idle transform
+           would turn this box into the containing block for any fixed/portaled
+           UI (toasts) inside it. We only pay that cost while the drawer is open. */
+        transition: transform var(--nav-anim) var(--nav-ease);
+        --nav-x: 1;
+    }
+
+    :global([dir="rtl"]) .shell {
+        --nav-x: -1;
+    }
+
+    .shellOpen {
+        transform: translateX(calc(var(--nav-x) * var(--nav-width) * -1));
+        will-change: transform;
+    }
+}
+
+/* ---- Scrim: dims the pushed-aside page, doubles as a tap-to-close target ---- */
+.scrim {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        /* Button reset — the scrim is a borderless full-bleed close target. */
+        appearance: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        font: inherit;
+        cursor: pointer;
+        background: rgba(8, 12, 18, 0.42);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--nav-anim) var(--nav-ease);
+        /* Tap on the scrim shouldn't double as a text-select drag on mobile. */
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .scrimOpen {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* ---- Drawer panel ---- */
+.drawer {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .drawer {
+        position: fixed;
+        inset-block: 0;
+        inset-inline-end: 0;
+        z-index: 70;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+        width: var(--nav-width);
+        max-width: 100%;
+        padding: calc(var(--space-3) + env(safe-area-inset-top, 0px))
+            calc(var(--space-3) + env(safe-area-inset-right, 0px))
+            calc(var(--space-3) + env(safe-area-inset-bottom, 0px)) var(--space-3);
+        background: var(--bg-2);
+        /* Just the hairline edge — no drop shadow. --shadow-pop bleeds past the
+           panel box and would show at the screen edge even while parked off-canvas. */
+        border-inline-start: 1px solid var(--border-default);
+        border-start-start-radius: var(--radius-lg);
+        border-end-start-radius: var(--radius-lg);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        /* Parked off-canvas just past the inline-end edge. */
+        --nav-x: 1;
+        transform: translateX(calc(var(--nav-x) * 100%));
+        transition: transform var(--nav-anim) var(--nav-ease);
+        -webkit-overflow-scrolling: touch;
+    }
+
+    :global([dir="rtl"]) .drawer {
+        --nav-x: -1;
+    }
+
+    /* Same specificity as .drawer, declared later → wins when the class is on. */
+    .drawerOpen {
+        transform: translateX(0);
+        will-change: transform;
+    }
+}
+
+.drawerHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.drawerTitle {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+}
+
+.closeButton {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    margin: calc(var(--space-half) * -1);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--fg-muted);
+    transition:
+        color 0.15s,
+        background 0.15s;
+}
+
+.closeButton:hover {
+    color: var(--fg-default);
+    background: var(--bg-3);
+}
+
+.drawerNav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-half);
+}
+
+.drawerLink {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2);
+    border-radius: var(--radius-md);
+    color: var(--fg-default);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition:
+        color 0.15s,
+        background 0.15s;
+}
+
+.drawerLink:hover {
+    background: var(--bg-3);
+}
+
+/* Theme + language share one row — both controls are narrow enough to sit
+   side by side at the drawer's width. Wraps as a safety net on tiny screens. */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.control {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.sectionLabel {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+}
