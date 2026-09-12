@@ -10,6 +10,7 @@
     "nav": {
         "docs": "Docs",
         "security": "Security",
+        "threatModel": "Threat model",
         "api": "API",
         "source": "Source",
         "menu": "Menu",

@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { siteOrigin } from '@/lib/site-meta';
 
-const STATIC_PATHS = ['', '/docs', '/security', '/developers', '/faq'] as const;
+const STATIC_PATHS = ['', '/docs', '/security', '/threat-model', '/developers', '/faq'] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const origin = siteOrigin();

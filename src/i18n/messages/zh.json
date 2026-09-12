@@ -10,6 +10,7 @@
     "nav": {
         "docs": "文档",
         "security": "安全",
+        "threatModel": "威胁模型",
         "api": "API",
         "source": "源代码"
     },

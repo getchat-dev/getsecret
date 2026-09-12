@@ -220,6 +220,9 @@ export function NavShell({ header, footer, children }: NavShellProps) {
                     <Link href="/security" className={styles.drawerLink} onClick={closeMenu}>
                         {t('security')}
                     </Link>
+                    <Link href="/threat-model" className={styles.drawerLink} onClick={closeMenu}>
+                        {t('threatModel')}
+                    </Link>
                     {/* <Link href="/developers" className={styles.drawerLink} onClick={closeMenu}>{t('api')}</Link> */}
                 </nav>
 

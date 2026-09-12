@@ -1,0 +1,69 @@
+---
+title: "Threat model"
+lede: "A map of what Burnotes protects, who it protects you from, and — just as important — where it stops. If a risk isn't on this page, assume we don't cover it."
+metaDescription: "Burnotes threat model: assets, adversaries, what's in scope, what's explicitly out of scope, and how to report a vulnerability."
+---
+
+This page is written for people deciding whether they can rely on Burnotes for a specific job. If you just want a plain walkthrough of how it works, read [Security](/security) instead.
+
+A security tool that claims to protect against everything protects against nothing. So the most useful part of this page is the **Out of scope** section below — the risks we admit we can't touch.
+
+## What we protect
+
+- **The plaintext secret** — the password, token, key, or file you're sending.
+- **The encryption key** that unlocks it.
+- **Metadata about the secret**, as far as the design allows (we minimise it, but we don't reduce it to zero).
+
+## What we assume
+
+The model below holds only while these stay true:
+
+- TLS is intact between the browser and our server (a valid certificate, no broken cipher).
+- The browser's built-in cryptography (Web Crypto, AES-GCM, PBKDF2) works as specified.
+- The devices on both ends — sender and recipient — are not already compromised.
+- You send the link, and any password, through a channel the wrong people can't read.
+
+## Who we protect you from
+
+| Attacker | What they can do | Are you protected? |
+| --- | --- | --- |
+| Passive network (Wi-Fi sniffer) | Watch your HTTPS traffic | **Yes.** TLS covers the traffic, and the key never travels in the request anyway. |
+| Active network (MITM with a valid certificate) | Tamper with responses | **Yes.** The key never reaches the server, so a man in the middle has nothing to steal. |
+| Server operator (us, the host, a legal order) | Access all stored data | **Yes.** Storage holds only ciphertext and a token fingerprint — never the key. |
+| Token brute-forcer | Flood the open endpoint with guesses | **Yes.** Constant-time comparison, and the record self-destructs after 5 wrong tries. |
+| Cryptanalyst (timing, IV reuse) | Probe server responses | **Yes.** The consume step is one atomic operation, and every secret gets a fresh random IV. |
+| Someone with the stolen link | Hold the full URL, key included | **No — by design.** They can open it, but only once, and that burns it for everyone. |
+| Recipient who screenshots or copies | See the plaintext once | **No.** Once it's on their screen, it's their copy. See **Out of scope**. |
+
+## In scope
+
+These are the things Burnotes prevents:
+
+- **The server reading your secret** — impossible; it only ever holds ciphertext.
+- **Recovering a secret after the first open** — impossible; consumption deletes the record.
+- **Brute-forcing the access token** — capped at 5 attempts, then the record is destroyed.
+- **IV reuse** — every secret is encrypted with a fresh, random IV.
+- **Timing attacks on the token check** — the comparison runs in constant time.
+- **A secret living forever** — it's deleted after 24 hours whether or not it's read.
+
+## Out of scope
+
+This is the part that matters most. Burnotes does **not** protect against any of the following, and no setting changes that:
+
+- **A compromised device.** If the sender's or recipient's machine has malware, a keylogger, or screen capture, the secret leaks the moment it's typed or shown. We are not endpoint protection.
+- **A leaky delivery channel.** If you paste the link into the same chat where you usually share passwords, that chat will be read first. Sending the link over plain SMS is your risk to take.
+- **Screenshots and copy-paste by the recipient.** Once someone has legitimately seen the plaintext, we have no control over what they do with it.
+- **Traffic analysis.** An observer can still see that *someone* created a secret at a given time, and roughly how big it was. We don't hide the shape of your usage.
+- **Server-side metadata.** Our server sees the sender's IP, the time, the ciphertext size, and the TTL. We log the minimum we need to operate — not nothing.
+- **Quantum adversaries.** AES-GCM is not post-quantum. If your threat model includes an attacker with a future quantum computer harvesting today's traffic, Burnotes is not the right tool.
+- **A targeted state-level adversary.** If a well-resourced agency is burning a browser zero-day specifically at you, no one-time link will save you. Use an air-gapped device and a tool built for that fight.
+
+If any of these describe your situation, Burnotes is the wrong tool.
+
+## Reporting a vulnerability
+
+If you find a security issue, please report it privately — don't open a public issue or post it in a chat.
+
+Report it through a [GitHub security advisory](https://github.com/Markuper-tech/burnotes/security/advisories/new), which keeps the discussion private until a fix is out. Tell us what you found, how to reproduce it, and the impact you see. We'll confirm we received it and keep you posted while we work on it.
+
+Please don't run tests that degrade the service for others (no denial-of-service, no automated brute-forcing against the live site).

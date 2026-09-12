@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 
-export type ContentSlug = 'security' | 'faq' | 'docs' | 'developers';
+export type ContentSlug = 'security' | 'threat-model' | 'faq' | 'docs' | 'developers';
 
 export type ContentFrontmatter = {
     title: string;
@@ -17,6 +17,10 @@ const REGISTRY: Record<ContentSlug, Record<string, () => Promise<ContentModule>>
     security: {
         en: () => import('@/content/security/en.mdx'),
         ru: () => import('@/content/security/ru.mdx'),
+    },
+    'threat-model': {
+        en: () => import('@/content/threat-model/en.mdx'),
+        ru: () => import('@/content/threat-model/ru.mdx'),
     },
     faq: {
         en: () => import('@/content/faq/en.mdx'),

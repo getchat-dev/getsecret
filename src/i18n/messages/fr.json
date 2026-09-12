@@ -10,6 +10,7 @@
     "nav": {
         "docs": "Docs",
         "security": "Sécurité",
+        "threatModel": "Modèle de menace",
         "api": "API",
         "source": "Source"
     },
