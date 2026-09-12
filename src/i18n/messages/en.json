@@ -3,8 +3,8 @@
     "flag": "🇬🇧",
     "meta": {
         "tagline": "Encrypted notes that burn after reading",
-        "description": "Send passwords, API tokens, and files as encrypted one-time links. Generated in your browser; the decryption key never touches our servers.",
-        "homeDescription": "Send passwords, API tokens, and files via encrypted one-time links. Everything happens in your browser — our servers never see the plaintext or the decryption key.",
+        "description": "Burnotes turns a password, token, or file into a one-time link. The secret is encrypted in your browser and disappears the moment it is read.",
+        "homeDescription": "Send a password, API token, or file as a link that opens once and then destroys itself. Encrypted in your browser — the key never reaches our servers.",
         "secretViewTitle": "Open a one-time secret"
     },
     "nav": {

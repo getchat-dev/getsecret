@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { routing } from '@/i18n/routing';
-import { buildPageMetadata, localizedAlternates, SITE_NAME, siteOrigin } from '@/lib/site-meta';
+import { OG_IMAGE_SIZE } from '@/lib/brand';
+import { buildPageMetadata, localizedAlternates, SITE_NAME, siteOrigin, socialCardAlt } from '@/lib/site-meta';
 
 const original = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -88,5 +89,31 @@ describe('buildPageMetadata', () => {
     it('mirrors the canonical URL into openGraph.url', () => {
         const meta = buildPageMetadata({ locale: 'fr', path: '/faq', title: 'T', description: 'D' });
         expect(meta.openGraph?.url).toBe('https://burnotes.app/fr/faq');
+    });
+
+    it("points the card at the active locale's image with the stated dimensions", () => {
+        const meta = buildPageMetadata({ locale: 'ru', path: '/security', title: 'T', description: 'D' });
+        const image = (meta.openGraph?.images as Array<{ url: string; width: number; height: number }>)[0];
+        expect(image.url).toBe('https://burnotes.app/ru/opengraph-image');
+        expect([image.width, image.height]).toEqual([OG_IMAGE_SIZE.width, OG_IMAGE_SIZE.height]);
+    });
+
+    // The alt describes an image whose only text is the tagline, so it has to be
+    // in the page's language. The default is English and is a bug on /ru — this
+    // asserts a caller can override it, and the page-level tests upstream are
+    // what guarantee they do.
+    it('uses the alt text the caller supplies', () => {
+        const alt = socialCardAlt('Зашифрованные заметки, которые сгорают после прочтения');
+        const meta = buildPageMetadata({ locale: 'ru', path: '/', title: 'T', description: 'D', imageAlt: alt });
+        const image = (meta.openGraph?.images as Array<{ alt: string }>)[0];
+        expect(image.alt).toBe('Burnotes — Зашифрованные заметки, которые сгорают после прочтения');
+    });
+});
+
+describe('socialCardAlt', () => {
+    it('prefixes the tagline with the site name', () => {
+        expect(socialCardAlt('Encrypted notes that burn after reading')).toBe(
+            `${SITE_NAME} — Encrypted notes that burn after reading`,
+        );
     });
 });

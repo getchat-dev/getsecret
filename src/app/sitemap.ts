@@ -2,7 +2,10 @@ import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { siteOrigin } from '@/lib/site-meta';
 
-const STATIC_PATHS = ['', '/docs', '/security', '/threat-model', '/developers', '/faq'] as const;
+// Only pages with authored prose. /docs, /developers and /faq are routable but
+// still placeholders — they carry `noindex` and stay out of the sitemap until
+// their MDX is written, then they come back here in the same commit.
+const STATIC_PATHS = ['', '/security', '/threat-model'] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
     const origin = siteOrigin();
@@ -13,9 +16,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
             url: `${origin}/${locale}${path}`,
             lastModified,
             alternates: {
-                languages: Object.fromEntries(
-                    routing.locales.map((altLocale) => [altLocale, `${origin}/${altLocale}${path}`]),
-                ),
+                languages: {
+                    ...Object.fromEntries(
+                        routing.locales.map((altLocale) => [altLocale, `${origin}/${altLocale}${path}`]),
+                    ),
+                    // Mirrors localizedAlternates() in site-meta.ts, which emits
+                    // x-default in the document head. The two have to agree.
+                    'x-default': `${origin}/${routing.defaultLocale}${path}`,
+                },
             },
         })),
     );

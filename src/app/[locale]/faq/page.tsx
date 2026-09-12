@@ -1,17 +1,21 @@
 import type { Metadata } from 'next';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { loadContent } from '@/lib/content';
-import { buildPageMetadata } from '@/lib/site-meta';
+import { buildPageMetadata, socialCardAlt } from '@/lib/site-meta';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
     const { frontmatter } = await loadContent('faq', locale);
+    const tMeta = await getTranslations({ locale, namespace: 'meta' });
     return buildPageMetadata({
         locale,
         path: '/faq',
         title: frontmatter.title,
         description: frontmatter.metaDescription,
         type: 'article',
+        imageAlt: socialCardAlt(tMeta('tagline')),
+        // Placeholder body: unlisted until the MDX is written.
+        noindex: true,
     });
 }
 

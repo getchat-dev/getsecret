@@ -1,19 +1,23 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { loadContent } from '@/lib/content';
-import { buildPageMetadata } from '@/lib/site-meta';
+import { buildPageMetadata, socialCardAlt } from '@/lib/site-meta';
 
 const NAV_KEY = 'api';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
     const { frontmatter } = await loadContent('developers', locale);
+    const tMeta = await getTranslations({ locale, namespace: 'meta' });
     return buildPageMetadata({
         locale,
         path: '/developers',
         title: frontmatter.title,
         description: frontmatter.metaDescription,
         type: 'article',
+        imageAlt: socialCardAlt(tMeta('tagline')),
+        // Placeholder body: unlisted until the MDX is written.
+        noindex: true,
     });
 }
 
