@@ -48,9 +48,21 @@
         "info": "Votre secret est chiffré dans ce navigateur avant de partir. La clé est ajoutée après le # — les fragments ne sont jamais envoyés à nos serveurs.",
         "howItWorks": "Comment ça marche ↗",
         "units": {
-            "minutes": "minutes",
-            "hours": "heures",
-            "days": "jours"
+            "minutes": {
+                "full": "{count, plural, one {minute} other {minutes}}",
+                "mid": "min",
+                "short": "m"
+            },
+            "hours": {
+                "full": "{count, plural, one {heure} other {heures}}",
+                "mid": "h",
+                "short": "h"
+            },
+            "days": {
+                "full": "{count, plural, one {jour} other {jours}}",
+                "mid": "j",
+                "short": "j"
+            }
         },
         "f1t": "Zero-knowledge",
         "f1b": "Nous ne voyons jamais votre texte clair. Chiffrement dans le navigateur via WebCrypto.",

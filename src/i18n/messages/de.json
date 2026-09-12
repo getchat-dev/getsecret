@@ -48,9 +48,21 @@
         "info": "Dein Geheimnis wird in diesem Browser verschlüsselt, bevor es ihn verlässt. Der Schlüssel wird nach dem # im Link angehängt — Fragmente werden nie an unsere Server gesendet.",
         "howItWorks": "Wie es funktioniert ↗",
         "units": {
-            "minutes": "Minuten",
-            "hours": "Stunden",
-            "days": "Tage"
+            "minutes": {
+                "full": "{count, plural, one {Minute} other {Minuten}}",
+                "mid": "Min",
+                "short": "m"
+            },
+            "hours": {
+                "full": "{count, plural, one {Stunde} other {Stunden}}",
+                "mid": "Std",
+                "short": "h"
+            },
+            "days": {
+                "full": "{count, plural, one {Tag} other {Tage}}",
+                "mid": "Tg",
+                "short": "d"
+            }
         },
         "f1t": "Zero-Knowledge",
         "f1b": "Wir sehen deinen Klartext nie. Verschlüsselung erfolgt im Browser über WebCrypto.",

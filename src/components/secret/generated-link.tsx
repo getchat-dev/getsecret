@@ -136,7 +136,8 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                             <ClockIcon size={12} /> {t('expiresIn')}
                         </div>
                         <div className={styles.statValue}>
-                            {expiresIn.value} {tUnits(expiresIn.unit)}
+                            {expiresIn.value}{' '}
+                            {tUnits(`${expiresIn.unit}.full`, { count: Number(expiresIn.value) || 0 })}
                         </div>
                     </div>
                     <div className={styles.stat}>

@@ -52,9 +52,21 @@
         "info": "Your secret is encrypted in this browser before it leaves. The decryption key is appended after the # in the link — fragments are never sent to our servers.",
         "howItWorks": "How it works ↗",
         "units": {
-            "minutes": "minutes",
-            "hours": "hours",
-            "days": "days"
+            "minutes": {
+                "full": "{count, plural, one {minute} other {minutes}}",
+                "mid": "min",
+                "short": "m"
+            },
+            "hours": {
+                "full": "{count, plural, one {hour} other {hours}}",
+                "mid": "hr",
+                "short": "h"
+            },
+            "days": {
+                "full": "{count, plural, one {day} other {days}}",
+                "mid": "day",
+                "short": "d"
+            }
         },
         "f1t": "Zero-knowledge",
         "f1b": "We never see your plaintext. Encryption happens in your browser using WebCrypto.",

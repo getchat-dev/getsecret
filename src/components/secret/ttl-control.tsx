@@ -19,6 +19,10 @@ export function TtlControl({ value, unit, onChange }: Props) {
     const max = maxValueForUnit(unit);
     const parsed = Number.parseInt(value, 10);
     const numeric = Number.isInteger(parsed) ? parsed : null;
+    // Drives singular/plural on the labels ("1 day" vs "2 days"); empty/invalid
+    // input reads as 1 so the labels stay singular while mid-typing.
+    const count = numeric ?? 1;
+    const label = (option: TtlUnit) => tUnits(`${option}.full`, { count });
 
     function setValue(next: string) {
         // 1. Strip non-digits (keeps the field numeric even if the user
@@ -73,7 +77,7 @@ export function TtlControl({ value, unit, onChange }: Props) {
                         pattern="[0-9]*"
                         value={value}
                         onChange={(event) => setValue(event.target.value)}
-                        aria-label={`${t('expiresIn')} (${tUnits(unit)})`}
+                        aria-label={`${t('expiresIn')} (${label(unit)})`}
                     />
                     <button
                         type="button"
@@ -92,7 +96,7 @@ export function TtlControl({ value, unit, onChange }: Props) {
                             aria-pressed={option === unit}
                             onClick={() => setUnit(option)}
                         >
-                            {tUnits(option)}
+                            {label(option)}
                         </button>
                     ))}
                 </div>
