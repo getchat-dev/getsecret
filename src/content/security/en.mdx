@@ -6,7 +6,7 @@ metaDescription: "Why Burnotes exists, how client-side encryption works, and whe
 
 ## The problem
 
-Every day, passwords, tokens, API keys, and server credentials fly through work chats and email. Someone drops a production key into Slack. Someone sends an admin password over Telegram "for five minutes." Someone notes it down to themselves so they won't forget.
+Someone drops a production key into Slack. Someone sends an admin password over Telegram "for five minutes." Someone notes it down to themselves so they won't forget.
 
 It's convenient. But it isn't temporary.
 
@@ -24,7 +24,7 @@ Anyone who later gets access to even one of those copies gets the password too. 
 Leaks don't happen because of weak passwords. They happen because passwords end up in places they shouldn't be.
 
 - Verizon's 2024 DBIR puts stolen credentials among the top breach vectors — they show up in roughly one in three incidents.
-- IBM puts the average cost of a single corporate breach at $4.88M.
+- IBM estimates the average cost of a single corporate breach at $4.88M.
 - The global cybersecurity market is over $200B a year. That's money companies spend protecting what their own employees leak through chat.
 
 You won't move the budget at Microsoft. But you can stop leaving secrets in your message history.
@@ -36,8 +36,8 @@ The idea is simple: the server should not know what you're sending.
 When you create a secret, everything happens in your browser:
 
 1. Your browser generates a random key. No one but you ever sees it.
-2. It uses that key to encrypt your text with AES-256-GCM. Only the encrypted string travels to the server — without the key, it can't be read.
-3. The server stores two pieces: the encrypted text and a fingerprint of the access token. The third piece — the key itself — is placed in the link after the `#` symbol.
+2. Your browser then uses that key to encrypt your text with AES-256-GCM. Only the encrypted string travels to the server — without the key, it can't be read.
+3. The server stores two pieces: the encrypted text and a fingerprint of the access token. The third piece (the key itself) is placed in the link after the `#` symbol.
 
 The link looks like this:
 
