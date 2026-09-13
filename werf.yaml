@@ -57,6 +57,12 @@ git:
   - next-env.d.ts
   - src
   - public
+  # `pnpm build` runs the `prebuild` script first (pnpm 10 honours pre/post
+  # scripts), which is scripts/faq-schema.mjs; next.config.ts then loads the
+  # local rehype plugin from mdx/. Neither lives under src/, so without these
+  # two the build dies before it starts.
+  - scripts
+  - mdx
   stageDependencies:
     # File-level rebuild triggers. werf hashes only the listed paths to
     # decide whether the stage's cache is still valid — far more precise
@@ -68,6 +74,8 @@ git:
       - src
       - .env.production
       - public
+      - scripts
+      - mdx
       - next.config.ts
       - tsconfig.json
       - next-env.d.ts
