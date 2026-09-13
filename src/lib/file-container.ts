@@ -46,10 +46,10 @@ const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
 export async function encodeContainer(
-    fileBytes: ArrayBuffer | Uint8Array,
+    fileBytes: ArrayBuffer | Uint8Array<ArrayBuffer>,
     meta: FileMeta,
-    keyBytes: Uint8Array,
-): Promise<Uint8Array> {
+    keyBytes: Uint8Array<ArrayBuffer>,
+): Promise<Uint8Array<ArrayBuffer>> {
     if (keyBytes.length !== FILE_CONTAINER_KEY_BYTES) {
         throw new Error('Invalid file container key length');
     }
@@ -80,9 +80,9 @@ export async function encodeContainer(
 }
 
 export async function decodeContainer(
-    container: Uint8Array,
-    keyBytes: Uint8Array,
-): Promise<{ meta: FileMeta; bytes: Uint8Array }> {
+    container: Uint8Array<ArrayBuffer>,
+    keyBytes: Uint8Array<ArrayBuffer>,
+): Promise<{ meta: FileMeta; bytes: Uint8Array<ArrayBuffer> }> {
     if (keyBytes.length !== FILE_CONTAINER_KEY_BYTES) {
         throw new Error('Invalid file container key length');
     }
@@ -101,7 +101,7 @@ export async function decodeContainer(
     const ciphertext = container.subarray(FRAME_HEADER_BYTES);
 
     const cryptoKey = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['decrypt']);
-    let innerPlaintext: Uint8Array;
+    let innerPlaintext: Uint8Array<ArrayBuffer>;
     try {
         innerPlaintext = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, cryptoKey, ciphertext));
     } catch {

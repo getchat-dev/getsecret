@@ -32,7 +32,7 @@ const AUTO_HIDE_MS = 10_000;
 
 type DecryptedFile = { blob: Blob; filename: string };
 
-function decodeBase64Url(value: string): Uint8Array {
+function decodeBase64Url(value: string): Uint8Array<ArrayBuffer> {
     if (!BASE64URL_PATTERN.test(value)) {
         throw new Error('Invalid base64url');
     }

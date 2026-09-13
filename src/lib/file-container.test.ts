@@ -10,11 +10,11 @@ import {
 const META: FileMeta = { filename: 'report.pdf', mime: 'application/pdf', size: 11 };
 const HELLO = new TextEncoder().encode('hello world');
 
-function randomKey(): Uint8Array {
+function randomKey(): Uint8Array<ArrayBuffer> {
     return crypto.getRandomValues(new Uint8Array(FILE_CONTAINER_KEY_BYTES));
 }
 
-function randomBytes(length: number): Uint8Array {
+function randomBytes(length: number): Uint8Array<ArrayBuffer> {
     // crypto.getRandomValues is capped at 65536 bytes per call by the Web Crypto spec.
     const out = new Uint8Array(length);
     const chunkSize = 65536;

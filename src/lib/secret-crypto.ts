@@ -91,7 +91,7 @@ function base64UrlLengthForBytes(byteLength: number): number {
     return Math.ceil(byteLength / 3) * 4 - ((3 - (byteLength % 3)) % 3);
 }
 
-function concatBytes(...chunks: Uint8Array[]): Uint8Array {
+function concatBytes(...chunks: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
     const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
     const result = new Uint8Array(totalLength);
 
@@ -104,7 +104,7 @@ function concatBytes(...chunks: Uint8Array[]): Uint8Array {
     return result;
 }
 
-function encodeBase64Url(bytes: Uint8Array): string {
+function encodeBase64Url(bytes: Uint8Array<ArrayBuffer>): string {
     let binary = '';
     const chunkSize = 0x8000;
 
@@ -115,7 +115,7 @@ function encodeBase64Url(bytes: Uint8Array): string {
     return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
-function decodeBase64Url(value: string): Uint8Array {
+function decodeBase64Url(value: string): Uint8Array<ArrayBuffer> {
     if (!BASE64URL_PATTERN.test(value)) {
         throw new Error('Invalid base64url payload');
     }
@@ -134,20 +134,20 @@ function decodeBase64Url(value: string): Uint8Array {
     return bytes;
 }
 
-async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
+async function sha256(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
     const digest = await crypto.subtle.digest('SHA-256', bytes);
     return new Uint8Array(digest);
 }
 
-async function deriveToken(label: string, keyBytes: Uint8Array): Promise<string> {
+async function deriveToken(label: string, keyBytes: Uint8Array<ArrayBuffer>): Promise<string> {
     return encodeBase64Url(await sha256(concatBytes(textEncoder.encode(label), keyBytes)));
 }
 
-async function importAesKey(keyBytes: Uint8Array, usages: KeyUsage[]): Promise<CryptoKey> {
+async function importAesKey(keyBytes: Uint8Array<ArrayBuffer>, usages: KeyUsage[]): Promise<CryptoKey> {
     return crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, usages);
 }
 
-function decodeSecretKey(secretKey: string): Uint8Array {
+function decodeSecretKey(secretKey: string): Uint8Array<ArrayBuffer> {
     const keyBytes = decodeBase64Url(secretKey);
     if (keyBytes.length !== SECRET_KEY_BYTES) {
         throw new Error('Invalid secret key');
@@ -156,7 +156,7 @@ function decodeSecretKey(secretKey: string): Uint8Array {
     return keyBytes;
 }
 
-function decodeIv(iv: string): Uint8Array {
+function decodeIv(iv: string): Uint8Array<ArrayBuffer> {
     const ivBytes = decodeBase64Url(iv);
     if (ivBytes.length !== SECRET_IV_BYTES) {
         throw new Error('Invalid IV');
@@ -204,7 +204,7 @@ function isFileRefShape(value: unknown): value is FileRef {
     return true;
 }
 
-export function encodePlaintext(payload: SecretPayload): Uint8Array {
+export function encodePlaintext(payload: SecretPayload): Uint8Array<ArrayBuffer> {
     const envelope: { text: string; fileRef?: FileRef; previewImage?: boolean } = { text: payload.text };
     if (payload.fileRef) envelope.fileRef = payload.fileRef;
     // Only emit previewImage when (a) it's true and (b) there's a file to
@@ -219,7 +219,7 @@ export function encodePlaintext(payload: SecretPayload): Uint8Array {
     return out;
 }
 
-export function decodePlaintext(plaintext: Uint8Array): SecretPayload {
+export function decodePlaintext(plaintext: Uint8Array<ArrayBuffer>): SecretPayload {
     // Legacy raw text: no magic byte → treat the whole buffer as UTF-8 text.
     // We accept any byte that is not the magic, so a plaintext that happens to
     // start with a non-zero byte never gets misinterpreted as an envelope.
@@ -281,7 +281,7 @@ export async function prepareSecretUploadEnvelope(payload: SecretPayload): Promi
     return prepareSecretUploadFromBytes(encodePlaintext(payload));
 }
 
-async function prepareSecretUploadFromBytes(plaintext: Uint8Array): Promise<PreparedSecretUpload> {
+async function prepareSecretUploadFromBytes(plaintext: Uint8Array<ArrayBuffer>): Promise<PreparedSecretUpload> {
     const keyBytes = crypto.getRandomValues(new Uint8Array(SECRET_KEY_BYTES));
     const ivBytes = crypto.getRandomValues(new Uint8Array(SECRET_IV_BYTES));
     const encryptionKey = await importAesKey(keyBytes, ['encrypt']);
@@ -299,7 +299,10 @@ async function prepareSecretUploadFromBytes(plaintext: Uint8Array): Promise<Prep
     };
 }
 
-async function decryptSecretToBytes(secretKey: string, encryptedSecret: EncryptedSecret): Promise<Uint8Array> {
+async function decryptSecretToBytes(
+    secretKey: string,
+    encryptedSecret: EncryptedSecret,
+): Promise<Uint8Array<ArrayBuffer>> {
     if (!isValidEncryptedSecret(encryptedSecret)) {
         throw new Error('Unsupported secret payload');
     }
@@ -367,7 +370,7 @@ export async function prepareSecretUploadWithPasswordEnvelope(
 }
 
 async function prepareSecretUploadWithPasswordFromBytes(
-    plaintext: Uint8Array,
+    plaintext: Uint8Array<ArrayBuffer>,
     password: string,
     iterations: number,
 ): Promise<PreparedSecretUploadWithPassword> {
@@ -413,7 +416,7 @@ async function decryptSecretWithPasswordToBytes(
     encryptedSecret: EncryptedSecret,
     password: string,
     passwordParams: PasswordParams,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
     if (!isValidEncryptedSecret(encryptedSecret)) {
         throw new Error('Unsupported secret payload');
     }

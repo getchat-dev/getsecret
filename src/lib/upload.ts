@@ -38,7 +38,7 @@ export type UploadOptions = {
     signal?: AbortSignal;
 };
 
-function encodeBase64Url(bytes: Uint8Array): string {
+function encodeBase64Url(bytes: Uint8Array<ArrayBuffer>): string {
     let binary = '';
     const chunkSize = 0x8000;
     for (let index = 0; index < bytes.length; index += chunkSize) {
@@ -74,7 +74,7 @@ async function requestPresign(size: number, signal?: AbortSignal): Promise<Presi
     return (await response.json()) as PresignResponse;
 }
 
-function putWithProgress(url: string, body: Uint8Array, options: UploadOptions): Promise<void> {
+function putWithProgress(url: string, body: Uint8Array<ArrayBuffer>, options: UploadOptions): Promise<void> {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', url, true);

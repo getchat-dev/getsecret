@@ -30,7 +30,7 @@ function base64UrlLengthForBytes(byteLength: number): number {
     return Math.ceil(byteLength / 3) * 4 - ((3 - (byteLength % 3)) % 3);
 }
 
-function concatBytes(...chunks: Uint8Array[]): Uint8Array {
+function concatBytes(...chunks: Uint8Array<ArrayBuffer>[]): Uint8Array<ArrayBuffer> {
     const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
     const result = new Uint8Array(totalLength);
     let offset = 0;
@@ -41,7 +41,7 @@ function concatBytes(...chunks: Uint8Array[]): Uint8Array {
     return result;
 }
 
-function encodeBase64Url(bytes: Uint8Array): string {
+function encodeBase64Url(bytes: Uint8Array<ArrayBuffer>): string {
     let binary = '';
     const chunkSize = 0x8000;
     for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -50,7 +50,7 @@ function encodeBase64Url(bytes: Uint8Array): string {
     return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
-function decodeBase64Url(value: string): Uint8Array {
+function decodeBase64Url(value: string): Uint8Array<ArrayBuffer> {
     if (!BASE64URL_PATTERN.test(value)) {
         throw new Error('Invalid base64url payload');
     }
@@ -66,23 +66,23 @@ function decodeBase64Url(value: string): Uint8Array {
     return bytes;
 }
 
-async function sha256(bytes: Uint8Array): Promise<Uint8Array> {
+async function sha256(bytes: Uint8Array<ArrayBuffer>): Promise<Uint8Array<ArrayBuffer>> {
     const digest = await crypto.subtle.digest('SHA-256', bytes);
     return new Uint8Array(digest);
 }
 
-export function generatePasswordSalt(): Uint8Array {
+export function generatePasswordSalt(): Uint8Array<ArrayBuffer> {
     return crypto.getRandomValues(new Uint8Array(PASSWORD_SALT_BYTES));
 }
 
-export function encodePasswordSalt(saltBytes: Uint8Array): string {
+export function encodePasswordSalt(saltBytes: Uint8Array<ArrayBuffer>): string {
     if (saltBytes.length !== PASSWORD_SALT_BYTES) {
         throw new Error('Invalid password salt length');
     }
     return encodeBase64Url(saltBytes);
 }
 
-export function decodePasswordSalt(saltBase64: string): Uint8Array {
+export function decodePasswordSalt(saltBase64: string): Uint8Array<ArrayBuffer> {
     const bytes = decodeBase64Url(saltBase64);
     if (bytes.length !== PASSWORD_SALT_BYTES) {
         throw new Error('Invalid password salt');
@@ -119,9 +119,9 @@ export function isValidPasswordVerifierHash(value: unknown): value is string {
 
 export async function derivePasswordKey(
     password: string,
-    saltBytes: Uint8Array,
+    saltBytes: Uint8Array<ArrayBuffer>,
     iterations: number,
-): Promise<Uint8Array> {
+): Promise<Uint8Array<ArrayBuffer>> {
     if (saltBytes.length !== PASSWORD_SALT_BYTES) {
         throw new Error('Invalid password salt length');
     }
@@ -140,7 +140,7 @@ export async function derivePasswordKey(
 }
 
 // verifier = SHA256(K_inner ‖ domainTag) — sent to the server in the open path.
-export async function computePasswordVerifier(innerKeyBytes: Uint8Array): Promise<string> {
+export async function computePasswordVerifier(innerKeyBytes: Uint8Array<ArrayBuffer>): Promise<string> {
     if (innerKeyBytes.length !== PASSWORD_KEY_BYTES) {
         throw new Error('Invalid inner key length');
     }

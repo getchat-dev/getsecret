@@ -76,7 +76,7 @@ describe('buildPageMetadata', () => {
     it('sets the OG siteName and a Twitter summary_large_image card', () => {
         const meta = buildPageMetadata({ locale: 'en', path: '/', title: 'T', description: 'D' });
         expect(meta.openGraph?.siteName).toBe(SITE_NAME);
-        expect(meta.twitter?.card).toBe('summary_large_image');
+        expect((meta.twitter as { card: string }).card).toBe('summary_large_image');
     });
 
     it('populates OG locale + alternateLocale from the routing config', () => {
@@ -93,7 +93,7 @@ describe('buildPageMetadata', () => {
 
     it("points the card at the active locale's image with the stated dimensions", () => {
         const meta = buildPageMetadata({ locale: 'ru', path: '/security', title: 'T', description: 'D' });
-        const image = (meta.openGraph?.images as Array<{ url: string; width: number; height: number }>)[0];
+        const image = (meta.openGraph as { images: Array<{ url: string; width: number; height: number }> }).images[0];
         expect(image.url).toBe('https://burnotes.app/ru/opengraph-image');
         expect([image.width, image.height]).toEqual([OG_IMAGE_SIZE.width, OG_IMAGE_SIZE.height]);
     });
@@ -105,7 +105,7 @@ describe('buildPageMetadata', () => {
     it('uses the alt text the caller supplies', () => {
         const alt = socialCardAlt('Зашифрованные заметки, которые сгорают после прочтения');
         const meta = buildPageMetadata({ locale: 'ru', path: '/', title: 'T', description: 'D', imageAlt: alt });
-        const image = (meta.openGraph?.images as Array<{ alt: string }>)[0];
+        const image = (meta.openGraph as { images: Array<{ alt: string }> }).images[0];
         expect(image.alt).toBe('Getsecret — Зашифрованные заметки, которые сгорают после прочтения');
     });
 });
