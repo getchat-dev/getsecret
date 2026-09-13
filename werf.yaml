@@ -48,6 +48,9 @@ git:
   # не попадёт в образ. Если что-то понадобится — допишем явно.
   includePaths:
   - package.json
+  # Build-time public origin for metadata/sitemap/robots. Without it every
+  # absolute URL in the built output falls back to http://localhost:3000.
+  - .env.production
   - pnpm-lock.yaml
   - next.config.ts
   - tsconfig.json
@@ -63,6 +66,7 @@ git:
       - pnpm-lock.yaml
     setup:
       - src
+      - .env.production
       - public
       - next.config.ts
       - tsconfig.json

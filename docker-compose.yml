@@ -68,13 +68,29 @@ services:
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
       - traefik.http.middlewares.redirect-to-https.redirectscheme.permanent=true
 
-      # Redirection from old domain to new domain
-      - traefik.http.routers.burnotes-old.rule=Host(`${OLD_APP_HOST}`)
-      - traefik.http.routers.burnotes-old.entrypoints=web,websecure
-      - traefik.http.routers.burnotes-old.middlewares=redirect-to-new-domain
-      - traefik.http.routers.burnotes-old.tls=true
-      - traefik.http.routers.burnotes-old.tls.certresolver=le
+      # Every host the app has ever been served on permanently redirects to
+      # ${APP_HOST}. Two routers rather than one: a router that declares a
+      # `tls` section handles TLS traffic *only* and ignores the rest, so the
+      # single web+websecure router this replaces never actually answered
+      # plain http:// on a legacy host — it 404'd. Same http/https split as
+      # the burnotes/burnotesinsecure pair above.
+      # Rule syntax is Traefik v3: matchers combine with `||`, not a comma.
+      - traefik.http.routers.burnotes-legacy.rule=Host(`${OLD_APP_HOST}`) || Host(`${OLD_APP_HOST_2}`)
+      - traefik.http.routers.burnotes-legacy.entrypoints=websecure
+      - traefik.http.routers.burnotes-legacy.middlewares=redirect-to-new-domain
+      - traefik.http.routers.burnotes-legacy.tls=true
+      - traefik.http.routers.burnotes-legacy.tls.certresolver=le
 
-      - traefik.http.middlewares.redirect-to-new-domain.redirectregex.regex=^https?://${OLD_APP_HOST}/?(.*)
+      - traefik.http.routers.burnotes-legacy-insecure.rule=Host(`${OLD_APP_HOST}`) || Host(`${OLD_APP_HOST_2}`)
+      - traefik.http.routers.burnotes-legacy-insecure.entrypoints=web
+      - traefik.http.routers.burnotes-legacy-insecure.middlewares=redirect-to-new-domain
+
+      # The host part is matched loosely on purpose: the two routers above
+      # already decide which hosts reach this middleware, so one middleware
+      # serves all of them and retiring another domain means editing only the
+      # rules. Path and query ride along in the capture group; the URL
+      # fragment (`/s/:id#key`) never leaves the browser and is re-attached
+      # to the redirect target, so existing secret links keep working.
+      - traefik.http.middlewares.redirect-to-new-domain.redirectregex.regex=^https?://[^/]+/?(.*)
       - traefik.http.middlewares.redirect-to-new-domain.redirectregex.replacement=https://${APP_HOST}/$${1}
       - traefik.http.middlewares.redirect-to-new-domain.redirectregex.permanent=true
