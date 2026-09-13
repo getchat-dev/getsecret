@@ -106,7 +106,7 @@ describe('buildPageMetadata', () => {
         const alt = socialCardAlt('Зашифрованные заметки, которые сгорают после прочтения');
         const meta = buildPageMetadata({ locale: 'ru', path: '/', title: 'T', description: 'D', imageAlt: alt });
         const image = (meta.openGraph?.images as Array<{ alt: string }>)[0];
-        expect(image.alt).toBe('Burnotes — Зашифрованные заметки, которые сгорают после прочтения');
+        expect(image.alt).toBe('Getsecret — Зашифрованные заметки, которые сгорают после прочтения');
     });
 });
 

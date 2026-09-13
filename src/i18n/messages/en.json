@@ -3,7 +3,7 @@
     "flag": "🇬🇧",
     "meta": {
         "tagline": "Encrypted notes that burn after reading",
-        "description": "Burnotes turns a password, token, or file into a one-time link. The secret is encrypted in your browser and disappears the moment it is read.",
+        "description": "Getsecret turns a password, token, or file into a one-time link. The secret is encrypted in your browser and disappears the moment it is read.",
         "homeDescription": "Send a password, API token, or file as a link that opens once and then destroys itself. Encrypted in your browser — the key never reaches our servers.",
         "secretViewTitle": "Open a one-time secret"
     },
@@ -95,7 +95,7 @@
         "copy": "Copy link",
         "copied": "Copied",
         "shareNative": "Share via system",
-        "shareNativeText": "An encrypted one-time link from burnotes. Open it to reveal — it disappears once read.",
+        "shareNativeText": "An encrypted one-time link from getsecret. Open it to reveal — it disappears once read.",
         "warnTitle": "One-time read.",
         "warnBody": "Anyone who opens this link will burn it.",
         "expiresIn": "Expires in",

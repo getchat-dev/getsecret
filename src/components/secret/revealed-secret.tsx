@@ -4,11 +4,13 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { CopyButton } from '@/components/copy-button';
 import type { AttachedFile } from '@/components/secret/viewer';
+import { ActionLabel } from '@/components/ui/action-label';
 import { EyeIcon, EyeOffIcon, FileIcon, PlusIcon, UnlockIcon } from '@/components/ui/icons';
 import { useRouter } from '@/i18n/navigation';
 import { decodeContainer } from '@/lib/file-container';
 import { decodeImagePreview, type ImagePreviewHandle } from '@/lib/image-preview';
 import type { SecretFormat } from '@/lib/secret-formats';
+import { COMMAND } from '@/lib/ui-commands';
 import banner from '@/styles/primitives/banner.module.css';
 import btn from '@/styles/primitives/button.module.css';
 import card from '@/styles/primitives/card.module.css';
@@ -398,7 +400,11 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                                 onClick={handleDownload}
                                 disabled={isDownloading}
                             >
-                                {isDownloading ? t('downloading') : t('download')}
+                                {isDownloading ? (
+                                    t('downloading')
+                                ) : (
+                                    <ActionLabel command={COMMAND.downloadFile}>{t('download')}</ActionLabel>
+                                )}
                             </button>
                             {downloadError ? <span className={styles.attachmentError}>{downloadError}</span> : null}
                         </div>
@@ -425,7 +431,8 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
             </div>
             <footer className={card.footer}>
                 <button type="button" className={`${btn.btn} ${btn.btnSecondary}`} onClick={() => router.push('/')}>
-                    <PlusIcon size={14} /> {t('shareBack')}
+                    <PlusIcon size={14} />
+                    <ActionLabel command={COMMAND.newSecret}>{t('shareBack')}</ActionLabel>
                 </button>
             </footer>
         </section>

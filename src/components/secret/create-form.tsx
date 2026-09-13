@@ -11,6 +11,7 @@ import { MaxViewsControl } from '@/components/secret/max-views-control';
 import { PasswordField } from '@/components/secret/password-field';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
+import { ActionLabel } from '@/components/ui/action-label';
 import { AlertIcon, FileIcon, XIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
@@ -24,6 +25,7 @@ import {
     SECRET_FORMAT_EXTENSIONS,
     type SecretFormat,
 } from '@/lib/secret-formats';
+import { COMMAND } from '@/lib/ui-commands';
 import { type UploadProgress, uploadFile } from '@/lib/upload';
 import banner from '@/styles/primitives/banner.module.css';
 import btn from '@/styles/primitives/button.module.css';
@@ -381,7 +383,8 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isSubmitting}
                                 >
-                                    <FileIcon size={14} /> {t('attachFile')}
+                                    <FileIcon size={14} />
+                                    <ActionLabel command={COMMAND.attachFile}>{t('attachFile')}</ActionLabel>
                                 </button>
                             ) : null
                         }
@@ -467,12 +470,12 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                             }}
                             disabled={isSubmitting}
                         >
-                            {t('clear')}
+                            <ActionLabel command={COMMAND.clearForm}>{t('clear')}</ActionLabel>
                         </button>
                     ) : null}
                     {isSubmitting && uploadProgress ? (
                         <button type="button" className={`${btn.btn} ${btn.btnGhost}`} onClick={cancelSubmit}>
-                            {t('cancel')}
+                            <ActionLabel command={COMMAND.cancelUpload}>{t('cancel')}</ActionLabel>
                         </button>
                     ) : null}
                     <button
@@ -481,13 +484,17 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                         disabled={isSubmitting || !hasContent}
                     >
                         <ZapIcon size={14} />
-                        {isSubmitting
-                            ? uploadProgress
-                                ? t('uploading', {
-                                      percent: Math.round((uploadProgress.loaded / uploadProgress.total) * 100),
-                                  })
-                                : t('encrypting')
-                            : t('submit')}
+                        {isSubmitting ? (
+                            uploadProgress ? (
+                                t('uploading', {
+                                    percent: Math.round((uploadProgress.loaded / uploadProgress.total) * 100),
+                                })
+                            ) : (
+                                t('encrypting')
+                            )
+                        ) : (
+                            <ActionLabel command={COMMAND.createSecret}>{t('submit')}</ActionLabel>
+                        )}
                     </button>
                 </footer>
             </form>

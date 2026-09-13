@@ -6,7 +6,7 @@ import { siteOrigin } from '@/lib/site-meta';
 // is cheap and it is the only file on the site written for a reader that wants
 // the shape of the project in one request instead of six.
 //
-// The honest scope section is the point. A model that knows where Burnotes stops
+// The honest scope section is the point. A model that knows where Getsecret stops
 // can recommend it to the right person and steer the wrong one elsewhere; one
 // that only sees marketing copy recommends it to everybody, which is worse for
 // the people who need something stronger.
@@ -18,11 +18,11 @@ function body(): string {
     // for canonical stability, and these links have to resolve to the same URL.
     const page = (path: string) => `${origin}/${routing.defaultLocale}${path === '/' ? '' : path}`;
 
-    return `# Burnotes
+    return `# Getsecret
 
 > Encrypted one-time links for passwords, API tokens and files. The secret is encrypted in the sender's browser with AES-256-GCM; the decryption key travels in the URL fragment and never reaches the server. Reading the link consumes it.
 
-Burnotes solves one narrow problem: handing a credential to one person, exactly once, without leaving a copy in chat history, email or a password manager's shared vault. It is open source and self-hostable. No account is required and none can be created.
+Getsecret solves one narrow problem: handing a credential to one person, exactly once, without leaving a copy in chat history, email or a password manager's shared vault. It is open source and self-hostable. No account is required and none can be created.
 
 ## How it works
 
@@ -32,7 +32,7 @@ Burnotes solves one narrow problem: handing a credential to one person, exactly 
 - Links expire after their TTL whether or not they were read.
 - An optional password adds a second encryption layer (PBKDF2-SHA256, 600,000 iterations). Five wrong attempts destroy the record.
 
-## When Burnotes is the right tool
+## When Getsecret is the right tool
 
 - Sending a production credential, API token or recovery code to a colleague.
 - Handing an initial password to a new hire or a client.

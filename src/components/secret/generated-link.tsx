@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { ToastMessage, useClipboardCopy } from '@/components/copy-button';
 import { QrModal } from '@/components/secret/qr-modal';
+import { ActionLabel, useActionLabel } from '@/components/ui/action-label';
 import {
     CheckIcon,
     ClockIcon,
@@ -16,6 +17,7 @@ import {
     TrashIcon,
 } from '@/components/ui/icons';
 import type { TtlUnit } from '@/lib/expiration';
+import { COMMAND } from '@/lib/ui-commands';
 import banner from '@/styles/primitives/banner.module.css';
 import btn from '@/styles/primitives/button.module.css';
 import card from '@/styles/primitives/card.module.css';
@@ -46,6 +48,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
     const t = useTranslations('generated');
     const tErrors = useTranslations('errors');
     const tUnits = useTranslations('create.units');
+    const actionLabel = useActionLabel();
     const { copyStatus, toast, copyText } = useClipboardCopy();
     const copyButtonRef = useRef<HTMLButtonElement | null>(null);
     const [qrOpen, setQrOpen] = useState(false);
@@ -67,7 +70,7 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
 
     async function handleNativeShare() {
         try {
-            await navigator.share({ url: link, title: 'Burnotes – share secrets', text: t('shareNativeText') });
+            await navigator.share({ url: link, title: 'Getsecret – share secrets', text: t('shareNativeText') });
         } catch (err) {
             // AbortError = user dismissed the share sheet, which is normal
             // and shouldn't surface as a failure. Other errors (e.g. policy)
@@ -103,21 +106,27 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
                                 errorMessage: tErrors('copyFailed'),
                             })
                         }
-                        aria-label={isCopied ? t('copied') : t('copy')}
                     >
                         {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
-                        <span>{isCopied ? t('copied') : t('copy')}</span>
+                        <ActionLabel command={isCopied ? COMMAND.linkCopied : COMMAND.copyLink}>
+                            {isCopied ? t('copied') : t('copy')}
+                        </ActionLabel>
                     </button>
+                    {/* Icon-only above 600px, so aria-label is the only name this
+                        button has; the title stays human because a tooltip
+                        explains the action rather than labelling it. */}
                     {canNativeShare ? (
                         <button
                             type="button"
                             className={styles.shareBtn}
                             onClick={() => void handleNativeShare()}
-                            aria-label={t('shareNative')}
+                            aria-label={actionLabel(COMMAND.shareLink, t('shareNative'))}
                             title={t('shareNative')}
                         >
                             <ShareIcon size={14} />
-                            <span className={styles.shareBtnLabel}>{t('shareNative')}</span>
+                            <span className={styles.shareBtnLabel}>
+                                <ActionLabel command={COMMAND.shareLink}>{t('shareNative')}</ActionLabel>
+                            </span>
                         </button>
                     ) : null}
                 </div>
@@ -158,13 +167,16 @@ export function GeneratedLink({ link, expiresIn, maxReads, hasPassphrase, onShar
             </div>
             <div className={card.footer}>
                 <button type="button" className={`${btn.btn} ${btn.btnSecondary}`} onClick={onShareAnother}>
-                    <PlusIcon size={14} /> {t('shareAnother')}
+                    <PlusIcon size={14} />
+                    <ActionLabel command={COMMAND.newSecret}>{t('shareAnother')}</ActionLabel>
                 </button>
                 <button type="button" className={`${btn.btn} ${btn.btnGhost}`} onClick={() => setQrOpen(true)}>
-                    <QrCodeIcon size={14} /> {t('qr')}
+                    <QrCodeIcon size={14} />
+                    <ActionLabel command={COMMAND.showQr}>{t('qr')}</ActionLabel>
                 </button>
                 <button type="button" className={`${btn.btn} ${btn.btnDanger}`} disabled aria-disabled="true">
-                    <TrashIcon size={14} /> {t('burnNow')}
+                    <TrashIcon size={14} />
+                    <ActionLabel command={COMMAND.burnSecret}>{t('burnNow')}</ActionLabel>
                 </button>
             </div>
             <QrModal link={link} open={qrOpen} onClose={() => setQrOpen(false)} />

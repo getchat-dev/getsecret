@@ -91,7 +91,7 @@
         "copy": "Copiar enlace",
         "copied": "Copiado",
         "shareNative": "Compartir con el sistema",
-        "shareNativeText": "Un enlace cifrado de un solo uso de burnotes. Ábrelo para verlo — desaparece tras leerlo.",
+        "shareNativeText": "Un enlace cifrado de un solo uso de getsecret. Ábrelo para verlo — desaparece tras leerlo.",
         "warnTitle": "Lectura única.",
         "warnBody": "Cualquiera que abra este enlace lo quemará.",
         "expiresIn": "Expira en",

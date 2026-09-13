@@ -63,9 +63,13 @@ export default async function OpengraphImage({ params }: { params: Promise<{ loc
                         <path d={FLAME_PATH} />
                     </svg>
                 </div>
+                {/* Satori has no monospace face loaded, so the card shows the
+                    wordmark in the default font; the accent underscore is what
+                    still reads as `get_secret` at thumbnail size. */}
                 <div style={{ display: 'flex', fontSize: 40, letterSpacing: -0.5 }}>
-                    <span style={{ color: BRAND_PAPER }}>burnotes</span>
-                    <span style={{ color: BRAND_ACCENT }}>.app</span>
+                    <span style={{ color: BRAND_PAPER }}>get</span>
+                    <span style={{ color: BRAND_ACCENT }}>_</span>
+                    <span style={{ color: BRAND_PAPER }}>secret</span>
                 </div>
             </div>
 

@@ -1,7 +1,7 @@
 ---
 title: "Security"
-lede: "Passwords, tokens, and keys fly through work chats every day. Burnotes lets you hand over a secret once — without leaving a trail in your message history."
-metaDescription: "Why a password pasted into chat stays there for years, how Burnotes encrypts it in your browser instead, and what it still cannot protect you from."
+lede: "Passwords, tokens, and keys fly through work chats every day. Getsecret lets you hand over a secret once — without leaving a trail in your message history."
+metaDescription: "Why a password pasted into chat stays there for years, how Getsecret encrypts it in your browser instead, and what it still cannot protect you from."
 ---
 
 ## The problem
@@ -29,7 +29,7 @@ Leaks don't happen because of weak passwords. They happen because passwords end 
 
 You won't move the budget at Microsoft. But you can stop leaving secrets in your message history.
 
-## How Burnotes works
+## How Getsecret works
 
 The idea is simple: the server should not know what you're sending.
 
@@ -41,7 +41,7 @@ When you create a secret, everything happens in your browser:
 
 The link looks like this:
 
-<code className="prose-example">https://burnotes.app/s/abc123#xyz789</code>
+<code className="prose-example">https://getsecret.app/s/abc123#xyz789</code>
 
 The part after `#` is called the fragment. Browsers are designed so that the fragment **is never sent to the server**. This isn't our invention — it's been part of how the web works since the late nineties. The fragment stays on your device and is used only locally.
 
@@ -65,7 +65,7 @@ How it works:
 
 The point is to send the link and the password through different channels. Link in Slack, password by voice or SMS. If one channel leaks, the attacker is left with encrypted noise.
 
-## What Burnotes doesn't do
+## What Getsecret doesn't do
 
 Technology doesn't replace common sense.
 
@@ -73,6 +73,6 @@ Technology doesn't replace common sense.
 - If there's malware already on the recipient's device, it will see the secret right alongside them.
 - If a link without a password reaches the wrong person and they open it, we cannot revoke it.
 
-Burnotes removes one specific risk — the trail in your message history. No more, no less.
+Getsecret removes one specific risk — the trail in your message history. No more, no less.
 
 For the full picture — what we protect, who we protect you from, and where we explicitly stop — read the [threat model](/threat-model).

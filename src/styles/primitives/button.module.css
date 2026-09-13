@@ -124,3 +124,15 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
+
+/* The visible label of a button that carries one of the product's own verbs:
+   a snake_case token from `ui-commands.ts`. Monospace is what makes it read as
+   a command rather than as untranslated English — the localized phrase sits
+   beside it in a `.visually-hidden` span and supplies the accessible name.
+   Slightly lighter than the 600 the button sets, because JetBrains Mono at 600
+   outweighs the body font at the same size. */
+.command {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}

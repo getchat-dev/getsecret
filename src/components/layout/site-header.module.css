@@ -57,15 +57,19 @@
     color: white;
 }
 
+/* The wordmark is an identifier, same as the action buttons — monospace is
+   what carries that. The old `.app` suffix was deliberately muted because a
+   domain tail is a detail; the underscore is the opposite, the one mark that
+   makes the name read as `get_secret`, so it takes the ember accent. */
 .brandName {
+    font-family: var(--font-mono);
     font-weight: 700;
     font-size: 15px;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
 }
 
-.brandName .dot {
-    color: var(--fg-subtle);
-    font-weight: 500;
+.brandName .mark {
+    color: var(--accent);
 }
 
 .links {

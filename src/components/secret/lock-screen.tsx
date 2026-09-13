@@ -2,8 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
+import { ActionLabel } from '@/components/ui/action-label';
 import { EyeIcon, EyeOffIcon, KeyIcon, LockIcon, ZapIcon } from '@/components/ui/icons';
 import { isValidPassword, MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import { COMMAND } from '@/lib/ui-commands';
 import btn from '@/styles/primitives/button.module.css';
 import card from '@/styles/primitives/card.module.css';
 import controls from '@/styles/primitives/controls.module.css';
@@ -71,7 +73,6 @@ export function LockScreen({
 
     const [showPassword, setShowPassword] = useState(false);
 
-    const buttonLabel = isLoading ? t('decrypting') : t('revealBtn');
     const passwordValid = !passwordRequired || isValidPassword(password);
     const disabled = isLoading || isExpired || isValidating || !passwordValid;
     const isWrongPassword = errorReason === 'wrong-password';
@@ -162,7 +163,11 @@ export function LockScreen({
             <div className={reveal.actions}>
                 <button type="button" className={`${btn.btn} ${btn.btnPrimary}`} onClick={onReveal} disabled={disabled}>
                     <ZapIcon size={14} />
-                    {buttonLabel}
+                    {isLoading ? (
+                        t('decrypting')
+                    ) : (
+                        <ActionLabel command={COMMAND.revealSecret}>{t('revealBtn')}</ActionLabel>
+                    )}
                 </button>
                 {readsRemaining === null ? null : readsRemaining > 1 ? (
                     <span className={reveal.hint}>{t('revealHintRemaining', { count: readsRemaining - 1 })}</span>

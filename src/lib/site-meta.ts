@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { routing } from '@/i18n/routing';
 import { OG_IMAGE_SIZE } from '@/lib/brand';
 
-export const SITE_NAME = 'Burnotes';
+export const SITE_NAME = 'Getsecret';
 
 // Public origin of the deployed site. `sitemap.ts` and `robots.ts` already use
 // the same env contract, so this single source of truth keeps the three in

@@ -24,7 +24,7 @@ export function SiteHeader() {
                         <FlameIcon size={14} />
                     </span>
                     <span className={styles.brandName}>
-                        burnotes<span className={styles.dot}>.app</span>
+                        get<span className={styles.mark}>_</span>secret
                     </span>
                 </Link>
                 <nav className={styles.links} aria-label="Primary">

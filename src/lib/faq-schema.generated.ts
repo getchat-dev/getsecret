@@ -15,7 +15,7 @@ export const FAQ_ENTRIES: Record<string, readonly FaqEntry[]> = {
         },
         {
             question: 'The recipient says the link was already burned, but they never opened it',
-            answer: 'That does not happen with Burnotes. Corporate mail filters and link-preview bots in chat apps really do fetch URLs ahead of the human, and on many one-time-secret services that burns the secret before anyone reads it. Here a bot cannot burn it: the key lives in the fragment, which never reaches the server, and decryption starts on a button press rather than on page load. If a link really is burned, a person opened it or the timer ran out. That is a signal in itself, but only when a single read was allowed: a burned link at your recipient then means someone else got the secret, and it needs rotating immediately. With several reads there is no signal — an interceptor reads one, the counter drops, and your recipient still sees the secret and suspects nothing.',
+            answer: 'That does not happen with Getsecret. Corporate mail filters and link-preview bots in chat apps really do fetch URLs ahead of the human, and on many one-time-secret services that burns the secret before anyone reads it. Here a bot cannot burn it: the key lives in the fragment, which never reaches the server, and decryption starts on a button press rather than on page load. If a link really is burned, a person opened it or the timer ran out. That is a signal in itself, but only when a single read was allowed: a burned link at your recipient then means someone else got the secret, and it needs rotating immediately. With several reads there is no signal — an interceptor reads one, the counter drops, and your recipient still sees the secret and suspects nothing.',
         },
         {
             question: 'I sent the link to the wrong person. Can I revoke it?',
@@ -67,11 +67,11 @@ export const FAQ_ENTRIES: Record<string, readonly FaqEntry[]> = {
         },
         {
             question: 'Why bother when I have a password manager?',
-            answer: 'A password manager stores; Burnotes hands over. Sharing inside a manager leaves an entry somebody has to remember to revoke later, and a contractor, a new hire or a client usually has no way into your manager at all. A one-time link covers the moment of handover and leaves nothing behind.',
+            answer: 'A password manager stores; Getsecret hands over. Sharing inside a manager leaves an entry somebody has to remember to revoke later, and a contractor, a new hire or a client usually has no way into your manager at all. A one-time link covers the moment of handover and leaves nothing behind.',
         },
         {
             question: 'How is this better than disappearing messages in a chat app?',
-            answer: "A disappearing message is removed from the other person's screen but stays with the service and in their phone backup. Burnotes never sees the plaintext at all, so there is nothing on our side to delete. And the expiry here does not depend on whether the recipient opened the app.",
+            answer: "A disappearing message is removed from the other person's screen but stays with the service and in their phone backup. Getsecret never sees the plaintext at all, so there is nothing on our side to delete. And the expiry here does not depend on whether the recipient opened the app.",
         },
     ],
     ru: [
@@ -85,7 +85,7 @@ export const FAQ_ENTRIES: Record<string, readonly FaqEntry[]> = {
         },
         {
             question: 'Получатель говорит, что ссылка уже сожжена, хотя он её не открывал',
-            answer: 'С Burnotes так не бывает. Корпоративные почтовые фильтры и боты предпросмотра в мессенджерах действительно ходят по ссылкам заранее, и на многих сервисах одноразовых ссылок это сжигает секрет до того, как его увидит человек. Здесь бот не может его сжечь: ключ лежит во фрагменте, который до сервера не доходит, а расшифровка запускается нажатием кнопки, а не загрузкой страницы. Если ссылка всё-таки сожжена — её открыл человек либо истёк срок. И это само по себе сигнал, но только при одном разрешённом прочтении: тогда сожжённая ссылка у адресата означает, что секрет достался кому-то другому, и менять его нужно немедленно. С несколькими прочтениями сигнала нет — чужой прочитает, счётчик уменьшится, а ваш получатель всё равно увидит секрет и ничего не заподозрит.',
+            answer: 'С Getsecret так не бывает. Корпоративные почтовые фильтры и боты предпросмотра в мессенджерах действительно ходят по ссылкам заранее, и на многих сервисах одноразовых ссылок это сжигает секрет до того, как его увидит человек. Здесь бот не может его сжечь: ключ лежит во фрагменте, который до сервера не доходит, а расшифровка запускается нажатием кнопки, а не загрузкой страницы. Если ссылка всё-таки сожжена — её открыл человек либо истёк срок. И это само по себе сигнал, но только при одном разрешённом прочтении: тогда сожжённая ссылка у адресата означает, что секрет достался кому-то другому, и менять его нужно немедленно. С несколькими прочтениями сигнала нет — чужой прочитает, счётчик уменьшится, а ваш получатель всё равно увидит секрет и ничего не заподозрит.',
         },
         {
             question: 'Я отправил ссылку не тому человеку. Можно её отозвать?',
@@ -137,11 +137,11 @@ export const FAQ_ENTRIES: Record<string, readonly FaqEntry[]> = {
         },
         {
             question: 'Зачем это, если есть менеджер паролей?',
-            answer: 'Менеджер хранит, Burnotes передаёт. Общий доступ в менеджере оставляет запись, которую потом надо не забыть отозвать, а подрядчику, новому сотруднику или клиенту в ваш менеджер обычно вообще не попасть. Одноразовая ссылка закрывает именно момент передачи и следа не оставляет.',
+            answer: 'Менеджер хранит, Getsecret передаёт. Общий доступ в менеджере оставляет запись, которую потом надо не забыть отозвать, а подрядчику, новому сотруднику или клиенту в ваш менеджер обычно вообще не попасть. Одноразовая ссылка закрывает именно момент передачи и следа не оставляет.',
         },
         {
             question: 'Чем это лучше исчезающих сообщений в мессенджере?',
-            answer: 'Исчезающее сообщение удаляется у собеседника, но остаётся у сервиса и в облачной копии телефона. Burnotes открытого текста не видит вообще, поэтому удалять у нас нечего. И срок здесь не зависит от того, открыл ли получатель приложение.',
+            answer: 'Исчезающее сообщение удаляется у собеседника, но остаётся у сервиса и в облачной копии телефона. Getsecret открытого текста не видит вообще, поэтому удалять у нас нечего. И срок здесь не зависит от того, открыл ли получатель приложение.',
         },
     ],
 };

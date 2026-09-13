@@ -1,11 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { ActionLabel } from '@/components/ui/action-label';
 // Hidden for now; re-enable by uncommenting this import and the
 // <LifecycleSteps activeStep={5} /> usage below.
 // import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
 import { FlameIcon, LockIcon } from '@/components/ui/icons';
 import { Link } from '@/i18n/navigation';
+import { COMMAND } from '@/lib/ui-commands';
 import btn from '@/styles/primitives/button.module.css';
 import card from '@/styles/primitives/card.module.css';
 import field from '@/styles/primitives/field.module.css';
@@ -40,7 +42,7 @@ export function BurnedScreen({ reason: _reason }: Props = {}) {
                 </p>
                 <div className={reveal.actions}>
                     <Link href="/" className={`${btn.btn} ${btn.btnPrimary}`}>
-                        {t('sendNew')}
+                        <ActionLabel command={COMMAND.newSecret}>{t('sendNew')}</ActionLabel>
                     </Link>
                 </div>
             </section>

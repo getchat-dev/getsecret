@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     const { locale } = await params;
     const { frontmatter } = await loadContent('security', locale);
     const tMeta = await getTranslations({ locale, namespace: 'meta' });
-    // No "· Burnotes" suffix here — the root layout sets title.template
-    // which composes "%s · Burnotes" automatically.
+    // No "· Getsecret" suffix here — the root layout sets title.template
+    // which composes "%s · Getsecret" automatically.
     return buildPageMetadata({
         locale,
         path: '/security',

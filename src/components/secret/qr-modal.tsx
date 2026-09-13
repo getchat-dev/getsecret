@@ -3,8 +3,10 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import { ToastMessage, useClipboardCopy } from '@/components/copy-button';
+import { ActionLabel } from '@/components/ui/action-label';
 import { CheckIcon, CopyIcon } from '@/components/ui/icons';
 import { renderQrPngDataUrl, renderQrSvg } from '@/lib/qr';
+import { COMMAND } from '@/lib/ui-commands';
 import btn from '@/styles/primitives/button.module.css';
 import field from '@/styles/primitives/field.module.css';
 import styles from './qr-modal.module.css';
@@ -131,7 +133,7 @@ export function QrModal({ link, open, onClose }: Props) {
             setError(null);
             const colors = readThemeColors();
             const rendered = await renderQrSvg(link, { color: { dark: colors.dark, light: colors.light } });
-            downloadBlob('burnotes-secret-qr.svg', new Blob([rendered], { type: 'image/svg+xml' }));
+            downloadBlob('getsecret-qr.svg', new Blob([rendered], { type: 'image/svg+xml' }));
         } catch {
             setError(tErrors('qrDownloadFailed'));
         }
@@ -142,7 +144,7 @@ export function QrModal({ link, open, onClose }: Props) {
             setError(null);
             const colors = readThemeColors();
             const dataUrl = await renderQrPngDataUrl(link, { color: { dark: colors.dark, light: colors.light } });
-            downloadBlob('burnotes-secret-qr.png', dataUrlToBlob(dataUrl));
+            downloadBlob('getsecret-qr.png', dataUrlToBlob(dataUrl));
         } catch {
             setError(tErrors('qrDownloadFailed'));
         }
@@ -206,21 +208,23 @@ export function QrModal({ link, open, onClose }: Props) {
                         }
                     >
                         {isCopied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
-                        <span>{isCopied ? t('copied') : t('copy')}</span>
+                        <ActionLabel command={isCopied ? COMMAND.linkCopied : COMMAND.copyLink}>
+                            {isCopied ? t('copied') : t('copy')}
+                        </ActionLabel>
                     </button>
                     <button
                         type="button"
                         className={`${btn.btn} ${btn.btnGhost} ${styles.footerBtn}`}
                         onClick={() => void handleDownloadSvg()}
                     >
-                        {t('qrDownloadSvg')}
+                        <ActionLabel command={COMMAND.downloadSvg}>{t('qrDownloadSvg')}</ActionLabel>
                     </button>
                     <button
                         type="button"
                         className={`${btn.btn} ${btn.btnGhost} ${styles.footerBtn}`}
                         onClick={() => void handleDownloadPng()}
                     >
-                        {t('qrDownloadPng')}
+                        <ActionLabel command={COMMAND.downloadPng}>{t('qrDownloadPng')}</ActionLabel>
                     </button>
                 </footer>
                 <ToastMessage toast={toast?.kind === 'error' ? toast : null} anchorRef={copyButtonRef} />

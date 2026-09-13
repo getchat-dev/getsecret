@@ -1,10 +1,10 @@
 ---
 title: "Threat model"
-lede: "A map of what Burnotes protects, who it protects you from, and — just as important — where it stops. If a risk isn't on this page, assume we don't cover it."
-metaDescription: "What Burnotes protects, who it protects you from, and where it stops: the risks it covers, the ones it doesn't, and how to report a vulnerability."
+lede: "A map of what Getsecret protects, who it protects you from, and — just as important — where it stops. If a risk isn't on this page, assume we don't cover it."
+metaDescription: "What Getsecret protects, who it protects you from, and where it stops: the risks it covers, the ones it doesn't, and how to report a vulnerability."
 ---
 
-This page is written for people deciding whether they can rely on Burnotes for a specific job. If you just want a plain walkthrough of how it works, read [Security](/security) instead.
+This page is written for people deciding whether they can rely on Getsecret for a specific job. If you just want a plain walkthrough of how it works, read [Security](/security) instead.
 
 A security tool that claims to protect against everything protects against nothing. So the most useful part of this page is the **Out of scope** section below — the risks we admit we can't touch.
 
@@ -37,7 +37,7 @@ The model below holds only while these stay true:
 
 ## In scope
 
-These are the things Burnotes prevents:
+These are the things Getsecret prevents:
 
 - **The server reading your secret** — impossible; it only ever holds ciphertext.
 - **Recovering a secret after the first open** — impossible; consumption deletes the record.
@@ -48,17 +48,17 @@ These are the things Burnotes prevents:
 
 ## Out of scope
 
-This is the part that matters most. Burnotes does **not** protect against any of the following, and no setting changes that:
+This is the part that matters most. Getsecret does **not** protect against any of the following, and no setting changes that:
 
 - **A compromised device.** If the sender's or recipient's machine has malware, a keylogger, or screen capture, the secret leaks the moment it's typed or shown. We are not endpoint protection.
 - **A leaky delivery channel.** If you paste the link into the same chat where you usually share passwords, that chat will be read first. Sending the link over plain SMS is your risk to take.
 - **Screenshots and copy-paste by the recipient.** Once someone has legitimately seen the plaintext, we have no control over what they do with it.
 - **Traffic analysis.** An observer can still see that *someone* created a secret at a given time, and roughly how big it was. We don't hide the shape of your usage.
 - **Server-side metadata.** Our server sees the sender's IP, the time, the ciphertext size, and the TTL. We log the minimum we need to operate — not nothing.
-- **Quantum adversaries.** AES-GCM is not post-quantum. If your threat model includes an attacker with a future quantum computer harvesting today's traffic, Burnotes is not the right tool.
+- **Quantum adversaries.** AES-GCM is not post-quantum. If your threat model includes an attacker with a future quantum computer harvesting today's traffic, Getsecret is not the right tool.
 - **A targeted state-level adversary.** If a well-resourced agency is burning a browser zero-day specifically at you, no one-time link will save you. Use an air-gapped device and a tool built for that fight.
 
-If any of these describe your situation, Burnotes is the wrong tool.
+If any of these describe your situation, Getsecret is the wrong tool.
 
 ## Reporting a vulnerability
 

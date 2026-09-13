@@ -91,7 +91,7 @@
         "copy": "Copia link",
         "copied": "Copiato",
         "shareNative": "Condividi tramite il sistema",
-        "shareNativeText": "Un link cifrato monouso da burnotes. Aprilo per vederlo — sparisce dopo la lettura.",
+        "shareNativeText": "Un link cifrato monouso da getsecret. Aprilo per vederlo — sparisce dopo la lettura.",
         "warnTitle": "Lettura una sola volta.",
         "warnBody": "Chiunque apra questo link lo brucerà.",
         "expiresIn": "Scade tra",

@@ -91,7 +91,7 @@
         "copy": "复制链接",
         "copied": "已复制",
         "shareNative": "通过系统分享",
-        "shareNativeText": "来自 burnotes 的一次性加密链接。打开即可查看 — 阅读后即消失。",
+        "shareNativeText": "来自 getsecret 的一次性加密链接。打开即可查看 — 阅读后即消失。",
         "warnTitle": "一次性阅读。",
         "warnBody": "任何打开此链接的人都会焚毁它。",
         "expiresIn": "过期时间",
