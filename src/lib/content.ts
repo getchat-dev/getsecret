@@ -4,7 +4,10 @@ export type ContentSlug = 'security' | 'threat-model' | 'faq' | 'docs' | 'develo
 
 export type ContentFrontmatter = {
     title: string;
-    lede: string;
+    // Optional: a page whose own content already introduces it says nothing
+    // here rather than restating its table of contents. The FAQ is that case —
+    // the questions are visible immediately below the heading.
+    lede?: string;
     metaDescription: string;
 };
 

@@ -11,8 +11,13 @@
         "docs": "Docs",
         "security": "Sécurité",
         "threatModel": "Modèle de menace",
+        "faq": "FAQ",
         "api": "API",
         "source": "Source"
+    },
+    "faq": {
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all"
     },
     "eyebrow": {
         "create": "Chiffré de bout en bout · zero-knowledge",

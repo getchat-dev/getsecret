@@ -11,8 +11,13 @@
         "docs": "文档",
         "security": "安全",
         "threatModel": "威胁模型",
+        "faq": "常见问题",
         "api": "API",
         "source": "源代码"
+    },
+    "faq": {
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all"
     },
     "eyebrow": {
         "create": "端到端加密 · 零知识",

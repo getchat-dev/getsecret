@@ -11,8 +11,13 @@
         "docs": "Documentación",
         "security": "Seguridad",
         "threatModel": "Modelo de amenazas",
+        "faq": "FAQ",
         "api": "API",
         "source": "Código fuente"
+    },
+    "faq": {
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all"
     },
     "eyebrow": {
         "create": "Cifrado de extremo a extremo · zero-knowledge",

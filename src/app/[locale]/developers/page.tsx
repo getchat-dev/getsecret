@@ -31,7 +31,7 @@ export default async function DevelopersPage({ params }: { params: Promise<{ loc
         <main className="page">
             <span className="eyebrow">{navT(NAV_KEY)}</span>
             <h1 className="display">{frontmatter.title}</h1>
-            <p className="lede">{frontmatter.lede}</p>
+            {frontmatter.lede && <p className="lede">{frontmatter.lede}</p>}
             <article className="page-prose">
                 <Content />
             </article>

@@ -11,8 +11,13 @@
         "docs": "Doku",
         "security": "Sicherheit",
         "threatModel": "Bedrohungsmodell",
+        "faq": "FAQ",
         "api": "API",
         "source": "Quellcode"
+    },
+    "faq": {
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all"
     },
     "eyebrow": {
         "create": "Ende-zu-Ende verschlüsselt · Zero-Knowledge",

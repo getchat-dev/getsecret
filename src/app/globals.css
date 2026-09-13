@@ -556,3 +556,101 @@ h1.display .accent-word {
 .page-prose tbody tr:last-child td {
     border-bottom: none;
 }
+
+/* ============================================================
+   FAQ DISCLOSURE LIST
+   Global, not a CSS Module, for the same reason .page-prose is:
+   the markup comes out of MDX (mdx/rehype-faq-details.mjs), which
+   cannot reference hashed module class names.
+   ============================================================ */
+
+.faq-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    /* The FAQ has no lede, so the toolbar carries the air that .lede's bottom
+       margin gives every other page between the h1 and the content. */
+    margin: var(--space-3) 0 var(--space-1);
+}
+
+.faq-list {
+    max-width: 64ch;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.faq-item {
+    position: relative;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* One rail per item, spanning summary and answer both. It is the affordance
+   when closed — always visible, so touch users see the row is interactive —
+   and when open it runs the full height of what opened, showing the extent of
+   the answer instead of marking only its first line. */
+.faq-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: var(--space-2);
+    bottom: var(--space-2);
+    width: 2px;
+    border-radius: 1px;
+    background: var(--border-default);
+    transition: background 0.15s;
+}
+
+.faq-item:hover::before,
+.faq-item:focus-within::before,
+.faq-item[open]::before {
+    background: var(--accent);
+}
+
+.faq-summary {
+    padding: var(--space-2) 0 var(--space-2) calc(2px + var(--space-2));
+    cursor: pointer;
+    list-style: none;
+}
+
+.faq-summary::-webkit-details-marker {
+    display: none;
+}
+
+.faq-summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+.page-prose .faq-question {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--fg-default);
+}
+
+.page-prose .faq-summary:hover .faq-question {
+    color: var(--accent-hover);
+}
+
+.faq-answer {
+    padding: 0 0 var(--space-3) calc(2px + var(--space-2));
+    animation: faq-open 0.16s ease-out;
+}
+
+.faq-answer > :last-child {
+    margin-bottom: 0;
+}
+
+@keyframes faq-open {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .faq-answer {
+        animation: none;
+    }
+}

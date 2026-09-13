@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { FaqDisclosures } from '@/components/content/faq-disclosures';
+import { JsonLd } from '@/components/seo/json-ld';
 import { loadContent } from '@/lib/content';
+import { FAQ_ENTRIES } from '@/lib/faq-schema.generated';
 import { buildPageMetadata, socialCardAlt } from '@/lib/site-meta';
+import { faqPageLd } from '@/lib/structured-data';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
     const { locale } = await params;
@@ -14,8 +18,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
         description: frontmatter.metaDescription,
         type: 'article',
         imageAlt: socialCardAlt(tMeta('tagline')),
-        // Placeholder body: unlisted until the MDX is written.
-        noindex: true,
     });
 }
 
@@ -24,13 +26,18 @@ export default async function FaqPage({ params }: { params: Promise<{ locale: st
     setRequestLocale(locale);
     const { default: Content, frontmatter } = await loadContent('faq', locale);
 
+    const entries = FAQ_ENTRIES[locale] ?? [];
+
     return (
         <main className="page">
+            {entries.length > 0 && <JsonLd data={faqPageLd({ locale, entries })} />}
             <span className="eyebrow">FAQ</span>
             <h1 className="display">{frontmatter.title}</h1>
-            <p className="lede">{frontmatter.lede}</p>
+            {frontmatter.lede && <p className="lede">{frontmatter.lede}</p>}
             <article className="page-prose">
-                <Content />
+                <FaqDisclosures>
+                    <Content />
+                </FaqDisclosures>
             </article>
         </main>
     );

@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import createMDX from '@next/mdx';
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
@@ -21,6 +22,10 @@ const withMDX = createMDX({
             ['remark-mdx-frontmatter', {}],
             ['remark-gfm', {}],
         ],
+        // Local plugin. The reference has to be a serializable string like the
+        // remark ones above, and a relative specifier resolves against the
+        // resolver rather than the project — hence the absolute path.
+        rehypePlugins: [[join(process.cwd(), 'mdx/rehype-faq-details.mjs'), {}]],
     },
 });
 

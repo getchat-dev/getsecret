@@ -223,6 +223,9 @@ export function NavShell({ header, footer, children }: NavShellProps) {
                     <Link href="/threat-model" className={styles.drawerLink} onClick={closeMenu}>
                         {t('threatModel')}
                     </Link>
+                    <Link href="/faq" className={styles.drawerLink} onClick={closeMenu}>
+                        {t('faq')}
+                    </Link>
                     {/* <Link href="/developers" className={styles.drawerLink} onClick={closeMenu}>{t('api')}</Link> */}
                 </nav>
 

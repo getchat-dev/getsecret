@@ -1,11 +1,13 @@
 {
     "name": "burnotes",
-    "version": "2.41.0",
+    "version": "2.42.0",
     "private": true,
     "packageManager": "pnpm@10.33.2",
     "scripts": {
         "dev": "next dev",
+        "predev": "npm run gen:faq",
         "build": "next build",
+        "prebuild": "npm run gen:faq",
         "start": "next start",
         "test": "vitest run",
         "test:watch": "vitest",
@@ -19,7 +21,8 @@
         "lint:ci": "biome check",
         "clean": "rm -rf .next",
         "clear": "rm -rf .next node_modules",
-        "setup:bindings": "pnpm install --force"
+        "setup:bindings": "pnpm install --force",
+        "gen:faq": "node scripts/faq-schema.mjs"
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.700.0",

@@ -1,7 +1,82 @@
 ---
 title: "Frequently asked questions"
-lede: "Burnotes answers a narrow problem — how do you hand a credential to one person, exactly once, with no trail. The how, the trade-offs, and the things we deliberately do not do are documented here."
 metaDescription: "Can a link be opened twice? What if it reaches the wrong person? How long does it live? Short answers to the questions people ask before sending anything."
 ---
 
-Q&A entries land here as we collect them — open an issue on GitHub if your question is not covered.
+## Can you read my secret?
+
+No, and you can check that yourself. The secret is encrypted in your browser before it is sent, and the key stays after the `#` in the link — browsers are built so that this part of the address never travels to a server. Open the Network tab in your developer tools while you create a link: the request carries ciphertext and nothing else. The full mechanism is on the [Security](/security) page.
+
+## What if you get breached or receive a legal order?
+
+There would be nothing to hand over. Storage holds ciphertext and a fingerprint of the access token; the key is not there and never was, so neither we nor anyone who reaches our servers can decrypt it. What *is* visible — an IP, a timestamp, a size — is listed in the [threat model](/threat-model).
+
+## The recipient says the link was already burned, but they never opened it
+
+That does not happen with Burnotes. Corporate mail filters and link-preview bots in chat apps really do fetch URLs ahead of the human, and on many one-time-secret services that burns the secret before anyone reads it. Here a bot cannot burn it: the key lives in the fragment, which never reaches the server, and decryption starts on a button press rather than on page load.
+
+If a link really is burned, a person opened it or the timer ran out. That is a signal in itself, but only when a single read was allowed: a burned link at your recipient then means someone else got the secret, and it needs rotating immediately. With several reads there is no signal — an interceptor reads one, the counter drops, and your recipient still sees the secret and suspects nothing.
+
+## I sent the link to the wrong person. Can I revoke it?
+
+If nobody has opened it yet, open it yourself: the secret burns and no one else gets it. Once it has been opened there is nothing to revoke — the secret was read, and we cannot tell you by whom or when. Rotate whatever you sent.
+
+## What if the link is intercepted in transit?
+
+Whoever intercepts it opens the secret first and burns it in the process. With a single read allowed you will notice: your recipient sees a burned link instead of the secret, which tells you the channel is compromised and the credential needs rotating. With several reads you will not: one is enough for the interceptor, the next goes to your recipient, and nobody suspects a thing. A link with a password on it is useless to an interceptor either way.
+
+## Can I put a password on a link?
+
+Yes, when you create it. The password never reaches the server: your browser derives a second key from it (PBKDF2-SHA256, 600,000 iterations) and encrypts the secret again, on top of the first layer. The server stores only a fingerprint for verification, and the password cannot be recovered from it. Five wrong attempts destroy the record.
+
+## Why add a password if the link is one-time anyway?
+
+Because the link can go somewhere you did not intend while the password stays with you. Being one-time protects against a second read, not against the wrong person seeing the first one: forwarded to the wrong thread, delivered to a shared team inbox, read off an unlocked phone on a desk. With a password, an intercepted link is useless — it carries only ciphertext.
+
+This works when the link and the password travel through different channels: link by email, password by voice. More on the [Security](/security) page.
+
+## Do I have to invent a new password every time?
+
+No, and with regular correspondents it is easier to agree once. Settle it with a colleague over a separate channel — by voice, in person — that every link between you opens with the same phrase. After that you just send the link: the second channel is never needed again, and an intercepted link still gives nothing away.
+
+The cost of that convenience is that the phrase becomes a long-lived secret. Use a long phrase rather than a word: anyone holding the link can attack the password offline, and length is the only thing slowing them down. Each secret carries its own salt, so two links have to be attacked separately — cracking one does not open the rest. Change the phrase when someone leaves the project.
+
+## Can a link be opened more than once?
+
+Yes, if you allow more than one read when creating it. The counter drops with every read and the record is deleted on the last one — the same one-time link, just with a different threshold. The expiry runs on its own schedule: once it passes, the secret is gone no matter how many reads were left.
+
+Several reads come at a cost. A single read makes interception visible: your recipient finds the link burned and tells you. Several reads remove that signal, because one read is enough for an interceptor and the next one still goes to your recipient. Leave it at one read if you want to find out when a link is intercepted.
+
+## How long does a link live, and what if nobody opens it?
+
+A day by default, thirty at most — you choose when you create it. If nobody opens the link, the secret is deleted when the time runs out: the timer does not care whether anyone read it.
+
+## Can I send a file?
+
+Yes, up to 25 MB. The file is encrypted in your browser exactly like text: ciphertext goes to storage, the key stays in the link fragment.
+
+## Why send a file as a link instead of dropping it into chat?
+
+Because in a chat the file stays forever. A screenshot of a passport, a contract, an export full of personal data — sent once, and then they sit in your history, in the recipient's history, in the chat app's cloud, and in their phone backup. A year later nobody remembers what was in it, and nobody cleans it up.
+
+A one-time link removes the permanent copy in the middle. The recipient downloads the file, and on our side the encrypted blob is deleted within two days — by then it cannot be decrypted anyway, since the key disappeared on the first open. The downloaded file stays on the recipient's disk: that copy is theirs to manage.
+
+## How long can a secret be?
+
+Up to 10,000 characters, roughly five pages of text. Enough for a password, a private key, or an entire `.env`.
+
+## Do I need an account, and what does it cost?
+
+Neither an account nor a payment. There is no registration at all — anyone who opens the site can create a link. The code is MIT-licensed, and you can run your own instance from source.
+
+## Does the recipient need to install anything?
+
+No, a browser is enough. Decryption happens on their side using the browser's own Web Crypto — no extension, no app, no sign-up.
+
+## Why bother when I have a password manager?
+
+A password manager stores; Burnotes hands over. Sharing inside a manager leaves an entry somebody has to remember to revoke later, and a contractor, a new hire or a client usually has no way into your manager at all. A one-time link covers the moment of handover and leaves nothing behind.
+
+## How is this better than disappearing messages in a chat app?
+
+A disappearing message is removed from the other person's screen but stays with the service and in their phone backup. Burnotes never sees the plaintext at all, so there is nothing on our side to delete. And the expiry here does not depend on whether the recipient opened the app.

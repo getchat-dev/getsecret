@@ -1,3 +1,4 @@
+import type { FaqEntry } from '@/lib/faq-schema.generated';
 import { SITE_NAME, siteOrigin } from '@/lib/site-meta';
 
 // Schema.org payloads. Kept as plain builders (not components) so the shapes stay
@@ -77,5 +78,28 @@ export function techArticleLd({ locale, path, title, description }: ArticleArgs)
         inLanguage: locale,
         isPartOf: { '@id': `${origin}/#website` },
         publisher: { '@id': `${origin}/#organization` },
+    };
+}
+
+type FaqArgs = { locale: string; entries: readonly FaqEntry[] };
+
+// FAQPage. The pairs come from faq-schema.generated.ts so the markup and the
+// visible page cannot say different things — both are derived from one MDX file.
+export function faqPageLd({ locale, entries }: FaqArgs): Json {
+    const origin = siteOrigin();
+    const url = `${origin}/${locale}/faq`;
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        url,
+        inLanguage: locale,
+        isPartOf: { '@id': `${origin}/#website` },
+        publisher: { '@id': `${origin}/#organization` },
+        mainEntity: entries.map((entry) => ({
+            '@type': 'Question',
+            name: entry.question,
+            acceptedAnswer: { '@type': 'Answer', text: entry.answer },
+        })),
     };
 }

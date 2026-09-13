@@ -37,6 +37,9 @@ export function SiteHeader() {
                     <Link href="/threat-model" className={styles.link}>
                         {t('threatModel')}
                     </Link>
+                    <Link href="/faq" className={styles.link}>
+                        {t('faq')}
+                    </Link>
                     {/* <Link href="/developers" className="nav-link">
                         {t('api')}
                     </Link> */}

@@ -11,12 +11,17 @@
         "docs": "Docs",
         "security": "Security",
         "threatModel": "Threat model",
+        "faq": "FAQ",
         "api": "API",
         "source": "Source",
         "menu": "Menu",
         "openMenu": "Open menu",
         "closeMenu": "Close menu",
         "language": "Language"
+    },
+    "faq": {
+        "expandAll": "Expand all",
+        "collapseAll": "Collapse all"
     },
     "eyebrow": {
         "create": "End-to-end encrypted · zero-knowledge",

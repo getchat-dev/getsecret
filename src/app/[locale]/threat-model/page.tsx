@@ -41,7 +41,7 @@ export default async function ThreatModelPage({ params }: { params: Promise<{ lo
             />
             <span className="eyebrow">{navT(NAV_KEY)}</span>
             <h1 className="display">{frontmatter.title}</h1>
-            <p className="lede">{frontmatter.lede}</p>
+            {frontmatter.lede && <p className="lede">{frontmatter.lede}</p>}
             <article className="page-prose">
                 <Content />
             </article>
