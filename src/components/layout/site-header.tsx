@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { LangPicker } from '@/components/layout/lang-picker';
+import { NavLink } from '@/components/layout/nav-link';
 import { useMobileNav } from '@/components/layout/nav-shell';
 import { ThemeSwitch } from '@/components/layout/theme-switch';
 // GithubIcon is unused while the Source nav link is hidden; re-add it
@@ -31,15 +32,15 @@ export function SiteHeader() {
                     {/* <Link href="/docs" className="nav-link">
                         {t('docs')}
                     </Link> */}
-                    <Link href="/security" className={styles.link}>
+                    <NavLink href="/security" className={styles.link}>
                         {t('security')}
-                    </Link>
-                    <Link href="/threat-model" className={styles.link}>
+                    </NavLink>
+                    <NavLink href="/threat-model" className={styles.link}>
                         {t('threatModel')}
-                    </Link>
-                    <Link href="/faq" className={styles.link}>
+                    </NavLink>
+                    <NavLink href="/faq" className={styles.link}>
                         {t('faq')}
-                    </Link>
+                    </NavLink>
                     {/* <Link href="/developers" className="nav-link">
                         {t('api')}
                     </Link> */}

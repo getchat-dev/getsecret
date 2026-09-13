@@ -3,9 +3,9 @@
 import { useTranslations } from 'next-intl';
 import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import { LangPicker } from '@/components/layout/lang-picker';
+import { NavLink } from '@/components/layout/nav-link';
 import { ThemeSwitch } from '@/components/layout/theme-switch';
 import { XIcon } from '@/components/ui/icons';
-import { Link } from '@/i18n/navigation';
 import styles from './nav-shell.module.css';
 
 // Keep this in lockstep with --nav-anim in globals.css: the close sequence waits
@@ -216,17 +216,17 @@ export function NavShell({ header, footer, children }: NavShellProps) {
 
                 <nav className={styles.drawerNav} aria-label={t('menu')}>
                     {/* Mirrors the desktop header links. Re-enable alongside the header copies. */}
-                    {/* <Link href="/docs" className={styles.drawerLink} onClick={closeMenu}>{t('docs')}</Link> */}
-                    <Link href="/security" className={styles.drawerLink} onClick={closeMenu}>
+                    {/* <NavLink href="/docs" className={styles.drawerLink} onClick={closeMenu}>{t('docs')}</NavLink> */}
+                    <NavLink href="/security" className={styles.drawerLink} onClick={closeMenu}>
                         {t('security')}
-                    </Link>
-                    <Link href="/threat-model" className={styles.drawerLink} onClick={closeMenu}>
+                    </NavLink>
+                    <NavLink href="/threat-model" className={styles.drawerLink} onClick={closeMenu}>
                         {t('threatModel')}
-                    </Link>
-                    <Link href="/faq" className={styles.drawerLink} onClick={closeMenu}>
+                    </NavLink>
+                    <NavLink href="/faq" className={styles.drawerLink} onClick={closeMenu}>
                         {t('faq')}
-                    </Link>
-                    {/* <Link href="/developers" className={styles.drawerLink} onClick={closeMenu}>{t('api')}</Link> */}
+                    </NavLink>
+                    {/* <NavLink href="/developers" className={styles.drawerLink} onClick={closeMenu}>{t('api')}</NavLink> */}
                 </nav>
 
                 <div className={styles.controls}>

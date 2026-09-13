@@ -94,9 +94,25 @@
     gap: var(--space-1);
 }
 
-.link:hover {
+/* Excludes the current page: lighting it up on hover would offer a trip you
+   have already taken. It stays a real link for keyboard and screen-reader
+   users — only the invitation is withdrawn. */
+.link:hover:not([aria-current="page"]) {
     color: var(--fg-default);
     background: var(--bg-3);
+}
+
+/* The page you're on. Styled off `aria-current` rather than a class of our own
+   so the underline and what a screen reader announces can't drift apart.
+   `text-decoration` (not a pseudo-element) keeps the rule hugging the word
+   itself, so it stays put when the label's length changes between locales. */
+.link[aria-current="page"] {
+    color: var(--fg-default);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+    cursor: default;
 }
 
 /* Hamburger — hidden until the mobile breakpoint, where it replaces the inline

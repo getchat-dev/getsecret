@@ -168,8 +168,21 @@
         background 0.15s;
 }
 
-.drawerLink:hover {
+/* Same exclusion as the desktop header — no hover invitation to the page you
+   are already on. The cursor is left alone here: the drawer is a touch
+   surface, and tapping the current link still does something (it closes the
+   menu), so this one is not inert the way the header's copy is. */
+.drawerLink:hover:not([aria-current="page"]) {
     background: var(--bg-3);
+}
+
+/* Same marker as the desktop header, one size up — see `.link[aria-current]`
+   in site-header.module.css. */
+.drawerLink[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
 }
 
 /* Theme + language share one row — both controls are narrow enough to sit
