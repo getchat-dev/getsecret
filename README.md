@@ -75,10 +75,11 @@ BURNOTES_IMAGE=burnotes:latest docker compose up -d
 Open app: `http://burnotes.localhost`.
 Traefik dashboard: `http://localhost:8080`.
 
-## Infrastructure (Valkey)
+## Infrastructure (Valkey + Postgres)
 
 Burnotes stores encrypted secrets and rate-limit state in Valkey
-(a Redis-compatible server). Valkey runs in its **own** Compose stack so it is
+(a Redis-compatible server). A PostgreSQL 17 server runs alongside it for
+relational data. Both run in their **own** Compose stack so they are
 not affected by `./start.sh --down` or `--purge` — only the app comes and goes.
 
 ### Bring the infrastructure up (once per host)
@@ -90,9 +91,30 @@ docker compose -f docker-compose.infra.yml up -d
 This creates:
 - Docker network `burnotes-infra` (shared with the app via `external: true`).
 - Named volume `burnotes-infra_valkey-data` with AOF + periodic RDB snapshots.
+- Named volume `burnotes-infra_postgres-data` (initialised with `--data-checksums`).
 
 The app reads `VALKEY_URL` from `.env` and connects to `valkey:6379` inside
-that network. `APP` and `DEV` Compose files both attach to `burnotes-infra`.
+that network; Postgres is reachable at `postgres:5432` on the same network.
+`APP` and `DEV` Compose files both attach to `burnotes-infra`.
+
+### Postgres credentials
+
+The Compose file reads these from `.env` (or the shell) and falls back to
+development defaults — override them before you put anything real in the
+database:
+
+| Variable | Default |
+| --- | --- |
+| `POSTGRES_USER` | `burnotes` |
+| `POSTGRES_PASSWORD` | `burnotes-dev-secret-please-change` |
+| `POSTGRES_DB` | `burnotes` |
+
+The matching connection string for the app is
+`DATABASE_URL=postgres://burnotes:burnotes-dev-secret-please-change@postgres:5432/burnotes`.
+
+`POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB` are only read by `initdb` on
+the **first** start. Changing them later does nothing to an existing cluster —
+use `ALTER ROLE` / `CREATE DATABASE`, or wipe the volume and start over.
 
 ### Everyday operations
 
@@ -109,16 +131,21 @@ docker compose -f docker-compose.infra.yml logs -f valkey
 docker compose -f docker-compose.infra.yml exec valkey valkey-cli
 docker compose -f docker-compose.infra.yml restart valkey
 
-# Stop the infrastructure (data stays in the volume):
+# Postgres controls:
+docker compose -f docker-compose.infra.yml logs -f postgres
+docker compose -f docker-compose.infra.yml exec postgres psql -U burnotes -d burnotes
+docker compose -f docker-compose.infra.yml restart postgres
+
+# Stop the infrastructure (data stays in the volumes):
 docker compose -f docker-compose.infra.yml down
 
-# DANGEROUS: stop and wipe all stored secrets:
+# DANGEROUS: stop and wipe all stored secrets and tables:
 docker compose -f docker-compose.infra.yml down -v
 ```
 
 ### Backup
 
-The data lives in the named volume `burnotes-infra_valkey-data`:
+The Valkey data lives in the named volume `burnotes-infra_valkey-data`:
 
 ```bash
 docker run --rm \
@@ -127,10 +154,24 @@ docker run --rm \
   alpine tar czf /backup/valkey-backup.tgz /data
 ```
 
-### Running the app on the host (`pnpm dev`) against Dockerised Valkey
+Postgres is backed up logically rather than by copying `burnotes-infra_postgres-data`
+(a file-level copy of a running cluster is not consistent):
 
-Uncomment the `ports:` block in `docker-compose.infra.yml` (binds `127.0.0.1:6379`)
-and set `VALKEY_URL=redis://localhost:6379/0` in `.env`.
+```bash
+docker compose -f docker-compose.infra.yml exec -T postgres \
+  pg_dump -U burnotes -d burnotes --format=custom > burnotes.dump
+```
+
+### Running the app on the host (`pnpm dev`) against Dockerised infrastructure
+
+Uncomment the relevant `ports:` block in `docker-compose.infra.yml` — Valkey
+binds `127.0.0.1:6379`, Postgres `127.0.0.1:5432` — and point the app at
+`localhost` in `.env`:
+
+```dotenv
+VALKEY_URL=redis://localhost:6379/0
+DATABASE_URL=postgres://burnotes:burnotes-dev-secret-please-change@localhost:5432/burnotes
+```
 
 ### Security notes
 
@@ -138,6 +179,129 @@ Valkey is not exposed outside the internal network, so it runs without a
 password. If you ever route traffic across an untrusted network, add
 `--requirepass` to the `valkey-server` command and update `VALKEY_URL`
 accordingly (`redis://:password@valkey:6379/0`).
+
+Postgres is not exposed to the host either, but the image refuses to start
+without a password, so it always has one. The default is a development
+placeholder — set a real `POSTGRES_PASSWORD` in `.env` before the first start
+on any host that matters, since `initdb` only reads it once.
+
+## Umami (self-hosted analytics)
+
+Umami runs from its own Compose files, kept out of `docker-compose.infra.yml`
+so the infra stack stays free of any Traefik dependency:
+
+| File | Role |
+| --- | --- |
+| `docker-compose.umami.yml` | Base. Needs only `burnotes-infra` (for Postgres) and publishes Umami on `127.0.0.1:3001`. Works on any host. |
+| `docker-compose.umami.traefik.yml` | Overlay. Adds the external `web` network and the Traefik routers. |
+
+The direction of the split is forced: a Compose override can *add* a network to
+a service but cannot remove one, so `web` has to live in the overlay. Putting it
+in the base file would break every host that has no Traefik.
+
+> **Do not load the Umami tracker on `/s/[id]`.** Umami collects URL hash values
+> by default, and the Burnotes decryption key lives in the URL fragment. A
+> tracker on the reveal page would hand the analytics server the key for every
+> secret, next to the ciphertext it already stores — the whole threat model,
+> gone. `data-exclude-hash="true"` is necessary but is a single attribute
+> standing between you and that outcome; also gate the snippet so it never
+> renders on the reveal route.
+
+### One-time setup
+
+Umami shares the Postgres server from the infra stack, in its own database owned
+by its own role. Create them once per host (the infra stack must be up):
+
+```bash
+docker compose -f docker-compose.infra.yml exec postgres \
+  psql -U burnotes -d postgres \
+  -c "CREATE ROLE umami LOGIN PASSWORD 'choose-a-password';" \
+  -c "CREATE DATABASE umami OWNER umami;"
+```
+
+`OWNER umami` matters — Prisma migrations run as that role on first boot and
+need to create the schema.
+
+Then add to `.env`:
+
+```dotenv
+UMAMI_DB_PASSWORD=the-password-you-just-chose
+UMAMI_APP_SECRET=<openssl rand -base64 32>
+```
+
+`UMAMI_APP_SECRET` signs authentication tokens and must stay stable across
+restarts — a changed value logs everyone out. Both are declared with `${VAR:?}`,
+so Compose refuses to start rather than falling back to a default.
+
+`UMAMI_HOST` and the `TRAEFIK_*` variables are only read by the Traefik overlay —
+leave them unset to run on `localhost` alone. `UMAMI_PORT` overrides the
+published port if `3001` is taken.
+
+### Run locally
+
+```bash
+docker compose -f docker-compose.umami.yml up -d
+```
+
+Open `http://localhost:3001`. No hostname, no Traefik, no `web` network
+involved — the port is bound to the loopback interface, so it is reachable from
+the host but not from the network.
+
+### Run behind Traefik
+
+```bash
+docker compose -f docker-compose.umami.yml \
+               -f docker-compose.umami.traefik.yml up -d
+```
+
+The overlay is parameterised, because the two Traefik instances this project
+meets do not speak the same dialect. Defaults are the production values, so an
+unset variable deploys exactly as before:
+
+| Variable | Default (production) | Shared local Traefik |
+| --- | --- | --- |
+| `TRAEFIK_NETWORK` | `web` | `mppm_b2b_infra_bitrix` |
+| `TRAEFIK_ENTRYPOINT_HTTP` | `web` | `http` |
+| `TRAEFIK_ENTRYPOINT_HTTPS` | `websecure` | `https` |
+| `TRAEFIK_CERT_RESOLVER` | `le` | *(empty — no ACME)* |
+| `UMAMI_HOST` | _(required)_ | e.g. `umami.burnotes.local` |
+
+`TRAEFIK_CERT_RESOLVER` uses `${VAR-default}`, not `${VAR:-default}`: setting it
+to an empty string is meaningful and is preserved, while leaving it out falls
+back to `le`. An empty resolver means Traefik serves its own certificate instead
+of requesting one over ACME — which is what the shared local instance does, and
+what its own service files pass.
+
+A local hostname needs a matching line in `/etc/hosts` (wildcards do not work
+there):
+
+```
+127.0.0.1	umami.burnotes.local
+```
+
+The base file still publishes `127.0.0.1:3001` in this mode; drop the `ports:`
+block if you would rather publish nothing at all.
+
+### Either way
+
+```bash
+docker compose -f docker-compose.umami.yml logs -f umami
+```
+
+First boot runs the Prisma migration before the server answers, which is why the
+healthcheck has a 60s `start_period`. Log in with the default `admin` / `umami`
+and change the password immediately.
+
+### Notes
+
+- The image is pinned to `docker.umami.is/umami-software/umami:3.3.1`. In v3 the
+  version tags dropped the `postgresql-` prefix — `3.3.1` and
+  `postgresql-latest` are the same digest, so do not "fix" it back to the
+  floating tag.
+- Analytics data lives in the `umami` database inside
+  `burnotes-infra_postgres-data`, so bringing the infra stack down with `-v` now
+  destroys the analytics history along with the stored secrets.
+- `PRIVATE_MODE=true` is set, so Umami makes no outbound calls.
 
 ## Build with werf
 
@@ -149,5 +313,14 @@ Use the resulting image tag from `werf build` output in `BURNOTES_IMAGE`.
 
 ## Notes
 
-- Encrypted payloads live in Valkey. Restarting the app container preserves all active links; restarting Valkey preserves them via AOF + RDB.
+- Encrypted payloads live in Valkey; Postgres holds relational data and is empty until a schema is added. Restarting the app container preserves all active links; restarting Valkey preserves them via AOF + RDB.
 - App can run as multiple instances since state is external; Valkey itself must remain a single reachable endpoint.
+
+## License
+
+AGPL-3.0-or-later — see [LICENSE](LICENSE).
+
+The network clause is the point: if you run a modified copy of this as a service
+that other people use, you have to offer them your modified source. Running it
+unmodified for your own team costs you nothing beyond keeping the source link in
+the footer intact — that link is how the deployed site meets section 13.

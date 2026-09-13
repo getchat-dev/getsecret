@@ -22,7 +22,7 @@ function body(): string {
 
 > Encrypted one-time links for passwords, API tokens and files. The secret is encrypted in the sender's browser with AES-256-GCM; the decryption key travels in the URL fragment and never reaches the server. Reading the link consumes it.
 
-Getsecret solves one narrow problem: handing a credential to one person, exactly once, without leaving a copy in chat history, email or a password manager's shared vault. It is open source and self-hostable. No account is required and none can be created.
+Getsecret solves one narrow problem: handing a credential to one person, exactly once, without leaving a copy in chat history, email or a password manager's shared vault. It is open source under AGPL-3.0-or-later (https://github.com/getchat-dev/getsecret) and self-hostable. No account is required and none can be created.
 
 ## How it works
 

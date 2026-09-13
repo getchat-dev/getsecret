@@ -53,11 +53,29 @@
     animation: pulse 2s ease-in-out infinite;
 }
 
-/* The version line is two spans so the phone layout can pin the version
+/* The version line is two elements so the phone layout can pin the version
    flush-left and the license flush-right. On desktop/tablet they read as one
-   inline string joined by the middot. */
-.license::before {
+   inline string joined by the middot.
+
+   The middot hangs off the version, not off the link. Inside the <a> it would
+   be both underlined and clickable — it separates the two halves, it isn't
+   part of the destination. */
+.version::after {
     content: " · ";
+}
+
+/* The license half is a link to the source (AGPL §13) rather than a label, so
+   it gets the same treatment as the footer's other links: colour on hover, no
+   rule. An underline here would run under the middots on either side of
+   "source" and read as a stray line rather than as a link. */
+.license {
+    color: var(--fg-subtle);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.license:hover {
+    color: var(--fg-default);
 }
 
 @media (max-width: 920px) {
@@ -114,7 +132,7 @@
         gap: var(--space-2);
     }
 
-    .license::before {
+    .version::after {
         content: "";
     }
 }

@@ -59,7 +59,7 @@ export const FAQ_ENTRIES: Record<string, readonly FaqEntry[]> = {
         },
         {
             question: 'Do I need an account, and what does it cost?',
-            answer: 'Neither an account nor a payment. There is no registration at all — anyone who opens the site can create a link. The code is MIT-licensed, and you can run your own instance from source.',
+            answer: 'Neither an account nor a payment. There is no registration at all — anyone who opens the site can create a link. The code is AGPL-licensed, and you can run your own instance from source.',
         },
         {
             question: 'Does the recipient need to install anything?',
@@ -129,7 +129,7 @@ export const FAQ_ENTRIES: Record<string, readonly FaqEntry[]> = {
         },
         {
             question: 'Нужен ли аккаунт и сколько это стоит?',
-            answer: 'Ни аккаунта, ни оплаты. Регистрации нет вообще — создать ссылку может любой, кто открыл сайт. Код открыт под лицензией MIT, свой экземпляр можно развернуть из исходников.',
+            answer: 'Ни аккаунта, ни оплаты. Регистрации нет вообще — создать ссылку может любой, кто открыл сайт. Код открыт под лицензией AGPL, свой экземпляр можно развернуть из исходников.',
         },
         {
             question: 'Нужно ли получателю что-то устанавливать?',

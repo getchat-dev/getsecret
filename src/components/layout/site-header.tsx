@@ -11,7 +11,7 @@ import { FlameIcon, MenuIcon } from '@/components/ui/icons';
 import { Link } from '@/i18n/navigation';
 import styles from './site-header.module.css';
 
-// const SOURCE_URL = 'https://github.com/Markuper-tech/burnotes';
+// const SOURCE_URL = 'https://github.com/getchat-dev/getsecret';
 
 export function SiteHeader() {
     const t = useTranslations('nav');

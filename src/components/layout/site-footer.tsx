@@ -8,14 +8,28 @@ import styles from './site-footer.module.css';
 const VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? '';
 const LICENSE = process.env.NEXT_PUBLIC_APP_LICENSE ?? '';
 
+// AGPL §13: anyone who uses the service over a network has to be offered the
+// Corresponding Source, and the licence itself suggests exactly this — a
+// "Source" link in the interface. So the licence name in the footer is that
+// link rather than a label; it is the site's compliance, not a credit.
+const SOURCE_URL = 'https://github.com/getchat-dev/getsecret';
+
+// The SPDX id carries a suffix nobody reads aloud; the footer shows the family
+// name and keeps the exact id in package.json, where tooling looks for it.
+const LICENSE_LABEL = LICENSE.replace(/-(only|or-later)$/, '');
+
 export async function SiteFooter() {
     const t = await getTranslations('foot');
 
     return (
         <footer className={styles.foot}>
             <span className={styles.meta}>
-                <span>v{VERSION}</span>
-                {LICENSE ? <span className={styles.license}>open source under {LICENSE} license</span> : null}
+                <span className={styles.version}>v{VERSION}</span>
+                {LICENSE ? (
+                    <a className={styles.license} href={SOURCE_URL} target="_blank" rel="noreferrer">
+                        source · {LICENSE_LABEL}
+                    </a>
+                ) : null}
             </span>
             <nav className={styles.links} aria-label="Footer">
                 <Link href="/security#privacy">{t('privacy')}</Link>
