@@ -230,5 +230,17 @@
         "system": "Tema del sistema",
         "light": "Tema claro",
         "dark": "Tema oscuro"
+    },
+    "hints": {
+        "toggle": "Ayuda",
+        "show": "Mostrar ayuda",
+        "hide": "Ocultar ayuda",
+        "about": "Ayuda: {label}",
+        "fileName": "El nombre con el que el destinatario descargará el secreto. Haz clic en el nombre para cambiarlo. La extensión depende del formato.",
+        "format": "Define el resaltado de sintaxis y la extensión del archivo. Se detecta automáticamente al pegar texto, pero puedes elegirlo tú.",
+        "attachFile": "Un archivo de hasta 25 MB se cifra en tu navegador junto con el texto. Arrástralo a la página o pégalo desde el portapapeles.",
+        "expiresIn": "Cuando se acaba el plazo, el enlace deja de funcionar y el secreto se borra del servidor, aunque nadie lo haya abierto.",
+        "maxReads": "Cuántas veces se puede abrir el enlace. Tras la última lectura el secreto se borra; ∞ significa sin límite hasta que caduque.",
+        "passphrase": "Una capa extra de cifrado: sin esta contraseña el secreto no se puede descifrar, ni siquiera con el enlace. Envíala aparte del enlace, por otro canal. Cinco intentos fallidos borran el secreto."
     }
 }

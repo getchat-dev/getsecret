@@ -1,0 +1,30 @@
+/* Sized to sit next to the theme switch: same 34px height (24px button +
+   padding + border), same border and background. */
+.toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: var(--bg-2);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--fg-subtle);
+    cursor: pointer;
+    transition:
+        color 0.15s,
+        background 0.15s,
+        border-color 0.15s;
+}
+
+.toggle:hover {
+    color: var(--fg-default);
+    border-color: var(--border-strong);
+}
+
+/* On unless <html data-hints="off"> — the attribute is the source of truth. */
+:global(:root:not([data-hints="off"])) .toggle {
+    color: var(--accent);
+    background: var(--accent-bg-soft);
+    border-color: var(--accent-border);
+}

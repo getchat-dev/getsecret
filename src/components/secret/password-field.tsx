@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { Hint } from '@/components/ui/hint';
 import { EyeIcon, EyeOffIcon, KeyIcon } from '@/components/ui/icons';
 import { MAX_PASSWORD_LENGTH } from '@/lib/password-policy';
 import btn from '@/styles/primitives/button.module.css';
@@ -14,18 +15,25 @@ type Props = {
 
 export function PasswordField({ value, onChange }: Props) {
     const t = useTranslations('create');
+    const tHints = useTranslations('hints');
     const [shown, setShown] = useState(false);
 
     return (
         <div className={field.field}>
-            <label className={field.label} htmlFor="passphrase">
-                <KeyIcon size={12} /> {t('passphrase')}
-                <span className={field.labelHint}> {t('passphraseHint')}</span>
-            </label>
+            <div className={field.labelRow}>
+                <label className={field.label} htmlFor="passphrase">
+                    <KeyIcon size={12} /> {t('passphrase')}
+                </label>
+                <Hint label={t('passphrase')}>{tHints('passphrase')}</Hint>
+                <span id="passphrase-hint" className={field.labelHint}>
+                    {t('passphraseHint')}
+                </span>
+            </div>
             <div className={field.row}>
                 <div className={field.passwordWrap}>
                     <input
                         id="passphrase"
+                        aria-describedby="passphrase-hint"
                         type={shown ? 'text' : 'password'}
                         autoComplete="new-password"
                         spellCheck={false}

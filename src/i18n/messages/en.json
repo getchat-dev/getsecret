@@ -234,5 +234,17 @@
         "system": "Use system theme",
         "light": "Light theme",
         "dark": "Dark theme"
+    },
+    "hints": {
+        "toggle": "Hints",
+        "show": "Show hints",
+        "hide": "Hide hints",
+        "about": "About: {label}",
+        "fileName": "The name the recipient's download gets. Click the name to rename it. The extension follows the format.",
+        "format": "Sets syntax highlighting and the file extension. Detected automatically when you paste text, but you can pick it yourself.",
+        "attachFile": "Files up to 25 MB are encrypted in your browser along with the text. Drag one onto the page or paste it from the clipboard.",
+        "expiresIn": "When the time is up, the link stops working and the secret is deleted from the server, even if nobody opened it.",
+        "maxReads": "How many times the link can be opened. After the last read the secret is deleted; ∞ means no limit until it expires.",
+        "passphrase": "An extra layer of encryption: without this password the secret can't be decrypted, even with the link. Send it separately from the link, through another channel. Five wrong attempts delete the secret."
     }
 }

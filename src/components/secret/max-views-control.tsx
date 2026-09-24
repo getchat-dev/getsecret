@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { Hint } from '@/components/ui/hint';
 import { MAX_VIEW_PRESETS } from '@/lib/max-views';
 import controls from '@/styles/primitives/controls.module.css';
 import field from '@/styles/primitives/field.module.css';
@@ -12,6 +13,7 @@ type Props = {
 
 export function MaxViewsControl({ value, onChange }: Props) {
     const t = useTranslations('create');
+    const tHints = useTranslations('hints');
 
     const options: Array<{ id: string; label: string; value: number | null }> = [
         ...MAX_VIEW_PRESETS.map((preset) => ({
@@ -24,7 +26,10 @@ export function MaxViewsControl({ value, onChange }: Props) {
 
     return (
         <div className={field.field}>
-            <span className={field.label}>{t('maxReads')}</span>
+            <div className={field.labelRow}>
+                <span className={field.label}>{t('maxReads')}</span>
+                <Hint label={t('maxReads')}>{tHints('maxReads')}</Hint>
+            </div>
             <div className={field.row}>
                 <div className={controls.segmented}>
                     {options.map((option) => {

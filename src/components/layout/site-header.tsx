@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { HintsToggle } from '@/components/layout/hints-toggle';
 import { LangPicker } from '@/components/layout/lang-picker';
 import { NavLink } from '@/components/layout/nav-link';
 import { useMobileNav } from '@/components/layout/nav-shell';
@@ -50,8 +51,14 @@ export function SiteHeader() {
                         <span>{t('source')}</span>
                     </a> */}
                     <LangPicker />
+                    <HintsToggle />
                     <ThemeSwitch />
                 </nav>
+                {/* On mobile the inline nav (and its lightbulb) collapses into the drawer;
+                    this copy keeps the hints switch one tap away, next to the hamburger. */}
+                <span className={styles.mobileHints}>
+                    <HintsToggle />
+                </span>
                 {/* Opener only: while open the page (and this button) sit under the
                     scrim — closing is the drawer's own ✕, a scrim tap, or Escape. */}
                 <button

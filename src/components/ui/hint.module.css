@@ -1,0 +1,92 @@
+.trigger {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--fg-subtle);
+    cursor: help;
+    transition:
+        color 0.15s,
+        background 0.15s;
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+    color: var(--accent);
+    background: var(--accent-bg-soft);
+}
+
+.trigger:focus-visible {
+    outline: 2px solid var(--accent-border);
+    outline-offset: 1px;
+}
+
+.bubble {
+    position: fixed;
+    z-index: 200;
+    width: max-content;
+    max-width: min(300px, calc(100vw - 24px));
+    padding: var(--space-1) 12px;
+    background: var(--bg-2);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-pop);
+    color: var(--fg-default);
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: normal;
+    text-align: start;
+    white-space: normal;
+}
+
+/* Arrow: a rotated square under the bubble's edge, pointing at the "?". */
+.bubble::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: calc(var(--hint-arrow, 50%) - 5px);
+    width: 10px;
+    height: 10px;
+    background: inherit;
+    border-top: 1px solid var(--border-default);
+    border-left: 1px solid var(--border-default);
+    transform: rotate(45deg);
+}
+
+.bubble[data-above]::before {
+    top: auto;
+    bottom: -5px;
+    transform: rotate(225deg);
+}
+
+/* The header lightbulb turned hints off. */
+:global(:root[data-hints="off"]) .trigger,
+:global(:root[data-hints="off"]) .bubble {
+    display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .bubble {
+        animation: hint-in 0.12s ease-out;
+    }
+}
+
+@keyframes hint-in {
+    from {
+        opacity: 0;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    /* Bigger tap target without growing the icon. */
+    .trigger {
+        width: 28px;
+        height: 28px;
+        margin: -4px;
+    }
+}

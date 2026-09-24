@@ -13,6 +13,7 @@ import { SecretName } from '@/components/secret/secret-name';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
 import { ActionLabel } from '@/components/ui/action-label';
+import { Hint } from '@/components/ui/hint';
 import { AlertIcon, FileIcon, XIcon, ZapIcon } from '@/components/ui/icons';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
@@ -87,6 +88,7 @@ export function CreateForm({
 }: Props) {
     const t = useTranslations('create');
     const tErrors = useTranslations('errors');
+    const tHints = useTranslations('hints');
 
     const [secret, setSecret] = useState('');
     const [link, setLink] = useState('');
@@ -377,9 +379,11 @@ export function CreateForm({
                         onChange={setName}
                         fallback={defaultFilename}
                         disabled={isSubmitting}
+                        hint={<Hint label={t('fileNameLabel')}>{tHints('fileName')}</Hint>}
                     />
                     <span className={card.headerMeta}>
                         <FormatSelect value={format} onChange={setFormat} label={t('formatLabel')} />
+                        <Hint label={t('formatLabel')}>{tHints('format')}</Hint>
                     </span>
                 </header>
                 <div className={card.body}>
@@ -394,15 +398,18 @@ export function CreateForm({
                         autoFocus
                         toolbarStart={
                             enableFileAttachments && file === null ? (
-                                <button
-                                    type="button"
-                                    className={`${btn.btn} ${btn.btnGhost}`}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isSubmitting}
-                                >
-                                    <FileIcon size={14} />
-                                    <ActionLabel command={COMMAND.attachFile}>{t('attachFile')}</ActionLabel>
-                                </button>
+                                <>
+                                    <button
+                                        type="button"
+                                        className={`${btn.btn} ${btn.btnGhost}`}
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isSubmitting}
+                                    >
+                                        <FileIcon size={14} />
+                                        <ActionLabel command={COMMAND.attachFile}>{t('attachFile')}</ActionLabel>
+                                    </button>
+                                    <Hint label={t('attachFile')}>{tHints('attachFile')}</Hint>
+                                </>
                             ) : null
                         }
                     />

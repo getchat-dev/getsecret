@@ -84,6 +84,46 @@
     margin: 0;
 }
 
+/* One shell for a quantity and its unit ("1" + "day"): the TTL picker reads as
+   a single field, so the stepper and the unit choice share one border instead of
+   sitting in two boxes side by side. The nested primitives drop their own chrome;
+   the group supplies border, background, corner radius and the focus ring. */
+.inputGroup {
+    display: inline-flex;
+    align-items: stretch;
+    /* Never shrink: offsetWidth stays the width the content actually wants, which
+       is what TtlControl compares against the available line width. */
+    flex: 0 0 auto;
+    background: var(--bg-1);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    /* Clips the square corners of the edge buttons' hover fill against the
+       rounded shell. The focus ring is this element's own box-shadow, so it is
+       drawn outside and stays visible. */
+    overflow: hidden;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+
+.inputGroup:focus-within {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg-soft);
+}
+
+.inputGroup > .stepper,
+.inputGroup > .segmented {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+/* The hairline is the only thing telling "how many" apart from "of what". */
+.inputGroup > .segmented {
+    align-items: center;
+    border-left: 1px solid var(--border-default);
+}
+
 .pill {
     display: inline-flex;
     align-items: center;

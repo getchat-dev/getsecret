@@ -111,13 +111,14 @@ export default async function LocaleLayout({
                 {/* Apply the user's saved theme before first paint to avoid a flash
                     when the explicit choice differs from the system preference.
                     `data-theme-choice` mirrors the choice (incl. "system") so the
-                    theme switch can highlight the right button via pure CSS. */}
+                    theme switch can highlight the right button via pure CSS. The same
+                    script restores a switched-off hints toggle (see src/lib/hints.ts). */}
                 <script
                     nonce={nonce}
                     suppressHydrationWarning
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: trusted inline pre-hydration script.
                     dangerouslySetInnerHTML={{
-                        __html: "(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='system')t='system';if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-theme-choice',t);}catch(e){}})();",
+                        __html: "(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='system')t='system';if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-theme-choice',t);if(localStorage.getItem('hints')==='off')document.documentElement.setAttribute('data-hints','off');}catch(e){}})();",
                     }}
                 />
             </head>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FileIcon } from '@/components/ui/icons';
 import { MAX_SECRET_NAME_LENGTH, sanitizeFilename } from '@/lib/secret-filename';
 import { type NameEllipsis, truncateName } from '@/lib/truncate-name';
@@ -12,6 +12,9 @@ import styles from './secret-name.module.css';
 // the result matches what the browser will draw closely enough that the
 // 1px slack below absorbs rounding.
 let measureContext: CanvasRenderingContext2D | null = null;
+
+// Gap between the name and the hint slot; matches .hintSlot's margin.
+const HINT_GAP = 4;
 
 function textWidth(text: string, style: CSSStyleDeclaration): number {
     measureContext ??= document.createElement('canvas').getContext('2d');
@@ -39,12 +42,19 @@ function TruncatedName({ value, extension, ellipsis }: { value: string; extensio
         const ext = extensionRef.current;
         const box = root?.closest<HTMLElement>(`.${styles.title}`);
         if (!root || !base || !ext || !box) return;
+        // An optional "?" after the name; room for it (and the gap before it)
+        // comes off the width the name may use. It's display:none while hints
+        // are off, and then reserves nothing.
+        const hintSlot = box.querySelector<HTMLElement>(`.${styles.hintSlot}`);
 
         const refit = () => {
+            const hintRoom =
+                hintSlot && hintSlot.offsetWidth > 0 ? hintSlot.getBoundingClientRect().width + HINT_GAP : 0;
             const available =
                 box.getBoundingClientRect().right -
                 root.getBoundingClientRect().left -
                 ext.getBoundingClientRect().width -
+                hintRoom -
                 1;
             const style = getComputedStyle(base);
             setShown(truncateName(value, (candidate) => textWidth(candidate, style) <= available, ellipsis));
@@ -53,6 +63,8 @@ function TruncatedName({ value, extension, ellipsis }: { value: string; extensio
         refit();
         const observer = new ResizeObserver(refit);
         observer.observe(box);
+        // Fires when the hints toggle shows or hides the "?".
+        if (hintSlot) observer.observe(hintSlot);
         // Web fonts can land after the first measurement and change widths.
         let active = true;
         void document.fonts?.ready.then(() => {
@@ -89,13 +101,23 @@ type Props = {
     fallback: string;
     disabled?: boolean;
     ellipsis?: NameEllipsis;
+    // Rendered right after the name, e.g. a <Hint>.
+    hint?: ReactNode;
 };
 
 // Card-header file name for the text part. Reads as plain text until
 // clicked, then turns into an inline input for the base name; the extension
 // stays fixed because it follows the selected format. Enter or blur commits,
 // Escape reverts, and an empty/unusable name falls back to `fallback`.
-export function SecretName({ value, extension, onChange, fallback, disabled = false, ellipsis = 'middle' }: Props) {
+export function SecretName({
+    value,
+    extension,
+    onChange,
+    fallback,
+    disabled = false,
+    ellipsis = 'middle',
+    hint,
+}: Props) {
     const t = useTranslations('create');
     const [isEditing, setIsEditing] = useState(false);
     const [draft, setDraft] = useState(value);
@@ -160,6 +182,7 @@ export function SecretName({ value, extension, onChange, fallback, disabled = fa
                     <TruncatedName value={value} extension={extension} ellipsis={ellipsis} />
                 </button>
             )}
+            {hint ? <span className={styles.hintSlot}>{hint}</span> : null}
         </span>
     );
 }

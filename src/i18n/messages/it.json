@@ -230,5 +230,17 @@
         "system": "Tema di sistema",
         "light": "Tema chiaro",
         "dark": "Tema scuro"
+    },
+    "hints": {
+        "toggle": "Suggerimenti",
+        "show": "Mostra suggerimenti",
+        "hide": "Nascondi suggerimenti",
+        "about": "Suggerimento: {label}",
+        "fileName": "Il nome con cui il destinatario scaricherà il segreto. Clicca sul nome per rinominarlo. L'estensione dipende dal formato.",
+        "format": "Imposta l'evidenziazione della sintassi e l'estensione del file. Viene rilevato automaticamente quando incolli del testo, ma puoi sceglierlo tu.",
+        "attachFile": "Un file fino a 25 MB viene cifrato nel browser insieme al testo. Trascinalo sulla pagina o incollalo dagli appunti.",
+        "expiresIn": "Scaduto il tempo, il link smette di funzionare e il segreto viene eliminato dal server, anche se nessuno lo ha aperto.",
+        "maxReads": "Quante volte si può aprire il link. Dopo l'ultima lettura il segreto viene eliminato; ∞ significa senza limiti fino alla scadenza.",
+        "passphrase": "Un livello di cifratura in più: senza questa password il segreto non si può decifrare, nemmeno con il link. Inviala separatamente dal link, su un altro canale. Cinque tentativi errati eliminano il segreto."
     }
 }

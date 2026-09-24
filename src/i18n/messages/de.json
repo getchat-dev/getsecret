@@ -230,5 +230,17 @@
         "system": "Systemdesign",
         "light": "Helles Design",
         "dark": "Dunkles Design"
+    },
+    "hints": {
+        "toggle": "Hinweise",
+        "show": "Hinweise anzeigen",
+        "hide": "Hinweise ausblenden",
+        "about": "Hinweis: {label}",
+        "fileName": "Unter diesem Namen lädt der Empfänger das Geheimnis herunter. Klicke auf den Namen, um ihn zu ändern. Die Endung folgt dem Format.",
+        "format": "Legt die Syntaxhervorhebung und die Dateiendung fest. Wird beim Einfügen von Text automatisch erkannt, lässt sich aber manuell wählen.",
+        "attachFile": "Dateien bis 25 MB werden zusammen mit dem Text im Browser verschlüsselt. Zieh sie auf die Seite oder füge sie aus der Zwischenablage ein.",
+        "expiresIn": "Ist die Zeit abgelaufen, funktioniert der Link nicht mehr und das Geheimnis wird vom Server gelöscht, auch wenn es niemand geöffnet hat.",
+        "maxReads": "Wie oft der Link geöffnet werden kann. Nach dem letzten Aufruf wird das Geheimnis gelöscht; ∞ heißt unbegrenzt bis zum Ablauf.",
+        "passphrase": "Eine zusätzliche Verschlüsselungsebene: Ohne dieses Passwort lässt sich das Geheimnis selbst mit dem Link nicht entschlüsseln. Übermittle es getrennt vom Link über einen anderen Kanal. Fünf Fehlversuche löschen das Geheimnis."
     }
 }

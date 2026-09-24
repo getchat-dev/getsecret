@@ -13,6 +13,15 @@
     gap: var(--space-1);
 }
 
+/* A label plus the "?" hint that explains it. The hint sits outside the
+   <label> so its text doesn't leak into the input's accessible name. */
+.labelRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-half);
+}
+
 .labelHint {
     color: var(--fg-muted);
     font-weight: 400;
@@ -38,8 +47,12 @@
     gap: var(--space-2) var(--space-4);
 }
 
-.pair > .field {
-    flex: 0 0 auto;
+/* Takes the leftover width on its line, so a control inside it can measure how
+   much room its labels actually have. min-width:0 is load-bearing: without it
+   the field never shrinks below its min-content width. */
+.grow {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .input {

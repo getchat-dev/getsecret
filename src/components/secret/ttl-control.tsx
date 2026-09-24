@@ -1,6 +1,8 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { Hint } from '@/components/ui/hint';
 import { MinusIcon, PlusIcon } from '@/components/ui/icons';
 import { maxValueForUnit, TTL_UNITS, type TtlUnit, unitSeconds } from '@/lib/expiration';
 import controls from '@/styles/primitives/controls.module.css';
@@ -12,9 +14,24 @@ type Props = {
     onChange: (next: { value: string; unit: TtlUnit }) => void;
 };
 
+// Unit-label tiers, widest → narrowest. The stepper and the unit buttons share one
+// shell that cannot wrap, so the control measures itself and drops to a shorter tier
+// when the full names would push that shell past the width of its line:
+//   full → "minutes / hours / days" (count-aware: minute vs minutes)
+//   mid  → "min / hr / day"
+//   short→ "m / h / d"
+const TIERS = ['full', 'mid', 'short'] as const;
+type Tier = (typeof TIERS)[number];
+
+// useLayoutEffect warns during SSR; this client component still server-renders,
+// so fall back to useEffect on the server.
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
 export function TtlControl({ value, unit, onChange }: Props) {
     const t = useTranslations('create');
     const tUnits = useTranslations('create.units');
+    const tHints = useTranslations('hints');
+    const locale = useLocale();
 
     const max = maxValueForUnit(unit);
     const parsed = Number.parseInt(value, 10);
@@ -22,7 +39,54 @@ export function TtlControl({ value, unit, onChange }: Props) {
     // Drives singular/plural on the labels ("1 day" vs "2 days"); empty/invalid
     // input reads as 1 so the labels stay singular while mid-typing.
     const count = numeric ?? 1;
-    const label = (option: TtlUnit) => tUnits(`${option}.full`, { count });
+
+    const rowRef = useRef<HTMLDivElement>(null);
+    const groupRef = useRef<HTMLDivElement>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [tierIndex, setTierIndex] = useState(0);
+    const lastInputs = useRef('');
+
+    // Re-measure whenever our own width changes.
+    useEffect(() => {
+        const row = rowRef.current;
+        if (!row || typeof ResizeObserver === 'undefined') return;
+        const observer = new ResizeObserver((entries) => {
+            const width = Math.round(entries[0].contentRect.width);
+            setContainerWidth((prev) => (prev === width ? prev : width));
+        });
+        observer.observe(row);
+        return () => observer.disconnect();
+    }, []);
+
+    // Fit search: when the inputs (available width, count, locale) change, restart
+    // from the widest tier; otherwise, if the group is wider than the line it sits
+    // on, drop one tier. Runs before paint so no intermediate tier flashes.
+    // The group never wraps and never shrinks (controls.inputGroup is flex: 0 0 auto),
+    // so its offsetWidth is the width the current labels actually want. The TTL field
+    // grows to fill its line (see field.grow), so the available width is independent
+    // of the tier — no measure → shrink → re-measure feedback loop.
+    useIsoLayoutEffect(() => {
+        const group = groupRef.current;
+        const row = rowRef.current;
+        if (!group || !row) return;
+
+        const key = `${containerWidth}|${count}|${locale}`;
+        if (lastInputs.current !== key) {
+            lastInputs.current = key;
+            if (tierIndex !== 0) {
+                setTierIndex(0);
+                return;
+            }
+        }
+
+        if (group.offsetWidth > row.clientWidth + 1 && tierIndex < TIERS.length - 1) {
+            setTierIndex(tierIndex + 1);
+        }
+    }, [containerWidth, count, locale, tierIndex]);
+
+    const tier: Tier = TIERS[tierIndex];
+    // mid/short messages carry no {count} placeholder, so the value is ignored there.
+    const label = (option: TtlUnit, forTier: Tier = tier) => tUnits(`${option}.${forTier}`, { count });
 
     function setValue(next: string) {
         // 1. Strip non-digits (keeps the field numeric even if the user
@@ -56,49 +120,59 @@ export function TtlControl({ value, unit, onChange }: Props) {
     }
 
     return (
-        <div className={field.field}>
-            <label className={field.label} htmlFor="ttl-value">
-                {t('expiresIn')}
-            </label>
-            <div className={field.row}>
-                <div className={controls.stepper}>
-                    <button
-                        type="button"
-                        onClick={() => step(-1)}
-                        disabled={numeric !== null && numeric <= 1}
-                        aria-label="Decrease"
-                    >
-                        <MinusIcon size={12} />
-                    </button>
-                    <input
-                        id="ttl-value"
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        value={value}
-                        onChange={(event) => setValue(event.target.value)}
-                        aria-label={`${t('expiresIn')} (${label(unit)})`}
-                    />
-                    <button
-                        type="button"
-                        onClick={() => step(1)}
-                        disabled={numeric !== null && numeric >= max}
-                        aria-label="Increase"
-                    >
-                        <PlusIcon size={12} />
-                    </button>
-                </div>
-                <div className={controls.segmented}>
-                    {TTL_UNITS.map((option) => (
+        <div className={`${field.field} ${field.grow}`}>
+            <div className={field.labelRow}>
+                <label className={field.label} htmlFor="ttl-value">
+                    {t('expiresIn')}
+                </label>
+                <Hint label={t('expiresIn')}>{tHints('expiresIn')}</Hint>
+            </div>
+            <div className={field.row} ref={rowRef}>
+                {/* Stepper and unit choice share one shell so they read as a single
+                    field — "1 day" — rather than two unrelated controls. */}
+                <div className={controls.inputGroup} ref={groupRef}>
+                    <div className={controls.stepper}>
                         <button
-                            key={option}
                             type="button"
-                            aria-pressed={option === unit}
-                            onClick={() => setUnit(option)}
+                            onClick={() => step(-1)}
+                            disabled={numeric !== null && numeric <= 1}
+                            aria-label="Decrease"
                         >
-                            {label(option)}
+                            <MinusIcon size={12} />
                         </button>
-                    ))}
+                        <input
+                            id="ttl-value"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={value}
+                            onChange={(event) => setValue(event.target.value)}
+                            aria-label={`${t('expiresIn')} (${label(unit, 'full')})`}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => step(1)}
+                            disabled={numeric !== null && numeric >= max}
+                            aria-label="Increase"
+                        >
+                            <PlusIcon size={12} />
+                        </button>
+                    </div>
+                    <div className={controls.segmented}>
+                        {TTL_UNITS.map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                aria-pressed={option === unit}
+                                // Always announce the full word to screen readers, even when
+                                // the visible label is abbreviated to "m" / "h" / "d".
+                                aria-label={label(option, 'full')}
+                                onClick={() => setUnit(option)}
+                            >
+                                {label(option)}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

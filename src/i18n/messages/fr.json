@@ -230,5 +230,17 @@
         "system": "Thème du système",
         "light": "Thème clair",
         "dark": "Thème sombre"
+    },
+    "hints": {
+        "toggle": "Aide",
+        "show": "Afficher l'aide",
+        "hide": "Masquer l'aide",
+        "about": "Aide : {label}",
+        "fileName": "Le nom sous lequel le destinataire téléchargera le secret. Cliquez sur le nom pour le modifier. L'extension suit le format.",
+        "format": "Définit la coloration syntaxique et l'extension du fichier. Détecté automatiquement quand vous collez du texte, mais vous pouvez le choisir.",
+        "attachFile": "Un fichier jusqu'à 25 Mo est chiffré dans votre navigateur avec le texte. Glissez-le sur la page ou collez-le depuis le presse-papiers.",
+        "expiresIn": "Une fois le délai écoulé, le lien ne fonctionne plus et le secret est supprimé du serveur, même si personne ne l'a ouvert.",
+        "maxReads": "Nombre d'ouvertures autorisées. Après la dernière lecture, le secret est supprimé ; ∞ signifie sans limite jusqu'à expiration.",
+        "passphrase": "Une couche de chiffrement supplémentaire : sans ce mot de passe, le secret reste indéchiffrable, même avec le lien. Transmettez-le séparément du lien, par un autre canal. Cinq essais erronés suppriment le secret."
     }
 }

@@ -115,6 +115,17 @@
     cursor: default;
 }
 
+/* Mobile-only copy of the hints switch, left of the hamburger. */
+.mobileHints {
+    display: none;
+}
+
+/* Matches the hamburger's 38px box. */
+.mobileHints > button {
+    width: 38px;
+    height: 38px;
+}
+
 /* Hamburger — hidden until the mobile breakpoint, where it replaces the inline
    nav (see the 640px block below). */
 .menuTrigger {
@@ -158,8 +169,18 @@
         display: none;
     }
 
+    /* The hints switch takes the auto margin that pushes the pair to the
+       end; the hamburger sits right after it. */
+    .mobileHints {
+        display: flex;
+        margin-left: auto;
+        /* Pull the pair to an 8px gap instead of the row's 16px. */
+        margin-right: calc(var(--space-1) - var(--space-2));
+    }
+
     .menuTrigger {
         display: inline-flex;
+        margin-left: 0;
     }
 }
 
