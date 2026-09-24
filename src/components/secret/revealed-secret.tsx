@@ -3,13 +3,15 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { CopyButton } from '@/components/copy-button';
+import { SecretNameLabel } from '@/components/secret/secret-name';
 import type { AttachedFile } from '@/components/secret/viewer';
 import { ActionLabel } from '@/components/ui/action-label';
-import { EyeIcon, EyeOffIcon, FileIcon, PlusIcon, UnlockIcon } from '@/components/ui/icons';
+import { DownloadIcon, EyeIcon, EyeOffIcon, FileIcon, PlusIcon, UnlockIcon } from '@/components/ui/icons';
 import { useRouter } from '@/i18n/navigation';
 import { decodeContainer } from '@/lib/file-container';
 import { decodeImagePreview, type ImagePreviewHandle } from '@/lib/image-preview';
-import type { SecretFormat } from '@/lib/secret-formats';
+import { DEFAULT_SECRET_FILENAME, sanitizeFilename } from '@/lib/secret-filename';
+import { SECRET_FORMAT_EXTENSIONS, type SecretFormat } from '@/lib/secret-formats';
 import { COMMAND } from '@/lib/ui-commands';
 import banner from '@/styles/primitives/banner.module.css';
 import btn from '@/styles/primitives/button.module.css';
@@ -48,6 +50,11 @@ function decodeBase64Url(value: string): Uint8Array<ArrayBuffer> {
 
 type Props = {
     content: string;
+    // Sender-chosen base name from the envelope; null for secrets created
+    // before names existed or left at the default.
+    name?: string | null;
+    // Used when `name` is null.
+    defaultFilename?: string;
     format: SecretFormat;
     viewsRemaining: number | null;
     file?: AttachedFile | null;
@@ -59,7 +66,14 @@ type PreviewState =
     | { status: 'ready'; url: string }
     | { status: 'unavailable' };
 
-export function RevealedSecret({ content, format, viewsRemaining, file = null }: Props) {
+export function RevealedSecret({
+    content,
+    name = null,
+    defaultFilename = DEFAULT_SECRET_FILENAME,
+    format,
+    viewsRemaining,
+    file = null,
+}: Props) {
     const t = useTranslations('revealed');
     const tErrors = useTranslations('errors');
     const router = useRouter();
@@ -183,9 +197,10 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 // still return null (false-positive MIME, HEIC worker blocked)
                 // and we don't want that to invalidate a perfectly downloadable
                 // file the user already paid for.
-                const cached: DecryptedFile = { blob, filename: decoded.meta.filename || 'attachment' };
+                const safeName = sanitizeFilename(decoded.meta.filename);
+                const cached: DecryptedFile = { blob, filename: safeName || 'attachment' };
                 decryptedFileRef.current = cached;
-                if (decoded.meta.filename) setAttachmentName(decoded.meta.filename);
+                if (safeName) setAttachmentName(safeName);
                 resolveHandoff(cached);
                 imageHandle = decodeImagePreview(blob, {
                     type: decoded.meta.mime,
@@ -302,12 +317,13 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                 blob = new Blob([new Uint8Array(decoded.bytes)], {
                     type: decoded.meta.mime || 'application/octet-stream',
                 });
-                filename = decoded.meta.filename || 'attachment';
+                const safeName = sanitizeFilename(decoded.meta.filename);
+                filename = safeName || 'attachment';
                 // Populate the cache so a second click is free too (matters
                 // even without auto-preview, e.g. user downloads, decides to
                 // re-save under a different name).
                 decryptedFileRef.current = { blob, filename };
-                if (decoded.meta.filename) setAttachmentName(decoded.meta.filename);
+                if (safeName) setAttachmentName(safeName);
             }
             blobUrl = URL.createObjectURL(blob);
             const anchor = document.createElement('a');
@@ -333,11 +349,29 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
     }
 
     const hasText = content.length > 0;
+    const textFilename = `${name ?? defaultFilename}.${SECRET_FORMAT_EXTENSIONS[format]}`;
+
+    // The text never left this tab in plaintext; a same-origin blob: URL
+    // hands it to the browser's download manager without another request.
+    function handleDownloadText() {
+        const blobUrl = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
+        const anchor = document.createElement('a');
+        anchor.href = blobUrl;
+        anchor.download = textFilename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+    }
 
     return (
         <section className={`${card.card} fade-up`}>
             <header className={card.header}>
-                <span className={card.headerTitle}>{t('plaintext')}</span>
+                {hasText ? (
+                    <SecretNameLabel value={name ?? defaultFilename} extension={SECRET_FORMAT_EXTENSIONS[format]} />
+                ) : (
+                    <span className={card.headerTitle}>{t('plaintext')}</span>
+                )}
                 <span className={card.headerMeta}>
                     {hasText ? (
                         <>
@@ -348,6 +382,15 @@ export function RevealedSecret({ content, format, viewsRemaining, file = null }:
                                 aria-label={hidden ? 'show' : 'hide'}
                             >
                                 {hidden ? <EyeIcon size={14} /> : <EyeOffIcon size={14} />}
+                            </button>
+                            <button
+                                type="button"
+                                className={`${btn.btn} ${btn.btnGhost} ${btn.btnIcon}`}
+                                onClick={handleDownloadText}
+                                aria-label={t('downloadText', { filename: textFilename })}
+                                title={t('downloadText', { filename: textFilename })}
+                            >
+                                <DownloadIcon size={14} />
                             </button>
                             <CopyButton
                                 textToCopy={content}

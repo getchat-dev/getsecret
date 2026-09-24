@@ -79,6 +79,8 @@
         "encrypting": "加密中…",
         "charsLeft": "剩余 {count, number} 个字符",
         "formatLabel": "格式",
+        "renameFile": "重命名",
+        "fileNameLabel": "文件名",
         "hidePassword": "隐藏密码",
         "showPassword": "显示密码",
         "previewImageLabel": "在显示时展示图片预览"
@@ -168,6 +170,7 @@
         "copiedToast": "秘密已复制 — 立即粘贴",
         "attachmentLabel": "附件",
         "download": "下载",
+        "downloadText": "下载为 {filename}",
         "downloading": "下载中…",
         "previewLoading": "正在加载预览…"
     },

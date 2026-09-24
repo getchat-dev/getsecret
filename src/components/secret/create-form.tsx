@@ -9,6 +9,7 @@ import { GeneratedLink } from '@/components/secret/generated-link';
 // import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
 import { MaxViewsControl } from '@/components/secret/max-views-control';
 import { PasswordField } from '@/components/secret/password-field';
+import { SecretName } from '@/components/secret/secret-name';
 import { SecretTextarea } from '@/components/secret/secret-textarea';
 import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
 import { ActionLabel } from '@/components/ui/action-label';
@@ -19,6 +20,7 @@ import { decodeImagePreview, isImageCandidate } from '@/lib/image-preview';
 import { DEFAULT_MAX_VIEWS } from '@/lib/max-views';
 import { markOwnSecret } from '@/lib/own-secrets';
 import { isValidPassword, MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import { DEFAULT_SECRET_FILENAME } from '@/lib/secret-filename';
 import {
     DEFAULT_SECRET_FORMAT,
     isSecretFormat,
@@ -74,9 +76,15 @@ type Props = {
     enableMultiRead?: boolean;
     enablePassword?: boolean;
     enableFileAttachments?: boolean;
+    defaultFilename?: string;
 };
 
-export function CreateForm({ enableMultiRead = false, enablePassword = false, enableFileAttachments = true }: Props) {
+export function CreateForm({
+    enableMultiRead = false,
+    enablePassword = false,
+    enableFileAttachments = true,
+    defaultFilename = DEFAULT_SECRET_FILENAME,
+}: Props) {
     const t = useTranslations('create');
     const tErrors = useTranslations('errors');
 
@@ -87,6 +95,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     const [ttlValue, setTtlValue] = useState('1');
     const [ttlUnit, setTtlUnit] = useState<TtlUnit>('days');
     const [format, setFormat] = useState<SecretFormat>(DEFAULT_SECRET_FORMAT);
+    const [name, setName] = useState(defaultFilename);
     const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
     const [password, setPassword] = useState('');
     const [file, setFile] = useState<File | null>(null);
@@ -287,6 +296,10 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                 ...(effectivePassword.length > 0 ? { password: effectivePassword } : {}),
                 ...(uploadResult ? { fileRef: uploadResult.fileRef, uploadToken: uploadResult.uploadToken } : {}),
                 ...(uploadResult && fileIsImage && previewImage ? { previewImage: true } : {}),
+                // Always sent, even when unchanged: the operator's default can
+                // change between create and read, and the recipient should
+                // get the name the sender saw.
+                name,
             });
             window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
             window.sessionStorage.removeItem(FORMAT_STORAGE_KEY);
@@ -321,6 +334,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
     function shareAnother() {
         setSecret('');
         setFormat(DEFAULT_SECRET_FORMAT);
+        setName(defaultFilename);
         setLink('');
         setPassword('');
         setFile(null);
@@ -357,10 +371,13 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
             ) : null}
             <form onSubmit={handleSubmit} className={`${card.card} fade-up`} noValidate>
                 <header className={card.header}>
-                    <span className={card.headerTitle}>
-                        <FileIcon size={14} className={card.fileIcon} />
-                        secret.{SECRET_FORMAT_EXTENSIONS[format]}
-                    </span>
+                    <SecretName
+                        value={name}
+                        extension={SECRET_FORMAT_EXTENSIONS[format]}
+                        onChange={setName}
+                        fallback={defaultFilename}
+                        disabled={isSubmitting}
+                    />
                     <span className={card.headerMeta}>
                         <FormatSelect value={format} onChange={setFormat} label={t('formatLabel')} />
                     </span>
@@ -466,6 +483,7 @@ export function CreateForm({ enableMultiRead = false, enablePassword = false, en
                             onClick={() => {
                                 setSecret('');
                                 setFormat(DEFAULT_SECRET_FORMAT);
+                                setName(defaultFilename);
                                 setFile(null);
                             }}
                             disabled={isSubmitting}

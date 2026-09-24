@@ -79,6 +79,8 @@
         "encrypting": "Crittografia in corso…",
         "charsLeft": "{count, number} caratteri rimanenti",
         "formatLabel": "Formato",
+        "renameFile": "Rinomina",
+        "fileNameLabel": "Nome del file",
         "hidePassword": "Nascondi passphrase",
         "showPassword": "Mostra passphrase",
         "previewImageLabel": "Mostra l'anteprima dell'immagine all'apertura"
@@ -168,6 +170,7 @@
         "copiedToast": "Segreto copiato — incollalo ora",
         "attachmentLabel": "Allegato",
         "download": "Scarica",
+        "downloadText": "Scarica come {filename}",
         "downloading": "Download in corso…",
         "previewLoading": "Caricamento anteprima…"
     },

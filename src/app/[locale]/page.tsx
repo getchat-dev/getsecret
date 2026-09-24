@@ -4,6 +4,7 @@ import { CreateForm } from '@/components/secret/create-form';
 import { CreateIntro } from '@/components/secret/create-intro';
 import { JsonLd } from '@/components/seo/json-ld';
 import { isMultiReadEnabled, isPasswordEnabled } from '@/lib/feature-flags';
+import { getDefaultSecretFilename } from '@/lib/secret-filename';
 import { buildPageMetadata, SITE_NAME, socialCardAlt } from '@/lib/site-meta';
 import { homePageLd } from '@/lib/structured-data';
 
@@ -40,7 +41,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                 })}
             />
             <CreateIntro />
-            <CreateForm enableMultiRead={isMultiReadEnabled()} enablePassword={isPasswordEnabled()} />
+            <CreateForm
+                enableMultiRead={isMultiReadEnabled()}
+                enablePassword={isPasswordEnabled()}
+                defaultFilename={getDefaultSecretFilename()}
+            />
         </main>
     );
 }

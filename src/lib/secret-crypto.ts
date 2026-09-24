@@ -8,6 +8,7 @@ import {
     PASSWORD_PBKDF2_ITERATIONS,
     type PasswordParams,
 } from '@/lib/password-derive';
+import { sanitizeFilename } from '@/lib/secret-filename';
 
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
 const SECRET_ID_LABEL = 'burnotes:secret-id:v1:';
@@ -73,12 +74,16 @@ export type SecretPayload = {
     // S3 object until the user clicks. Stored inside the encrypted envelope
     // so the server never sees the sender's intent.
     previewImage?: boolean;
+    // Sender-chosen base name for the text part (no extension — that comes
+    // from the format). The recipient downloads the text as `<name>.<ext>`.
+    // Lives inside the envelope so the server never learns it.
+    name?: string;
 };
 
 // Envelope wire format inside the AES-GCM plaintext:
 //
 //   byte 0:     0x00 (magic — marks the envelope format)
-//   bytes 1..:  UTF-8 JSON { text: string, fileRef?: { s3Key, keyB64 }, previewImage?: boolean }
+//   bytes 1..:  UTF-8 JSON { text: string, fileRef?: { s3Key, keyB64 }, previewImage?: boolean, name?: string }
 //
 // Legacy secrets (created before this format was introduced) have plaintext
 // that is raw UTF-8 text with no 0x00 prefix. The decoder detects them by
@@ -205,12 +210,16 @@ function isFileRefShape(value: unknown): value is FileRef {
 }
 
 export function encodePlaintext(payload: SecretPayload): Uint8Array<ArrayBuffer> {
-    const envelope: { text: string; fileRef?: FileRef; previewImage?: boolean } = { text: payload.text };
+    const envelope: { text: string; fileRef?: FileRef; previewImage?: boolean; name?: string } = {
+        text: payload.text,
+    };
     if (payload.fileRef) envelope.fileRef = payload.fileRef;
     // Only emit previewImage when (a) it's true and (b) there's a file to
     // preview. Saves a few bytes for the common case and keeps the field's
     // meaning unambiguous when it does appear.
     if (payload.fileRef && payload.previewImage === true) envelope.previewImage = true;
+    const name = payload.name === undefined ? '' : sanitizeFilename(payload.name);
+    if (name.length > 0) envelope.name = name;
     const json = JSON.stringify(envelope);
     const jsonBytes = textEncoder.encode(json);
     const out = new Uint8Array(1 + jsonBytes.length);
@@ -246,9 +255,14 @@ export function decodePlaintext(plaintext: Uint8Array<ArrayBuffer>): SecretPaylo
     // never coerce strings/numbers, since a hostile envelope could otherwise
     // smuggle truthy values past us.
     const previewImage = fileRef && obj.previewImage === true ? true : undefined;
-    if (fileRef && previewImage) return { text, fileRef, previewImage };
-    if (fileRef) return { text, fileRef };
-    return { text };
+    // Re-sanitize on the way out: the envelope is sender-controlled, and the
+    // name ends up in a download attribute on the recipient's machine.
+    const name = typeof obj.name === 'string' ? sanitizeFilename(obj.name) : '';
+    const payload: SecretPayload = { text };
+    if (fileRef) payload.fileRef = fileRef;
+    if (previewImage) payload.previewImage = previewImage;
+    if (name.length > 0) payload.name = name;
+    return payload;
 }
 
 export async function deriveSecretId(secretKey: string): Promise<string> {

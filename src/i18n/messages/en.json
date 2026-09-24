@@ -83,6 +83,8 @@
         "encrypting": "Encrypting…",
         "charsLeft": "{count, number} characters left",
         "formatLabel": "Format",
+        "renameFile": "Rename",
+        "fileNameLabel": "File name",
         "hidePassword": "Hide passphrase",
         "showPassword": "Show passphrase",
         "previewImageLabel": "Show image preview on reveal"
@@ -172,6 +174,7 @@
         "copiedToast": "Secret copied — paste it now",
         "attachmentLabel": "Attached file",
         "download": "Download",
+        "downloadText": "Download as {filename}",
         "downloading": "Downloading…",
         "previewLoading": "Decoding preview…"
     },

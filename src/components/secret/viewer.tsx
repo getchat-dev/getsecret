@@ -54,6 +54,7 @@ type SecretState =
     | {
           status: 'revealed';
           content: string;
+          name: string | null;
           format: SecretFormat;
           viewsRemaining: number | null;
           file: AttachedFile | null;
@@ -66,9 +67,10 @@ type Props = {
     maxViews: number | null;
     viewsUsed: number;
     passwordParams: PasswordParams | null;
+    defaultFilename?: string;
 };
 
-export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }: Props) {
+export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams, defaultFilename }: Props) {
     const t = useTranslations('reveal');
 
     const [linkState, setLinkState] = useState<LinkState>({ status: 'checking' });
@@ -215,6 +217,7 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
                 setSecretState({
                     status: 'revealed',
                     content: payload.text,
+                    name: payload.name ?? null,
                     format,
                     viewsRemaining,
                     file,
@@ -250,6 +253,8 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams }
         return (
             <RevealedSecret
                 content={secretState.content}
+                name={secretState.name}
+                defaultFilename={defaultFilename}
                 format={secretState.format}
                 viewsRemaining={secretState.viewsRemaining}
                 file={secretState.file}

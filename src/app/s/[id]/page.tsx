@@ -5,6 +5,7 @@ import { BurnedScreen } from '@/components/secret/burned-screen';
 import { RevealIntro } from '@/components/secret/reveal-intro';
 import { Viewer } from '@/components/secret/viewer';
 import { pickLocaleFromAcceptLanguage } from '@/lib/accept-language';
+import { getDefaultSecretFilename } from '@/lib/secret-filename';
 import { secretStore } from '@/lib/secret-store';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,7 @@ export default async function SecretPage({ params }: { params: Promise<{ id: str
                 maxViews={secretMetadata.maxViews}
                 viewsUsed={secretMetadata.viewsUsed}
                 passwordParams={secretMetadata.passwordParams}
+                defaultFilename={getDefaultSecretFilename()}
             />
         </main>
     );

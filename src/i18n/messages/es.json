@@ -79,6 +79,8 @@
         "encrypting": "Cifrando…",
         "charsLeft": "{count, number} caracteres restantes",
         "formatLabel": "Formato",
+        "renameFile": "Renombrar",
+        "fileNameLabel": "Nombre del archivo",
         "hidePassword": "Ocultar contraseña",
         "showPassword": "Mostrar contraseña",
         "previewImageLabel": "Mostrar vista previa de la imagen al revelar"
@@ -168,6 +170,7 @@
         "copiedToast": "Secreto copiado — pégalo ahora",
         "attachmentLabel": "Archivo adjunto",
         "download": "Descargar",
+        "downloadText": "Descargar como {filename}",
         "downloading": "Descargando…",
         "previewLoading": "Cargando vista previa…"
     },

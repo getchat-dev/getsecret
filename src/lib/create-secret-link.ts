@@ -6,6 +6,7 @@ import {
     type PreparedSecretUploadWithPassword,
     prepareSecretUploadEnvelope,
     prepareSecretUploadWithPasswordEnvelope,
+    type SecretPayload,
 } from '@/lib/secret-crypto';
 import { DEFAULT_SECRET_FORMAT, type SecretFormat } from '@/lib/secret-formats';
 
@@ -28,6 +29,9 @@ type CreateSecretLinkOptions = {
     // Only takes effect when fileRef is also set; ignored otherwise. Stored
     // inside the encrypted envelope (server never learns the choice).
     previewImage?: boolean;
+    // Base name for the text part, without extension. Encrypted inside the
+    // envelope; the recipient downloads the text as `<name>.<ext>`.
+    name?: string;
 };
 
 function isPreparedWithPassword(
@@ -54,7 +58,7 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
         throw new Error('fileRef and uploadToken must be provided together');
     }
 
-    const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password, previewImage } = options;
+    const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password, previewImage, name } = options;
     const usePassword = typeof password === 'string' && password.length > 0;
     // The reveal-side gate (LockScreen + Viewer) refuses to open with a
     // password that doesn't pass isValidPassword. If we let a weaker one
@@ -76,11 +80,10 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
         // pre-envelope secret from older client builds still decodes.
         // previewImage is only meaningful with a file; encodePlaintext also
         // strips it in that case, but filtering here keeps callers honest.
-        const payload = fileRef
-            ? previewImage
-                ? { text: secret, fileRef, previewImage: true }
-                : { text: secret, fileRef }
-            : { text: secret };
+        const payload: SecretPayload = { text: secret };
+        if (fileRef) payload.fileRef = fileRef;
+        if (fileRef && previewImage) payload.previewImage = true;
+        if (name) payload.name = name;
         prepared = usePassword
             ? await prepareSecretUploadWithPasswordEnvelope(payload, password)
             : await prepareSecretUploadEnvelope(payload);

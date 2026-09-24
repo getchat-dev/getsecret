@@ -83,6 +83,8 @@
         "encrypting": "Шифрование…",
         "charsLeft": "осталось {count, number} символов",
         "formatLabel": "Формат",
+        "renameFile": "Переименовать",
+        "fileNameLabel": "Имя файла",
         "hidePassword": "Скрыть пароль",
         "showPassword": "Показать пароль",
         "previewImageLabel": "Показывать превью изображения при открытии"
@@ -172,6 +174,7 @@
         "copiedToast": "Секрет скопирован — вставьте сейчас",
         "attachmentLabel": "Вложение",
         "download": "Скачать",
+        "downloadText": "Скачать как {filename}",
         "downloading": "Скачивание…",
         "previewLoading": "Подготовка превью…"
     },

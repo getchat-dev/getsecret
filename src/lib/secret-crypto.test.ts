@@ -189,6 +189,31 @@ describe('plaintext envelope', () => {
         expect(decodePlaintext(bytes)).toEqual({ text: '', fileRef });
     });
 
+    it('round-trips a text name', () => {
+        expect(decodePlaintext(encodePlaintext({ text: 't', name: 'db-creds' }))).toEqual({
+            text: 't',
+            name: 'db-creds',
+        });
+    });
+
+    it('omits an empty name from the envelope', () => {
+        const encoded = encodePlaintext({ text: 't', name: '  ' });
+        expect(new TextDecoder().decode(encoded.subarray(1))).toBe('{"text":"t"}');
+    });
+
+    it('sanitizes a hostile name on decode', () => {
+        const bytes = new Uint8Array([
+            0x00,
+            ...new TextEncoder().encode(JSON.stringify({ text: 't', name: '../../etc/pa\u0000sswd' })),
+        ]);
+        expect(decodePlaintext(bytes)).toEqual({ text: 't', name: 'etcpasswd' });
+    });
+
+    it('drops a non-string name', () => {
+        const bytes = new Uint8Array([0x00, ...new TextEncoder().encode(JSON.stringify({ text: 't', name: 42 }))]);
+        expect(decodePlaintext(bytes)).toEqual({ text: 't' });
+    });
+
     it('round-trips previewImage=true alongside fileRef', () => {
         const encoded = encodePlaintext({ text: 't', fileRef, previewImage: true });
         expect(decodePlaintext(encoded)).toEqual({ text: 't', fileRef, previewImage: true });
