@@ -4,6 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `AGENTS.md` contains a deeper orientation (file map, end-to-end flows, invariants). Read it before non-trivial work.
 
+## Git & commits
+
+**Commit messages: Conventional Commits, terse.** No `Co-Authored-By` or authorship trailer. Add a body only when the subject line genuinely can't carry the point. When you do, open with *why* — the reason the work was done at all (a bug, a drift from the backend, a missing capability); the "what" is already in the diff. Then say what changes for the person *using* the app. Never a list of files or internals.
+
+Format:
+<type>(<scope>): <short title>
+<what changed from the user's perspective — 1-2 sentences max>
+
+Rules:
+- Title: Conventional Commits style, imperative mood, max 72 chars
+- No labels, no "This commit...", no bullet points in body
+- Skip body if the title is self-explanatory
+
+Examples:
+fix(auth): prevent logout on page refresh
+Users stay logged in after reloading the page instead of being redirected to login.
+
+feat(search): add filters by date and category
+
 ## Commands
 
 - `npm run dev` — Next dev server on `http://localhost:3000`
