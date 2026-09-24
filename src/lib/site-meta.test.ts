@@ -30,27 +30,33 @@ describe('localizedAlternates', () => {
     afterEach(() => setSiteUrl(original));
 
     it('produces canonical for the current locale and hreflang for every other', () => {
-        const result = localizedAlternates('/security', 'en');
-        expect(result.canonical).toBe('https://burnotes.app/en/security');
-        for (const locale of routing.locales) {
-            expect(result.languages?.[locale]).toBe(`https://burnotes.app/${locale}/security`);
-        }
+        const result = localizedAlternates('/security', 'ru');
+        expect(result.canonical).toBe('https://burnotes.app/ru/security');
+        expect(result.languages?.en).toBe('https://burnotes.app/security');
+        expect(result.languages?.ru).toBe('https://burnotes.app/ru/security');
+    });
+
+    it('serves the default locale without a prefix', () => {
+        expect(routing.defaultLocale).toBe('en');
+        expect(localizedAlternates('/security', 'en').canonical).toBe('https://burnotes.app/security');
     });
 
     it("includes x-default pointing at the project's default locale", () => {
         const result = localizedAlternates('/docs', 'ru');
-        expect(result.languages?.['x-default']).toBe(`https://burnotes.app/${routing.defaultLocale}/docs`);
+        expect(result.languages?.['x-default']).toBe('https://burnotes.app/docs');
     });
 
-    it("treats '/' and '' as the locale root (no trailing slash)", () => {
-        expect(localizedAlternates('/', 'en').canonical).toBe('https://burnotes.app/en');
-        expect(localizedAlternates('', 'en').canonical).toBe('https://burnotes.app/en');
+    it("treats '/' and '' as the locale root", () => {
+        expect(localizedAlternates('/', 'en').canonical).toBe('https://burnotes.app/');
+        expect(localizedAlternates('', 'en').canonical).toBe('https://burnotes.app/');
+        // A prefixed root has no trailing slash: /ru/ and /ru are distinct URLs.
+        expect(localizedAlternates('/', 'ru').canonical).toBe('https://burnotes.app/ru');
     });
 
     it('normalizes paths that come in without a leading slash', () => {
         // Defensive — callers shouldn't pass this shape, but a typo shouldn't
         // produce a double-slash URL.
-        expect(localizedAlternates('docs', 'en').canonical).toBe('https://burnotes.app/en/docs');
+        expect(localizedAlternates('docs', 'ru').canonical).toBe('https://burnotes.app/ru/docs');
     });
 });
 

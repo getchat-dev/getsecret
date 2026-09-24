@@ -1,5 +1,5 @@
 import type { FaqEntry } from '@/lib/faq-schema.generated';
-import { SITE_NAME, siteOrigin } from '@/lib/site-meta';
+import { localizedUrl, SITE_NAME, siteOrigin } from '@/lib/site-meta';
 
 // Schema.org payloads. Kept as plain builders (not components) so the shapes stay
 // unit-testable and every page composes its own graph.
@@ -28,7 +28,7 @@ type HomeArgs = { locale: string; name: string; description: string };
 // let a consumer resolve the publisher without re-stating it.
 export function homePageLd({ locale, name, description }: HomeArgs): Json {
     const origin = siteOrigin();
-    const url = `${origin}/${locale}`;
+    const url = localizedUrl(locale, '/');
     return {
         '@context': 'https://schema.org',
         '@graph': [
@@ -67,7 +67,7 @@ type ArticleArgs = { locale: string; path: string; title: string; description: s
 // are documentation of how a system works, which is what the type is for.
 export function techArticleLd({ locale, path, title, description }: ArticleArgs): Json {
     const origin = siteOrigin();
-    const url = `${origin}/${locale}${path}`;
+    const url = localizedUrl(locale, path);
     return {
         '@context': 'https://schema.org',
         '@type': 'TechArticle',
@@ -87,7 +87,7 @@ type FaqArgs = { locale: string; entries: readonly FaqEntry[] };
 // visible page cannot say different things — both are derived from one MDX file.
 export function faqPageLd({ locale, entries }: FaqArgs): Json {
     const origin = siteOrigin();
-    const url = `${origin}/${locale}/faq`;
+    const url = localizedUrl(locale, '/faq');
     return {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',

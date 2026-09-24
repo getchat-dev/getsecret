@@ -38,6 +38,22 @@ const nextConfig: NextConfig = {
         NEXT_PUBLIC_APP_VERSION: pkg.version,
         NEXT_PUBLIC_APP_LICENSE: pkg.license ?? '',
     },
+    // English lived under /en until routing moved to localePrefix 'as-needed'
+    // (see src/i18n/routing.ts). next-intl's middleware would bounce those URLs
+    // with a temporary 307; a permanent redirect tells search engines to move the
+    // indexing and link weight to the unprefixed URL.
+    //
+    // These run before the middleware, so it never sees /en/... and never updates
+    // the NEXT_LOCALE cookie on this hop. That is safe: switching to English via
+    // next-intl's router.replace(…, { locale }) navigates to a forced /en/... path
+    // but writes the cookie on the client first, and the soft switch on the home
+    // page writes it itself (writeLocaleCookie in src/i18n/locale-path.ts).
+    async redirects() {
+        return [
+            { source: '/en', destination: '/', permanent: true },
+            { source: '/en/:path*', destination: '/:path*', permanent: true },
+        ];
+    },
     async headers() {
         return [
             {

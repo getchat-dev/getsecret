@@ -13,11 +13,19 @@ export function siteOrigin(): string {
     return fromEnv || 'http://localhost:3000';
 }
 
-function joinPath(locale: string, path: string): string {
-    // path '/' or '' both mean the locale root; avoid trailing '/' for
-    // canonical-URL stability (search engines treat /en/ and /en as distinct).
+// Absolute public URL of a localized page, matching routing.localePrefix
+// ('as-needed'): the default locale is unprefixed (`/`, `/faq`), the rest carry
+// theirs (`/ru`, `/ru/faq`). Every canonical, hreflang, sitemap, OG and JSON-LD URL
+// goes through here — if two of them disagree, Google picks its own canonical.
+//
+// path '/' or '' both mean the locale root. A prefixed root has no trailing '/'
+// (search engines treat /ru/ and /ru as different URLs). The bare origin does get
+// one: `https://x` and `https://x/` are the same URL, and the slash form is what
+// browsers and Search Console display, so comparisons there match.
+export function localizedUrl(locale: string, path: string): string {
+    const prefix = locale === routing.defaultLocale ? '' : `/${locale}`;
     const tail = !path || path === '/' ? '' : path.startsWith('/') ? path : `/${path}`;
-    return `${siteOrigin()}/${locale}${tail}`;
+    return `${siteOrigin()}${prefix}${tail || (prefix ? '' : '/')}`;
 }
 
 // Builds the alternates block: canonical URL for THIS locale + a `languages`
@@ -25,10 +33,12 @@ function joinPath(locale: string, path: string): string {
 // default locale. Next's Metadata API takes care of emitting the right
 // <link rel="alternate" hreflang="..."> tags.
 export function localizedAlternates(path: string, locale: string): NonNullable<Metadata['alternates']> {
-    const languages: Record<string, string> = Object.fromEntries(routing.locales.map((l) => [l, joinPath(l, path)]));
-    languages['x-default'] = joinPath(routing.defaultLocale, path);
+    const languages: Record<string, string> = Object.fromEntries(
+        routing.locales.map((l) => [l, localizedUrl(l, path)]),
+    );
+    languages['x-default'] = localizedUrl(routing.defaultLocale, path);
     return {
-        canonical: joinPath(locale, path),
+        canonical: localizedUrl(locale, path),
         languages,
     };
 }
@@ -40,7 +50,7 @@ export function localizedAlternates(path: string, locale: string): NonNullable<M
 // and keeps one source of truth for the URL.
 function ogImage(locale: string, alt: string) {
     return {
-        url: `${siteOrigin()}/${locale}/opengraph-image`,
+        url: localizedUrl(locale, '/opengraph-image'),
         width: OG_IMAGE_SIZE.width,
         height: OG_IMAGE_SIZE.height,
         alt,

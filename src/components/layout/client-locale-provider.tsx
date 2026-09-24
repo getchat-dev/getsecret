@@ -2,14 +2,11 @@
 
 import { NextIntlClientProvider } from 'next-intl';
 import { type ComponentProps, createContext, useCallback, useContext, useState } from 'react';
-import { type Locale, routing } from '@/i18n/routing';
+import { isLocalizedPath, pathForLocale, writeLocaleCookie } from '@/i18n/locale-path';
+import type { Locale } from '@/i18n/routing';
 import { localeDirection } from '@/lib/locale-direction';
 
 type Messages = NonNullable<ComponentProps<typeof NextIntlClientProvider>['messages']>;
-
-// Build a regex like `^\/(en|ru|de|...)(?=\/|$)` so we can detect & swap a locale
-// segment in the URL without touching paths that don't have one (e.g. /s/:id).
-const LOCALE_PREFIX_RE = new RegExp(`^/(${routing.locales.join('|')})(?=/|$)`);
 
 type SwitchCtx = {
     locale: Locale;
@@ -42,11 +39,13 @@ export function ClientLocaleProvider({ initialLocale, initialMessages, children 
 
             if (typeof window !== 'undefined') {
                 const { pathname, search, hash } = window.location;
-                // Only rewrite the URL when the current path actually carries a locale
-                // segment. Pages like /s/:id are global — leave their URL untouched.
-                if (LOCALE_PREFIX_RE.test(pathname)) {
-                    const newPath = pathname.replace(LOCALE_PREFIX_RE, `/${next}`);
-                    window.history.replaceState(null, '', newPath + search + hash);
+                // Pages like /s/:id are global: their URL has no locale to swap, and
+                // their language comes from Accept-Language alone, so no cookie either.
+                // On localized pages the cookie is what keeps the choice across a
+                // reload — without it, `/` sends a Russian browser back to `/ru`.
+                if (isLocalizedPath(pathname)) {
+                    window.history.replaceState(null, '', pathForLocale(pathname, next) + search + hash);
+                    writeLocaleCookie(next);
                 }
                 document.documentElement.lang = next;
                 // Keep dir in step with the locale so the mobile push-drawer (and

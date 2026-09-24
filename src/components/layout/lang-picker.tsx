@@ -3,11 +3,10 @@
 import { useLocale } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { useSwitchLocale } from '@/components/layout/client-locale-provider';
+import { isLocalizedPath } from '@/i18n/locale-path';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { type Locale, routing } from '@/i18n/routing';
 import styles from './lang-picker.module.css';
-
-const LOCALE_PREFIX_RE = new RegExp(`^/(${routing.locales.join('|')})(?=/|$)`);
 
 type LocaleMeta = {
     code: Locale;
@@ -59,11 +58,12 @@ export function LangPicker() {
         // with input/animations) and global routes like /s/:id stay client-only;
         // static localized pages (docs/faq/...) get a soft route change so their
         // server-rendered text actually retranslates.
-        const fullPath = typeof window !== 'undefined' ? window.location.pathname : '';
-        const localeMatch = fullPath.match(LOCALE_PREFIX_RE);
-        const restAfterLocale = localeMatch ? fullPath.slice(localeMatch[0].length) : null;
-        const isHome = restAfterLocale === '' || restAfterLocale === '/';
-        if (localeMatch && !isHome) {
+        //
+        // `pathname` is next-intl's, with the locale prefix already stripped, so
+        // the English and Russian home page both read as '/'. Global routes are
+        // outside [locale] and come back unchanged ('/s/…').
+        const isHome = pathname === '/';
+        if (isLocalizedPath(pathname) && !isHome) {
             router.replace(pathname, { locale: next });
         } else {
             void switchLocale(next);

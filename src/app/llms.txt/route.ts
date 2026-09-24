@@ -1,5 +1,5 @@
 import { routing } from '@/i18n/routing';
-import { siteOrigin } from '@/lib/site-meta';
+import { localizedUrl } from '@/lib/site-meta';
 
 // https://llmstxt.org — a plain-markdown brief for language models and the
 // crawlers that feed them. Not a ratified standard and not a ranking signal; it
@@ -13,10 +13,8 @@ import { siteOrigin } from '@/lib/site-meta';
 export const dynamic = 'force-static';
 
 function body(): string {
-    const origin = siteOrigin();
-    // No trailing slash on the locale root: joinPath() in site-meta.ts drops it
-    // for canonical stability, and these links have to resolve to the same URL.
-    const page = (path: string) => `${origin}/${routing.defaultLocale}${path === '/' ? '' : path}`;
+    // Same builder as the canonical URLs, so these links resolve to the same URL.
+    const page = (path: string) => localizedUrl(routing.defaultLocale, path);
 
     return `# Getsecret
 
@@ -55,7 +53,7 @@ These limits are documented rather than glossed over — see the threat model.
 
 ## Notes
 
-- Available in English (\`/en\`) and Russian (\`/ru\`).
+- Available in English (\`/\`) and Russian (\`/ru\`).
 - Secret URLs (\`/s/:id\`) are excluded from crawling and must never be fetched, summarised or logged: the fragment of such a URL is the decryption key, and opening the link destroys the secret for its intended recipient.
 `;
 }
