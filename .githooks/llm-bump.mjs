@@ -3,13 +3,17 @@
 // Ненулевой exit + сообщение в stderr — если Ollama недоступна / диф пуст.
 //
 // Конфиг через env:
-//   OLLAMA_URL    — дефолт http://192.168.1.121:11434
-//   OLLAMA_MODEL  — если не задан, берём первую модель из /api/tags
+//   OLLAMA_URL    — дефолт http://192.168.1.61:11434
+//   OLLAMA_MODEL  — если не задан, просим выбрать из /api/tags через /dev/tty;
+//                   в CI или без терминала — падаем, а не угадываем модель
 //   OLLAMA_TIMEOUT_MS — дефолт 30000
 
 import { execSync } from 'node:child_process';
+import { openSync } from 'node:fs';
+import { createInterface } from 'node:readline/promises';
+import tty from 'node:tty';
 
-const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://192.168.1.121:11434';
+const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://192.168.1.61:11434';
 const REQUESTED_MODEL = process.env.OLLAMA_MODEL;
 const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS ?? 30000);
 const DIFF_LIMIT = 30000; // символов, чтобы не разорвать контекст модели
@@ -31,13 +35,91 @@ async function ollamaFetch(path, init = {}) {
     }
 }
 
+function isCI() {
+    const ci = process.env.CI;
+    return Boolean(ci) && ci !== 'false' && ci !== '0';
+}
+
+// Хук забирает stdout как ответ, а stderr пишет в файл, поэтому диалог идёт напрямую
+// через управляющий терминал. null — терминала нет (CI, IDE, detached-процесс).
+function openTty() {
+    if (isCI()) return null;
+    try {
+        return {
+            input: new tty.ReadStream(openSync('/dev/tty', 'r')),
+            output: new tty.WriteStream(openSync('/dev/tty', 'w')),
+        };
+    } catch {
+        return null;
+    }
+}
+
+// /api/tags отдаёт размер файла модели — при загрузке она занимает в памяти примерно столько же
+// (плюс KV-кэш под контекст). Точный size_vram есть только у уже загруженных, в /api/ps.
+function formatSize(bytes) {
+    return `${(bytes / 1e9).toFixed(1)} GB`;
+}
+
+async function askModel(term, models) {
+    const names = models.map((m) => m.name);
+    const width = Math.max(...names.map((name) => name.length));
+    const rl = createInterface({ input: term.input, output: term.output });
+    try {
+        term.output.write('\nOLLAMA_MODEL не задан. Какую модель использовать?\n');
+        for (const [i, m] of models.entries()) {
+            term.output.write(`  [${i + 1}] ${m.name.padEnd(width)}  ${formatSize(m.size).padStart(8)}\n`);
+        }
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const answer = (await rl.question(`Выбор [1-${names.length}]: `)).trim();
+            const picked = names[Number(answer) - 1] ?? names.find((name) => name === answer);
+            if (picked) {
+                term.output.write(`Чтобы не спрашивать каждый раз: export OLLAMA_MODEL=${picked}\n\n`);
+                return picked;
+            }
+            term.output.write('Неверный ввод.\n');
+        }
+        return null;
+    } finally {
+        rl.close();
+        term.input.destroy();
+        term.output.destroy();
+    }
+}
+
 async function pickModel() {
+    process.stderr.write(`[llm-bump] OLLAMA_URL=${OLLAMA_URL} OLLAMA_MODEL=${REQUESTED_MODEL ?? '(не задан)'}\n`);
     if (REQUESTED_MODEL) return REQUESTED_MODEL;
     const res = await ollamaFetch('/api/tags');
     if (!res.ok) die(`/api/tags вернул ${res.status}`);
     const { models = [] } = await res.json();
     if (models.length === 0) die('на Ollama-инстансе нет ни одной модели');
-    return models[0].name;
+
+    const term = openTty();
+    if (!term) {
+        const available = models.map((m) => `${m.name} (${formatSize(m.size)})`).join(', ');
+        die(`OLLAMA_MODEL не задан, а спросить некого (CI или нет TTY). Доступные: ${available}`);
+    }
+    const picked = await askModel(term, models);
+    if (!picked) die('три неверных ввода — модель не выбрана');
+    return picked;
+}
+
+// `node llm-bump.mjs --list` — вывести модели, доступные на Ollama-инстансе, и выйти.
+async function listModels() {
+    const res = await ollamaFetch('/api/tags');
+    if (!res.ok) die(`/api/tags вернул ${res.status}`);
+    const { models = [] } = await res.json();
+    if (models.length === 0) die('на Ollama-инстансе нет ни одной модели');
+    for (const m of models) {
+        const params = m.details?.parameter_size || '?';
+        const quant = m.details?.quantization_level || '?';
+        process.stdout.write(`${m.name}\t${params}\t${quant}\t${formatSize(m.size)}\n`);
+    }
+}
+
+if (process.argv[2] === '--list') {
+    await listModels();
+    process.exit(0);
 }
 
 function gatherDiff() {
