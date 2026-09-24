@@ -3,6 +3,7 @@ name: burnotes-infra
 networks:
   infra:
     name: burnotes-infra
+    external: true
 
 volumes:
   valkey-data:

@@ -34,11 +34,14 @@ Commands:
   build [IMAGE_NAME...]           build all images, or selected werf images, without running the container
   down [ARG...]                   stop the stack; ARG values are passed to docker compose down
   purge [ARG...]                  stop the stack and remove named volumes
+  infra [ARG...]                  start Valkey + Postgres from docker-compose.infra.yml (default: up -d);
+                                  ARG values replace -d and are passed to docker compose up
 
 Examples:
   ./start.sh up -d                run docker compose up -d through werf
   ./start.sh --build              build all werf images
   ./start.sh --build app          build only the "app" image from werf.yaml
+  ./start.sh infra                start the infra stack in the background
 EOF
 
 ACTION=up
@@ -58,7 +61,7 @@ done
 ACTION_ARGS=()
 if [[ $# -gt 0 ]]; then
   case "$1" in
-    up|build|down|purge)
+    up|build|down|purge|infra)
       ACTION=$1
       shift
       ACTION_ARGS=("$@")
@@ -93,6 +96,14 @@ if [[ $ACTION == build ]]; then
 fi
 
 export IMAGE_VERSION
+
+# Infra is plain docker compose with upstream images — no werf and no app .env needed.
+# Native platform on purpose: the amd64 override above is for the app image only, and
+# Valkey/Postgres would otherwise run under emulation on Apple Silicon.
+if [[ $ACTION == infra ]]; then
+  [[ ${#ACTION_ARGS[@]} -eq 0 ]] && ACTION_ARGS=(-d)
+  exec env -u DOCKER_DEFAULT_PLATFORM $COMPOSE_COMMAND -f docker-compose.infra.yml up "${ACTION_ARGS[@]}"
+fi
 
 . $("$HOME/bin/trdl" use werf "2" "ea")
 
