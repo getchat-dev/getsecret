@@ -281,7 +281,7 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams, 
 
     return (
         <>
-            {ownSecret ? (
+            {ownSecret && readsRemainingBeforeOpen === 1 ? (
                 <div className={`${banner.banner} ${banner.danger} ${styles.ownSecretBanner}`} role="alert">
                     <AlertIcon size={16} className={banner.icon} />
                     <span>
