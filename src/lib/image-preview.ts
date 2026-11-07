@@ -47,6 +47,16 @@ export function isImageCandidate(hint: ImageHint): boolean {
     return isNativePreviewable(hint) || isHeicCandidate(hint);
 }
 
+// Restricted raster previews decode directly in memory, without an image URL.
+export async function decodeImageBitmap(blob: Blob, hint: ImageHint): Promise<ImageBitmap> {
+    if (isNativePreviewable(hint)) return createImageBitmap(blob);
+    if (!isHeicCandidate(hint)) throw new Error('Unsupported image');
+    const { heicTo, isHeic } = await import('heic-to/next');
+    const file = blob instanceof File ? blob : new File([blob], hint.name, { type: hint.type });
+    if (!(await isHeic(file))) throw new Error('Invalid HEIC image');
+    return heicTo({ blob: file, type: 'bitmap' });
+}
+
 export type ImagePreviewHandle = {
     // Resolves to a blob URL ready to set on an <img>, or null if the input
     // wasn't actually decodable (false-positive HEIC extension, decode error,

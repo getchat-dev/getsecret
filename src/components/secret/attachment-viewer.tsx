@@ -6,7 +6,7 @@ import type { AttachedFile } from '@/components/secret/viewer';
 import { ActionLabel } from '@/components/ui/action-label';
 import { FileIcon } from '@/components/ui/icons';
 import { decodeContainer } from '@/lib/file-container';
-import { decodeImagePreview } from '@/lib/image-preview';
+import { decodeImageBitmap, decodeImagePreview } from '@/lib/image-preview';
 import { sanitizeFilename } from '@/lib/secret-filename';
 import { COMMAND } from '@/lib/ui-commands';
 import btn from '@/styles/primitives/button.module.css';
@@ -40,11 +40,34 @@ function AttachmentImage({ file, restricted }: { file: DecryptedFile; restricted
         let cancelled = false;
         let image: HTMLImageElement | null = null;
         const canvas = canvasRef.current;
-        const handle = decodeImagePreview(file.blob, { type: file.mime, name: file.filename });
+        const hint = { type: file.mime, name: file.filename };
+        // SVG Blob decoding is not supported by createImageBitmap in Chrome.
+        const useBitmap = restricted && file.mime !== 'image/svg+xml';
+        const handle = useBitmap ? null : decodeImagePreview(file.blob, hint);
+        const draw = (source: CanvasImageSource, width: number, height: number) => {
+            const context = canvas?.getContext('2d');
+            if (!canvas || !context || !width || !height) throw new Error('Canvas unavailable');
+            // Bound gallery bitmap memory; the source file can be much larger than its preview.
+            const scale = Math.min(1, 2048 / Math.max(width, height));
+            canvas.width = Math.max(1, Math.round(width * scale));
+            canvas.height = Math.max(1, Math.round(height * scale));
+            // shortcut: restricted animated images show one frame; add playback if needed.
+            context.drawImage(source, 0, 0, canvas.width, canvas.height);
+            setStatus('ready');
+        };
         setStatus('loading');
         setUrl(null);
         void (async () => {
             try {
+                if (useBitmap) {
+                    const bitmap = await decodeImageBitmap(file.blob, hint);
+                    try {
+                        if (!cancelled) draw(bitmap, bitmap.width, bitmap.height);
+                    } finally {
+                        bitmap.close();
+                    }
+                    return;
+                }
                 const imageUrl = await handle?.promise;
                 if (cancelled) return;
                 if (!imageUrl) throw new Error('Image unavailable');
@@ -57,16 +80,7 @@ function AttachmentImage({ file, restricted }: { file: DecryptedFile; restricted
                 image.onload = () => {
                     if (cancelled || !canvas || !image) return;
                     try {
-                        const context = canvas.getContext('2d');
-                        if (!context || !image.naturalWidth || !image.naturalHeight)
-                            throw new Error('Canvas unavailable');
-                        // Bound gallery bitmap memory; the source file can be much larger than its preview.
-                        const scale = Math.min(1, 2048 / Math.max(image.naturalWidth, image.naturalHeight));
-                        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-                        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-                        // shortcut: restricted animated images show one frame; add playback if needed.
-                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-                        setStatus('ready');
+                        draw(image, image.naturalWidth, image.naturalHeight);
                     } catch {
                         setStatus('error');
                     } finally {

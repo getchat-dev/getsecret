@@ -14,6 +14,7 @@ let root: Root;
 let host: HTMLDivElement;
 let attached: AttachedFile;
 const images: HTMLImageElement[] = [];
+const bitmaps: { width: number; height: number; close: ReturnType<typeof vi.fn> }[] = [];
 const drawImage = vi.fn();
 const revoke = vi.fn();
 const download = vi.fn();
@@ -21,6 +22,14 @@ const download = vi.fn();
 beforeEach(async () => {
     vi.stubGlobal('crypto', webcrypto);
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    vi.stubGlobal(
+        'createImageBitmap',
+        vi.fn(async () => {
+            const bitmap = { width: 6000, height: 4000, close: vi.fn() };
+            bitmaps.push(bitmap);
+            return bitmap;
+        }),
+    );
     vi.stubGlobal(
         'Image',
         class {
@@ -66,6 +75,7 @@ afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
     images.length = 0;
+    bitmaps.length = 0;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
     vi.clearAllMocks();
@@ -94,9 +104,9 @@ describe('attachment gallery', () => {
         await render({ ...attached, previewImage: false, restrictDownload: true });
         expect(host.querySelectorAll('img')).toHaveLength(0);
         expect(host.querySelectorAll('button')).toHaveLength(0);
-        await act(async () => {
-            for (const image of images) image.onload?.(new Event('load'));
-        });
+        expect(images).toHaveLength(0);
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+        expect(createImageBitmap).toHaveBeenCalledTimes(2);
         const canvases = host.querySelectorAll('canvas');
         expect(canvases).toHaveLength(2);
         expect(canvases[0].width).toBe(2048);
@@ -106,19 +116,66 @@ describe('attachment gallery', () => {
         canvases[0].dispatchEvent(event);
         expect(event.defaultPrevented).toBe(true);
         expect(drawImage).toHaveBeenCalledTimes(2);
-        expect(revoke).toHaveBeenCalledTimes(2);
+        for (const bitmap of bitmaps) expect(bitmap.close).toHaveBeenCalledOnce();
         await act(async () => root.render(null));
         expect(canvases[0].width).toBe(0);
     });
 
     it('allows retry after an image decode error without revealing download controls', async () => {
+        vi.mocked(createImageBitmap).mockRejectedValueOnce(new Error('Invalid image'));
         await render({ ...attached, restrictDownload: true });
-        await act(async () => images[0].onerror?.(new Event('error')));
         expect(host.querySelector('[role="alert"]')?.textContent).toContain('previewUnavailable');
         expect(host.textContent).not.toContain('download');
         await act(async () => host.querySelector('button')?.click());
         expect(fetch).toHaveBeenCalledOnce();
-        expect(images).toHaveLength(3);
+        expect(createImageBitmap).toHaveBeenCalledTimes(3);
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('closes a bitmap that finishes decoding after unmount', async () => {
+        let finish!: (bitmap: ImageBitmap) => void;
+        vi.mocked(createImageBitmap).mockImplementationOnce(
+            () =>
+                new Promise((resolve) => {
+                    finish = resolve;
+                }),
+        );
+        await render({ ...attached, restrictDownload: true });
+        await act(async () => root.render(null));
+        const bitmap = { width: 10, height: 10, close: vi.fn() };
+        await act(async () => finish(bitmap as unknown as ImageBitmap));
+        expect(bitmap.close).toHaveBeenCalledOnce();
+        expect(drawImage).toHaveBeenCalledTimes(1);
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('closes bitmaps even if canvas drawing fails', async () => {
+        drawImage.mockImplementationOnce(() => {
+            throw new Error('Canvas failed');
+        });
+        await render({ ...attached, restrictDownload: true });
+        expect(host.querySelector('[role="alert"]')?.textContent).toContain('previewUnavailable');
+        for (const bitmap of bitmaps) expect(bitmap.close).toHaveBeenCalledOnce();
+    });
+
+    it('keeps the temporary image URL fallback for restricted SVG', async () => {
+        const encrypted = await encodeContainer(
+            [
+                {
+                    meta: { filename: 'test.svg', mime: 'image/svg+xml', size: 1 },
+                    bytes: new Uint8Array([1]),
+                },
+            ],
+            new Uint8Array(32).fill(3),
+        );
+        vi.mocked(fetch).mockResolvedValueOnce({ ok: true, arrayBuffer: async () => encrypted.buffer } as Response);
+        await render({ ...attached, restrictDownload: true });
+        expect(createImageBitmap).not.toHaveBeenCalled();
+        expect(URL.createObjectURL).toHaveBeenCalledOnce();
+        await act(async () => images[0].onload?.(new Event('load')));
+        expect(host.querySelector('canvas')?.hidden).toBe(false);
+        expect(revoke).toHaveBeenCalledOnce();
+        expect(host.textContent).not.toContain('download');
     });
 
     it('keeps an unpreviewed attachment lazy until requested', async () => {
