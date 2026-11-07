@@ -159,6 +159,11 @@
         "ownSecretBody": "Opening it in this browser will burn it for the recipient. Close the tab if you only meant to verify the link."
     },
     "revealed": {
+        "openImage": "Open image: {filename}",
+        "closeImage": "Close viewer",
+        "previousImage": "Previous image",
+        "nextImage": "Next image",
+        "imagePosition": "{current} of {total}",
         "previewUnavailable": "Cannot display this image.",
         "retry": "Try again",
         "attachmentLoadFailed": "Could not load the attachment.",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { AttachedFile } from '@/components/secret/viewer';
 import { ActionLabel } from '@/components/ui/action-label';
 import { FileIcon } from '@/components/ui/icons';
@@ -28,7 +28,15 @@ function saveFile(file: DecryptedFile) {
     }
 }
 
-function AttachmentImage({ file, restricted }: { file: DecryptedFile; restricted: boolean }) {
+function AttachmentImage({
+    file,
+    restricted,
+    onOpen,
+}: {
+    file: DecryptedFile;
+    restricted: boolean;
+    onOpen?: () => void;
+}) {
     const t = useTranslations('revealed');
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [url, setUrl] = useState<string | null>(null);
@@ -111,28 +119,38 @@ function AttachmentImage({ file, restricted }: { file: DecryptedFile; restricted
         };
     }, [file, restricted, attempt]);
 
+    const image = restricted ? (
+        <canvas
+            ref={canvasRef}
+            role="img"
+            aria-label={file.filename}
+            hidden={status !== 'ready'}
+            className={`${styles.attachmentPreview} ${styles.restrictedPreview}`}
+            onContextMenu={(event) => event.preventDefault()}
+        >
+            {file.filename}
+        </canvas>
+    ) : url && status === 'ready' ? (
+        // biome-ignore lint/performance/noImgElement: decrypted blob URL, never sent to an image server.
+        <img src={url} alt={file.filename} className={styles.attachmentPreview} onError={() => setStatus('error')} />
+    ) : null;
+
     return (
         <>
-            {restricted ? (
-                <canvas
-                    ref={canvasRef}
-                    role="img"
-                    aria-label={file.filename}
-                    hidden={status !== 'ready'}
-                    className={`${styles.attachmentPreview} ${styles.restrictedPreview}`}
-                    onContextMenu={(event) => event.preventDefault()}
+            {onOpen ? (
+                <button
+                    type="button"
+                    className={styles.previewButton}
+                    aria-label={t('openImage', { filename: file.filename })}
+                    aria-haspopup="dialog"
+                    disabled={status !== 'ready'}
+                    onClick={onOpen}
                 >
-                    {file.filename}
-                </canvas>
-            ) : url && status === 'ready' ? (
-                // biome-ignore lint/performance/noImgElement: decrypted blob URL, never sent to an image server.
-                <img
-                    src={url}
-                    alt={file.filename}
-                    className={styles.attachmentPreview}
-                    onError={() => setStatus('error')}
-                />
-            ) : null}
+                    {image}
+                </button>
+            ) : (
+                image
+            )}
             {status === 'loading' ? (
                 <span className={styles.attachmentPreviewStatus}>{t('previewLoading')}</span>
             ) : null}
@@ -152,6 +170,103 @@ function AttachmentImage({ file, restricted }: { file: DecryptedFile; restricted
     );
 }
 
+function AttachmentLightbox({
+    files,
+    initialIndex,
+    restricted,
+    onClose,
+}: {
+    files: DecryptedFile[];
+    initialIndex: number;
+    restricted: boolean;
+    onClose: () => void;
+}) {
+    const t = useTranslations('revealed');
+    const titleId = useId();
+    const dialogRef = useRef<HTMLDialogElement>(null);
+    const [index, setIndex] = useState(initialIndex);
+    const file = files[index];
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const previousFocus = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+        dialog.showModal();
+        document.body.style.overflow = 'hidden';
+        return () => {
+            dialog.close();
+            document.body.style.overflow = previousOverflow;
+            if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+        };
+    }, []);
+
+    function move(step: number) {
+        setIndex((current) => (current + step + files.length) % files.length);
+    }
+
+    return (
+        <dialog
+            ref={dialogRef}
+            className={styles.lightbox}
+            aria-labelledby={titleId}
+            onCancel={(event) => {
+                event.preventDefault();
+                onClose();
+            }}
+            onClick={(event) => {
+                if (event.target === event.currentTarget) onClose();
+            }}
+            onKeyDown={(event) => {
+                if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    move(event.key === 'ArrowLeft' ? -1 : 1);
+                }
+            }}
+        >
+            <header className={styles.lightboxHeader}>
+                <span id={titleId} className={styles.lightboxTitle} title={file.filename}>
+                    {file.filename}
+                </span>
+                <button
+                    type="button"
+                    className={`${btn.btn} ${btn.btnSecondary} ${styles.lightboxControl}`}
+                    aria-label={t('closeImage')}
+                    onClick={onClose}
+                >
+                    <span aria-hidden="true">×</span>
+                </button>
+            </header>
+            <div className={styles.lightboxMedia}>
+                <AttachmentImage key={index} file={file} restricted={restricted} />
+            </div>
+            {files.length > 1 ? (
+                <footer className={styles.lightboxNavigation}>
+                    <button
+                        type="button"
+                        className={`${btn.btn} ${btn.btnSecondary} ${styles.lightboxControl}`}
+                        aria-label={t('previousImage')}
+                        onClick={() => move(-1)}
+                    >
+                        <span aria-hidden="true">←</span>
+                    </button>
+                    <span aria-live="polite" aria-atomic="true">
+                        {t('imagePosition', { current: index + 1, total: files.length })}
+                    </span>
+                    <button
+                        type="button"
+                        className={`${btn.btn} ${btn.btnSecondary} ${styles.lightboxControl}`}
+                        aria-label={t('nextImage')}
+                        onClick={() => move(1)}
+                    >
+                        <span aria-hidden="true">→</span>
+                    </button>
+                </footer>
+            ) : null}
+        </dialog>
+    );
+}
+
 export function AttachmentViewer({ file }: { file: AttachedFile }) {
     const t = useTranslations('revealed');
     const tErrors = useTranslations('errors');
@@ -162,6 +277,7 @@ export function AttachmentViewer({ file }: { file: AttachedFile }) {
     const [files, setFiles] = useState<DecryptedFile[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: attempt retries failed loading without changing the source.
     useEffect(() => {
@@ -215,7 +331,13 @@ export function AttachmentViewer({ file }: { file: AttachedFile }) {
                 files.map((entry, index) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: decrypted container entries never reorder.
                     <div key={index} className={styles.attachment}>
-                        {preview ? <AttachmentImage file={entry} restricted={restricted} /> : null}
+                        {preview ? (
+                            <AttachmentImage
+                                file={entry}
+                                restricted={restricted}
+                                onOpen={() => setLightboxIndex(index)}
+                            />
+                        ) : null}
                         <div className={styles.attachmentRow}>
                             <FileIcon size={16} />
                             <span className={styles.attachmentLabel}>{entry.filename}</span>
@@ -255,6 +377,14 @@ export function AttachmentViewer({ file }: { file: AttachedFile }) {
                     ) : null}
                 </div>
             )}
+            {files && lightboxIndex !== null ? (
+                <AttachmentLightbox
+                    files={files}
+                    initialIndex={lightboxIndex}
+                    restricted={restricted}
+                    onClose={() => setLightboxIndex(null)}
+                />
+            ) : null}
             {error ? (
                 <div role="alert" className={styles.attachmentError}>
                     {error}{' '}

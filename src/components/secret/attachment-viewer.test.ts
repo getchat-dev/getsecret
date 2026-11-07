@@ -7,7 +7,11 @@ import { AttachmentViewer } from '@/components/secret/attachment-viewer';
 import type { AttachedFile } from '@/components/secret/viewer';
 import { encodeContainer } from '@/lib/file-container';
 
-const translate = (key: string) => key;
+const translate = (key: string, values?: { filename?: string; current?: number; total?: number }) => {
+    if (key === 'openImage') return `${key} ${values?.filename}`;
+    if (key === 'imagePosition') return `${values?.current} / ${values?.total}`;
+    return key;
+};
 vi.mock('next-intl', () => ({ useTranslations: () => translate, useLocale: () => 'ru' }));
 
 let root: Root;
@@ -47,6 +51,20 @@ beforeEach(async () => {
         drawImage,
     } as unknown as CanvasRenderingContext2D);
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(download);
+    Object.defineProperties(HTMLDialogElement.prototype, {
+        showModal: {
+            configurable: true,
+            value: vi.fn(function (this: HTMLDialogElement) {
+                this.setAttribute('open', '');
+            }),
+        },
+        close: {
+            configurable: true,
+            value: vi.fn(function (this: HTMLDialogElement) {
+                this.removeAttribute('open');
+            }),
+        },
+    });
     Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:test') });
     Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: revoke });
     const key = new Uint8Array(32).fill(3);
@@ -93,7 +111,7 @@ describe('attachment gallery', () => {
         await render();
         expect(host.querySelectorAll('img')).toHaveLength(2);
         expect(host.querySelectorAll('canvas')).toHaveLength(0);
-        const buttons = host.querySelectorAll('button');
+        const buttons = [...host.querySelectorAll('button')].filter((button) => button.textContent === 'download');
         expect(buttons).toHaveLength(2);
         await act(async () => buttons[1].click());
         expect(download).toHaveBeenCalledOnce();
@@ -103,7 +121,8 @@ describe('attachment gallery', () => {
     it('uses bounded canvases, blocks the context menu and never offers downloads when restricted', async () => {
         await render({ ...attached, previewImage: false, restrictDownload: true });
         expect(host.querySelectorAll('img')).toHaveLength(0);
-        expect(host.querySelectorAll('button')).toHaveLength(0);
+        expect(host.textContent).not.toContain('download');
+        expect(host.querySelectorAll('button[aria-haspopup="dialog"]')).toHaveLength(2);
         expect(images).toHaveLength(0);
         expect(URL.createObjectURL).not.toHaveBeenCalled();
         expect(createImageBitmap).toHaveBeenCalledTimes(2);
@@ -126,7 +145,7 @@ describe('attachment gallery', () => {
         await render({ ...attached, restrictDownload: true });
         expect(host.querySelector('[role="alert"]')?.textContent).toContain('previewUnavailable');
         expect(host.textContent).not.toContain('download');
-        await act(async () => host.querySelector('button')?.click());
+        await act(async () => host.querySelector<HTMLButtonElement>('[role="alert"] button')?.click());
         expect(fetch).toHaveBeenCalledOnce();
         expect(createImageBitmap).toHaveBeenCalledTimes(3);
         expect(URL.createObjectURL).not.toHaveBeenCalled();
@@ -176,6 +195,13 @@ describe('attachment gallery', () => {
         expect(host.querySelector('canvas')?.hidden).toBe(false);
         expect(revoke).toHaveBeenCalledOnce();
         expect(host.textContent).not.toContain('download');
+        await act(async () => host.querySelector<HTMLButtonElement>('button[aria-haspopup="dialog"]')?.click());
+        await act(async () => images[1].onload?.(new Event('load')));
+        const dialog = host.querySelector('dialog');
+        expect(dialog?.querySelector('canvas')?.hidden).toBe(false);
+        expect(dialog?.querySelector('[aria-label="nextImage"]')).toBeNull();
+        expect(revoke).toHaveBeenCalledTimes(2);
+        expect(createImageBitmap).not.toHaveBeenCalled();
     });
 
     it('keeps an unpreviewed attachment lazy until requested', async () => {
@@ -202,5 +228,84 @@ describe('attachment gallery', () => {
         });
         expect(host.querySelectorAll('canvas')).toHaveLength(2);
         expect(fetch).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe('image lightbox', () => {
+    function getDialog() {
+        const dialog = host.querySelector('dialog');
+        if (!dialog) throw new Error('Lightbox missing');
+        return dialog;
+    }
+
+    async function open(index = 0) {
+        const trigger = host.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="dialog"]')[index];
+        trigger.focus();
+        await act(async () => trigger.click());
+        return trigger;
+    }
+
+    it('opens the selected image, cycles with arrows and closes with focus and scroll restored', async () => {
+        await render({ ...attached, restrictDownload: true });
+        const trigger = await open(1);
+        const dialog = getDialog();
+        expect(dialog.open).toBe(true);
+        expect(dialog.querySelector('canvas')?.getAttribute('aria-label')).toBe('2.png');
+        expect(dialog.textContent).toContain('2 / 2');
+        expect(document.body.style.overflow).toBe('hidden');
+        await act(async () => dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+        expect(dialog.querySelector('canvas')?.getAttribute('aria-label')).toBe('1.png');
+        await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="previousImage"]')?.click());
+        expect(dialog.querySelector('canvas')?.getAttribute('aria-label')).toBe('2.png');
+        expect(dialog.querySelector('img')).toBeNull();
+        expect(dialog.textContent).not.toContain('download');
+        expect(fetch).toHaveBeenCalledOnce();
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+        const canvas = dialog.querySelector('canvas');
+        await act(async () => dialog.dispatchEvent(new Event('cancel', { cancelable: true })));
+        expect(host.querySelector('dialog')).toBeNull();
+        expect(canvas?.width).toBe(0);
+        expect(document.body.style.overflow).toBe('');
+        expect(document.activeElement).toBe(trigger);
+    });
+
+    it('releases unrestricted preview URLs on navigation and close, and can reopen', async () => {
+        await render();
+        await open();
+        let dialog = getDialog();
+        expect(dialog.querySelector('img')?.alt).toBe('1.png');
+        await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="nextImage"]')?.click());
+        expect(dialog.querySelector('img')?.alt).toBe('2.png');
+        expect(revoke).toHaveBeenCalledTimes(1);
+        await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="closeImage"]')?.click());
+        expect(revoke).toHaveBeenCalledTimes(2);
+        await open();
+        dialog = getDialog();
+        expect(dialog.querySelector('img')?.alt).toBe('1.png');
+        await act(async () => dialog.click());
+        expect(host.querySelector('dialog')).toBeNull();
+        expect(revoke).toHaveBeenCalledTimes(3);
+        expect(fetch).toHaveBeenCalledOnce();
+    });
+
+    it('allows retry of a failed full-screen decode without enabling downloads', async () => {
+        await render({ ...attached, restrictDownload: true });
+        vi.mocked(createImageBitmap).mockRejectedValueOnce(new Error('decode failed'));
+        await open();
+        const dialog = getDialog();
+        expect(dialog.querySelector('[role="alert"]')).not.toBeNull();
+        await act(async () => dialog.querySelector<HTMLButtonElement>('[role="alert"] button')?.click());
+        expect(dialog.querySelector('canvas')?.hidden).toBe(false);
+        expect(dialog.textContent).not.toContain('download');
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
+
+    it('restores scrolling if the gallery is removed while the lightbox is open', async () => {
+        await render();
+        document.body.style.overflow = 'scroll';
+        await open();
+        await act(async () => root.render(null));
+        expect(document.body.style.overflow).toBe('scroll');
+        document.body.style.overflow = '';
     });
 });

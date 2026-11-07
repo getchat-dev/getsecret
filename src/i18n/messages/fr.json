@@ -155,6 +155,11 @@
         "ownSecretBody": "L'ouvrir dans ce navigateur le brûlera pour le destinataire. Fermez l'onglet si vous vouliez seulement vérifier le lien."
     },
     "revealed": {
+        "openImage": "Ouvrir l’image : {filename}",
+        "closeImage": "Fermer la visionneuse",
+        "previousImage": "Image précédente",
+        "nextImage": "Image suivante",
+        "imagePosition": "{current} sur {total}",
         "previewUnavailable": "Impossible d’afficher cette image.",
         "retry": "Réessayer",
         "attachmentLoadFailed": "Impossible de charger la pièce jointe.",

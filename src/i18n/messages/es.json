@@ -155,6 +155,11 @@
         "ownSecretBody": "Abrirlo en este navegador lo destruirá para el destinatario. Cierra la pestaña si solo querías comprobar el enlace."
     },
     "revealed": {
+        "openImage": "Abrir imagen: {filename}",
+        "closeImage": "Cerrar visor",
+        "previousImage": "Imagen anterior",
+        "nextImage": "Imagen siguiente",
+        "imagePosition": "{current} de {total}",
         "previewUnavailable": "No se pudo mostrar esta imagen.",
         "retry": "Reintentar",
         "attachmentLoadFailed": "No se pudo cargar el archivo adjunto.",

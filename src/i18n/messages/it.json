@@ -155,6 +155,11 @@
         "ownSecretBody": "Aprirlo in questo browser lo brucerà per il destinatario. Chiudi la scheda se volevi solo verificare il link."
     },
     "revealed": {
+        "openImage": "Apri immagine: {filename}",
+        "closeImage": "Chiudi visualizzatore",
+        "previousImage": "Immagine precedente",
+        "nextImage": "Immagine successiva",
+        "imagePosition": "{current} di {total}",
         "previewUnavailable": "Impossibile mostrare questa immagine.",
         "retry": "Riprova",
         "attachmentLoadFailed": "Impossibile caricare l’allegato.",

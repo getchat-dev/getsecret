@@ -155,6 +155,11 @@
         "ownSecretBody": "Wenn du ihn in diesem Browser öffnest, wird er für den Empfänger verbrannt. Schließe den Tab, wenn du nur den Link prüfen wolltest."
     },
     "revealed": {
+        "openImage": "Bild öffnen: {filename}",
+        "closeImage": "Ansicht schließen",
+        "previousImage": "Vorheriges Bild",
+        "nextImage": "Nächstes Bild",
+        "imagePosition": "{current} von {total}",
         "previewUnavailable": "Dieses Bild kann nicht angezeigt werden.",
         "retry": "Erneut versuchen",
         "attachmentLoadFailed": "Der Anhang konnte nicht geladen werden.",
