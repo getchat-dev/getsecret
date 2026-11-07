@@ -27,6 +27,10 @@
         "burned": "Vue destinataire · expiré"
     },
     "create": {
+        "addImage": "Ajouter une image",
+        "imageSlots": "{count}/20 images · encore {remaining} places",
+        "restrictDownload": "Limiter le téléchargement",
+        "restrictDownloadHint": "Masque les boutons de téléchargement. Les captures d’écran et l’enregistrement via les outils du navigateur restent possibles. Les animations sont affichées sous forme d’image fixe.",
         "title1": "Partagez des secrets qui",
         "title2": "s'effacent à la lecture.",
         "lede": "Collez un mot de passe, un jeton ou toute chaîne sensible. Nous le chiffrons dans votre navigateur et renvoyons un lien à usage unique. La clé de déchiffrement ne touche jamais nos serveurs — elle vit après le # dans l'URL.",
@@ -151,6 +155,9 @@
         "ownSecretBody": "L'ouvrir dans ce navigateur le brûlera pour le destinataire. Fermez l'onglet si vous vouliez seulement vérifier le lien."
     },
     "revealed": {
+        "previewUnavailable": "Impossible d’afficher cette image.",
+        "retry": "Réessayer",
+        "attachmentLoadFailed": "Impossible de charger la pièce jointe.",
         "title1": "Le voici.",
         "title2": "Ne le perdez pas.",
         "lede": "La charge chiffrée a été supprimée de nos serveurs. Cette page est le seul endroit où ce secret existe — copiez-le dans votre gestionnaire avant de fermer l'onglet.",
@@ -210,6 +217,9 @@
     },
     "tabsLegend": "Cycle de vie de votre secret",
     "errors": {
+        "attachmentCount": "Vous pouvez ajouter au maximum {count} fichiers maintenant.",
+        "imagesOnly": "Seules des images peuvent être ajoutées à cette sélection.",
+        "attachmentMetadata": "Les métadonnées du fichier sont trop volumineuses ou invalides.",
         "linkMissingKey": "Il manque la clé de déchiffrement à ce lien.",
         "linkKeyMismatch": "Cette clé de déchiffrement ne correspond pas au lien du secret.",
         "linkInvalidKey": "Clé de déchiffrement invalide ou corrompue.",

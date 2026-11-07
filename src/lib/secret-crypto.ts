@@ -69,11 +69,13 @@ export type SecretPayload = {
     fileRef?: FileRef;
     // Hint to the viewer that the sender opted in to showing an inline image
     // preview after reveal. Only meaningful when fileRef is also set and the
-    // attached file is actually decodable as an image. Absent / false → the
-    // viewer renders the existing download button only and never touches the
+    // attached file is actually decodable as an image. Without a preview or
+    // download restriction, the viewer renders a download button and never touches the
     // S3 object until the user clicks. Stored inside the encrypted envelope
     // so the server never sees the sender's intent.
     previewImage?: boolean;
+    // UI-only restriction for images; the recipient still receives decrypted bytes.
+    restrictDownload?: boolean;
     // Sender-chosen base name for the text part (no extension — that comes
     // from the format). The recipient downloads the text as `<name>.<ext>`.
     // Lives inside the envelope so the server never learns it.
@@ -83,7 +85,7 @@ export type SecretPayload = {
 // Envelope wire format inside the AES-GCM plaintext:
 //
 //   byte 0:     0x00 (magic — marks the envelope format)
-//   bytes 1..:  UTF-8 JSON { text: string, fileRef?: { s3Key, keyB64 }, previewImage?: boolean, name?: string }
+//   bytes 1..:  UTF-8 JSON { text: string, fileRef?: { s3Key, keyB64 }, previewImage?: boolean, restrictDownload?: boolean, name?: string }
 //
 // Legacy secrets (created before this format was introduced) have plaintext
 // that is raw UTF-8 text with no 0x00 prefix. The decoder detects them by
@@ -210,7 +212,7 @@ function isFileRefShape(value: unknown): value is FileRef {
 }
 
 export function encodePlaintext(payload: SecretPayload): Uint8Array<ArrayBuffer> {
-    const envelope: { text: string; fileRef?: FileRef; previewImage?: boolean; name?: string } = {
+    const envelope: SecretPayload = {
         text: payload.text,
     };
     if (payload.fileRef) envelope.fileRef = payload.fileRef;
@@ -218,6 +220,7 @@ export function encodePlaintext(payload: SecretPayload): Uint8Array<ArrayBuffer>
     // preview. Saves a few bytes for the common case and keeps the field's
     // meaning unambiguous when it does appear.
     if (payload.fileRef && payload.previewImage === true) envelope.previewImage = true;
+    if (payload.fileRef && payload.restrictDownload === true) envelope.restrictDownload = true;
     const name = payload.name === undefined ? '' : sanitizeFilename(payload.name);
     if (name.length > 0) envelope.name = name;
     const json = JSON.stringify(envelope);
@@ -261,6 +264,7 @@ export function decodePlaintext(plaintext: Uint8Array<ArrayBuffer>): SecretPaylo
     const payload: SecretPayload = { text };
     if (fileRef) payload.fileRef = fileRef;
     if (previewImage) payload.previewImage = previewImage;
+    if (fileRef && obj.restrictDownload === true) payload.restrictDownload = true;
     if (name.length > 0) payload.name = name;
     return payload;
 }

@@ -27,6 +27,10 @@
         "burned": "Empfängeransicht · abgelaufen"
     },
     "create": {
+        "addImage": "Bild hinzufügen",
+        "imageSlots": "{count}/20 Bilder · Platz für weitere {remaining}",
+        "restrictDownload": "Herunterladen einschränken",
+        "restrictDownloadHint": "Entfernt Download-Schaltflächen. Screenshots und Speichern über Browserwerkzeuge bleiben möglich. Animationen werden als Standbild angezeigt.",
         "title1": "Teile Geheimnisse, die",
         "title2": "beim Lesen verschwinden.",
         "lede": "Füge ein Passwort, Token oder einen sensiblen String ein. Wir verschlüsseln es in deinem Browser und geben dir einen Einmal-Link zurück. Der Entschlüsselungsschlüssel berührt nie unsere Server — er lebt nach dem # in der URL.",
@@ -151,6 +155,9 @@
         "ownSecretBody": "Wenn du ihn in diesem Browser öffnest, wird er für den Empfänger verbrannt. Schließe den Tab, wenn du nur den Link prüfen wolltest."
     },
     "revealed": {
+        "previewUnavailable": "Dieses Bild kann nicht angezeigt werden.",
+        "retry": "Erneut versuchen",
+        "attachmentLoadFailed": "Der Anhang konnte nicht geladen werden.",
         "title1": "Hier ist es.",
         "title2": "Verlier es nicht.",
         "lede": "Die verschlüsselten Daten wurden von unseren Servern gelöscht. Diese Seite ist der einzige Ort, wo das Geheimnis jetzt existiert — kopiere es in deinen Passwort-Manager.",
@@ -210,6 +217,9 @@
     },
     "tabsLegend": "Lebenszyklus deines Geheimnisses",
     "errors": {
+        "attachmentCount": "Du kannst jetzt höchstens {count} Dateien hinzufügen.",
+        "imagesOnly": "Dieser Auswahl können nur Bilder hinzugefügt werden.",
+        "attachmentMetadata": "Die Dateimetadaten sind zu groß oder ungültig.",
         "linkMissingKey": "Diesem Link fehlt der Entschlüsselungsschlüssel.",
         "linkKeyMismatch": "Dieser Entschlüsselungsschlüssel passt nicht zum Geheim-Link.",
         "linkInvalidKey": "Ungültiger oder beschädigter Entschlüsselungsschlüssel.",

@@ -27,6 +27,10 @@
         "burned": "接收者视图 · 已过期"
     },
     "create": {
+        "addImage": "添加图片",
+        "imageSlots": "{count}/20 张图片 · 还可添加 {remaining} 张",
+        "restrictDownload": "限制下载",
+        "restrictDownloadHint": "隐藏下载按钮。仍可截屏或通过浏览器工具保存。动画将显示为静态画面。",
         "title1": "分享秘密,",
         "title2": "阅后即焚。",
         "lede": "粘贴密码、令牌或任何敏感字符串。我们会在你的浏览器中加密,并返回一个一次性链接。解密密钥永不接触我们的服务器 — 它保存在 URL 中 # 之后。",
@@ -151,6 +155,9 @@
         "ownSecretBody": "在此浏览器中打开会为接收者销毁它。如果只是想验证链接，请关闭此标签页。"
     },
     "revealed": {
+        "previewUnavailable": "无法显示此图片。",
+        "retry": "重试",
+        "attachmentLoadFailed": "无法加载附件。",
         "title1": "在这里。",
         "title2": "别弄丢了。",
         "lede": "加密的载荷已从我们的服务器删除。此页面是该秘密目前唯一存在的地方 — 在关闭标签页之前,请将其复制到密码管理器或它应该所在的位置。",
@@ -210,6 +217,9 @@
     },
     "tabsLegend": "你的秘密的生命周期",
     "errors": {
+        "attachmentCount": "现在最多可添加 {count} 个文件。",
+        "imagesOnly": "此选择只能添加图片。",
+        "attachmentMetadata": "文件元数据过大或无效。",
         "linkMissingKey": "此链接缺少解密密钥。",
         "linkKeyMismatch": "此解密密钥与秘密链接不匹配。",
         "linkInvalidKey": "解密密钥无效或已损坏。",

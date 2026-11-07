@@ -9,6 +9,7 @@
 export const COMMAND = {
     createSecret: 'create_secret',
     attachFile: 'attach_file',
+    addImage: 'add_image',
     clearForm: 'clear_form',
     // Only rendered while an upload is in flight, so it can say what it cancels.
     cancelUpload: 'cancel_upload',

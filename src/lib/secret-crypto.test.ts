@@ -214,6 +214,22 @@ describe('plaintext envelope', () => {
         expect(decodePlaintext(bytes)).toEqual({ text: 't' });
     });
 
+    it('only preserves strict true download restrictions with a file', () => {
+        expect(decodePlaintext(encodePlaintext({ text: '', fileRef, restrictDownload: true }))).toEqual({
+            text: '',
+            fileRef,
+            restrictDownload: true,
+        });
+        expect(decodePlaintext(encodePlaintext({ text: 'text', restrictDownload: true }))).toEqual({ text: 'text' });
+        for (const value of [false, 'true', 1, {}, null]) {
+            const wire = new Uint8Array([
+                0,
+                ...new TextEncoder().encode(JSON.stringify({ text: '', fileRef, restrictDownload: value })),
+            ]);
+            expect(decodePlaintext(wire)).toEqual({ text: '', fileRef });
+        }
+    });
+
     it('round-trips previewImage=true alongside fileRef', () => {
         const encoded = encodePlaintext({ text: 't', fileRef, previewImage: true });
         expect(decodePlaintext(encoded)).toEqual({ text: 't', fileRef, previewImage: true });
@@ -253,7 +269,7 @@ describe('envelope-aware upload helpers', () => {
     };
 
     it('encrypts an envelope (text + fileRef) and decrypts back to the same payload', async () => {
-        const payload = { text: 'open me', fileRef };
+        const payload = { text: 'open me', fileRef, previewImage: true, restrictDownload: true };
         const prepared = await prepareSecretUploadEnvelope(payload);
 
         expect(prepared.encryptedSecret.version).toBe(SECRET_VERSION_V1);
@@ -273,7 +289,7 @@ describe('envelope-aware upload helpers', () => {
     });
 
     it('password-protected envelope round-trips with fileRef intact', async () => {
-        const payload = { text: 'sensitive', fileRef };
+        const payload = { text: 'sensitive', fileRef, previewImage: true, restrictDownload: true };
         const prepared = await prepareSecretUploadWithPasswordEnvelope(payload, 'pw-pw-pw-pw', 100_000);
 
         expect(prepared.encryptedSecret.version).toBe(SECRET_VERSION_V2);

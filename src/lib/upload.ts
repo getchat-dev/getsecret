@@ -1,7 +1,7 @@
 import { encodeContainer, FILE_CONTAINER_KEY_BYTES } from '@/lib/file-container';
 import type { FileRef } from '@/lib/secret-crypto';
 
-// Client-side file upload orchestrator. Encrypts the file into an opaque
+// Client-side file upload orchestrator. Encrypts the selection into an opaque
 // container, asks the server for a presigned PUT URL, uploads the container
 // to S3, and returns the data the caller needs to bind the file to a secret:
 //
@@ -11,7 +11,7 @@ import type { FileRef } from '@/lib/secret-crypto';
 //                  create request so the server can HEAD-verify the upload.
 //
 // Encryption uses a fresh 32-byte K_file; the same key is never reused across
-// files. We rely on XMLHttpRequest for the PUT step so we can surface upload
+// uploads. We rely on XMLHttpRequest for the PUT step so we can surface upload
 // progress to the UI (fetch upload progress is not yet portable).
 
 export type PresignResponse = {
@@ -107,15 +107,15 @@ function putWithProgress(url: string, body: Uint8Array<ArrayBuffer>, options: Up
     });
 }
 
-export async function uploadFile(file: File, options: UploadOptions = {}): Promise<UploadResult> {
-    const fileBytes = await file.arrayBuffer();
-
+export async function uploadFiles(files: File[], options: UploadOptions = {}): Promise<UploadResult> {
     const keyBytes = crypto.getRandomValues(new Uint8Array(FILE_CONTAINER_KEY_BYTES));
-    const container = await encodeContainer(
-        fileBytes,
-        { filename: file.name || 'file', mime: file.type || 'application/octet-stream', size: file.size },
-        keyBytes,
+    const entries = await Promise.all(
+        files.map(async (file) => ({
+            bytes: new Uint8Array(await file.arrayBuffer()),
+            meta: { filename: file.name || 'file', mime: file.type || 'application/octet-stream', size: file.size },
+        })),
     );
+    const container = await encodeContainer(entries, keyBytes);
 
     if (options.signal?.aborted) throw new Error('Upload aborted');
 

@@ -46,6 +46,7 @@ export type AttachedFile = {
     // auto-downloads and shows a thumbnail; when false the download stays
     // strictly user-initiated.
     previewImage: boolean;
+    restrictDownload?: boolean;
 };
 
 type SecretState =
@@ -212,6 +213,7 @@ export function Viewer({ id, expiresAtUtc, maxViews, viewsUsed, passwordParams, 
                               fileRef: payload.fileRef,
                               signedGetUrl,
                               previewImage: payload.previewImage === true,
+                              restrictDownload: payload.restrictDownload === true,
                           }
                         : null;
                 setSecretState({

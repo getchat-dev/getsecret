@@ -8,7 +8,7 @@
 //   offset  size   content
 //   ──────  ─────  ──────────────────────────────────────────────
 //   0       3      "BN1" magic
-//   3       1      version (0x01)
+//   3       1      version (0x01 or 0x02)
 //   4       12     AES-GCM IV
 //   16      ?      AES-GCM(K_file, iv, inner_plaintext) — includes 16B auth tag
 //
@@ -17,21 +17,20 @@
 //   offset  size       content
 //   ──────  ─────────  ───────────────────────────────────────
 //   0       4          header_len (uint32, BE)
-//   4       header_len JSON metadata { filename, mime, size }
-//   ?       remainder  raw file bytes
+//   4       header_len JSON metadata (v1: one object; v2: array)
+//   ?       remainder  file bytes concatenated in metadata order
 
 const MAGIC = new Uint8Array([0x42, 0x4e, 0x31]); // "BN1"
-const VERSION = 0x01;
+const VERSION = 0x02;
+export const MAX_IMAGE_FILES = 20;
 const IV_BYTES = 12;
 const AES_GCM_TAG_BYTES = 16;
 const HEADER_LEN_BYTES = 4;
 const FRAME_HEADER_BYTES = MAGIC.length + 1 + IV_BYTES; // 16
 const MIN_CONTAINER_BYTES = FRAME_HEADER_BYTES + AES_GCM_TAG_BYTES; // 32
 
-// File metadata is small (filename + MIME + size). 1 KiB cap blocks any
-// pathological inner plaintext that would otherwise force us to allocate
-// gigabytes for a JSON header before we even look at the file body.
-const MAX_HEADER_BYTES = 1024;
+// Bound sender-controlled metadata before parsing it.
+const MAX_HEADER_BYTES = 1024 * MAX_IMAGE_FILES;
 
 export const FILE_CONTAINER_KEY_BYTES = 32;
 export const FILE_CONTAINER_VERSION = VERSION;
@@ -45,26 +44,45 @@ export type FileMeta = {
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
+export type ContainerFile = { meta: FileMeta; bytes: Uint8Array<ArrayBuffer> };
+
+function encodeHeader(metadata: FileMeta[]): Uint8Array<ArrayBuffer> {
+    if (metadata.length < 1 || metadata.length > MAX_IMAGE_FILES) throw new Error('Invalid file count');
+    const header = textEncoder.encode(JSON.stringify(metadata.map(validateMeta)));
+    if (header.length > MAX_HEADER_BYTES) throw new Error('File container header too large');
+    return header;
+}
+
+export function containerSize(metadata: FileMeta[]): number {
+    return (
+        MIN_CONTAINER_BYTES +
+        HEADER_LEN_BYTES +
+        encodeHeader(metadata).length +
+        metadata.reduce((total, meta) => total + meta.size, 0)
+    );
+}
+
 export async function encodeContainer(
-    fileBytes: ArrayBuffer | Uint8Array<ArrayBuffer>,
-    meta: FileMeta,
+    files: ContainerFile[],
     keyBytes: Uint8Array<ArrayBuffer>,
 ): Promise<Uint8Array<ArrayBuffer>> {
     if (keyBytes.length !== FILE_CONTAINER_KEY_BYTES) {
         throw new Error('Invalid file container key length');
     }
-
-    const headerJson = JSON.stringify({ filename: meta.filename, mime: meta.mime, size: meta.size });
-    const headerBytes = textEncoder.encode(headerJson);
-    if (headerBytes.length > MAX_HEADER_BYTES) {
-        throw new Error('File container header too large');
+    const headerBytes = encodeHeader(files.map((file) => file.meta));
+    for (const file of files) {
+        if (file.meta.size !== file.bytes.length) throw new Error('File size mismatch');
     }
-
-    const fileView = fileBytes instanceof Uint8Array ? fileBytes : new Uint8Array(fileBytes);
-    const innerPlaintext = new Uint8Array(HEADER_LEN_BYTES + headerBytes.length + fileView.length);
+    const innerPlaintext = new Uint8Array(
+        HEADER_LEN_BYTES + headerBytes.length + files.reduce((total, file) => total + file.bytes.length, 0),
+    );
     new DataView(innerPlaintext.buffer).setUint32(0, headerBytes.length, false);
     innerPlaintext.set(headerBytes, HEADER_LEN_BYTES);
-    innerPlaintext.set(fileView, HEADER_LEN_BYTES + headerBytes.length);
+    let offset = HEADER_LEN_BYTES + headerBytes.length;
+    for (const file of files) {
+        innerPlaintext.set(file.bytes, offset);
+        offset += file.bytes.length;
+    }
 
     const iv = crypto.getRandomValues(new Uint8Array(IV_BYTES));
     const cryptoKey = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['encrypt']);
@@ -82,7 +100,7 @@ export async function encodeContainer(
 export async function decodeContainer(
     container: Uint8Array<ArrayBuffer>,
     keyBytes: Uint8Array<ArrayBuffer>,
-): Promise<{ meta: FileMeta; bytes: Uint8Array<ArrayBuffer> }> {
+): Promise<ContainerFile[]> {
     if (keyBytes.length !== FILE_CONTAINER_KEY_BYTES) {
         throw new Error('Invalid file container key length');
     }
@@ -93,7 +111,7 @@ export async function decodeContainer(
         throw new Error('Bad file container magic');
     }
     const version = container[MAGIC.length];
-    if (version !== VERSION) {
+    if (version !== 1 && version !== VERSION) {
         throw new Error(`Unsupported file container version: ${version}`);
     }
 
@@ -115,7 +133,7 @@ export async function decodeContainer(
         0,
         false,
     );
-    if (headerLen > MAX_HEADER_BYTES) {
+    if (headerLen > (version === 1 ? 1024 : MAX_HEADER_BYTES)) {
         throw new Error('File container header too large');
     }
     if (HEADER_LEN_BYTES + headerLen > innerPlaintext.length) {
@@ -131,7 +149,20 @@ export async function decodeContainer(
     } catch {
         throw new Error('File container header is not valid JSON');
     }
-    return { meta: validateMeta(parsed), bytes: bodyBytes };
+    const entries = version === 1 ? [parsed] : parsed;
+    if (!Array.isArray(entries) || entries.length < 1 || entries.length > MAX_IMAGE_FILES) {
+        throw new Error('Invalid file count');
+    }
+    let offset = 0;
+    const files = entries.map((entry) => {
+        const meta = validateMeta(entry);
+        if (meta.size > bodyBytes.length - offset) throw new Error('File size exceeds container body');
+        const bytes = bodyBytes.subarray(offset, offset + meta.size);
+        offset += meta.size;
+        return { meta, bytes };
+    });
+    if (offset !== bodyBytes.length) throw new Error('File size mismatch');
+    return files;
 }
 
 function validateMeta(parsed: unknown): FileMeta {
@@ -145,7 +176,7 @@ function validateMeta(parsed: unknown): FileMeta {
     if (typeof obj.mime !== 'string') {
         throw new Error('File container header missing mime');
     }
-    if (typeof obj.size !== 'number' || !Number.isFinite(obj.size) || obj.size < 0) {
+    if (typeof obj.size !== 'number' || !Number.isSafeInteger(obj.size) || obj.size < 0) {
         throw new Error('File container header missing or invalid size');
     }
     return { filename: obj.filename, mime: obj.mime, size: obj.size };

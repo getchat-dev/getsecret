@@ -29,6 +29,7 @@ type CreateSecretLinkOptions = {
     // Only takes effect when fileRef is also set; ignored otherwise. Stored
     // inside the encrypted envelope (server never learns the choice).
     previewImage?: boolean;
+    restrictDownload?: boolean;
     // Base name for the text part, without extension. Encrypted inside the
     // envelope; the recipient downloads the text as `<name>.<ext>`.
     name?: string;
@@ -52,13 +53,21 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
     if (secret.length > MAX_SECRET_LENGTH) {
         throw new Error(`Secret length must be between 1 and ${MAX_SECRET_LENGTH} characters.`);
     }
-    // fileRef and uploadToken are produced as a pair by uploadFile(); a caller
+    // fileRef and uploadToken are produced as a pair by uploadFiles(); a caller
     // that sets one without the other is misusing the API.
     if (hasFile !== (uploadToken !== undefined)) {
         throw new Error('fileRef and uploadToken must be provided together');
     }
 
-    const { expiresInSeconds, format = DEFAULT_SECRET_FORMAT, maxViews, password, previewImage, name } = options;
+    const {
+        expiresInSeconds,
+        format = DEFAULT_SECRET_FORMAT,
+        maxViews,
+        password,
+        previewImage,
+        restrictDownload,
+        name,
+    } = options;
     const usePassword = typeof password === 'string' && password.length > 0;
     // The reveal-side gate (LockScreen + Viewer) refuses to open with a
     // password that doesn't pass isValidPassword. If we let a weaker one
@@ -83,6 +92,7 @@ export async function createSecretLink(secret: string, options: CreateSecretLink
         const payload: SecretPayload = { text: secret };
         if (fileRef) payload.fileRef = fileRef;
         if (fileRef && previewImage) payload.previewImage = true;
+        if (fileRef && restrictDownload) payload.restrictDownload = true;
         if (name) payload.name = name;
         prepared = usePassword
             ? await prepareSecretUploadWithPasswordEnvelope(payload, password)

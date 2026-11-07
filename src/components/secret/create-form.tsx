@@ -15,6 +15,7 @@ import { TtlControl, ttlValueToSeconds } from '@/components/secret/ttl-control';
 import { ActionLabel } from '@/components/ui/action-label';
 import { Hint } from '@/components/ui/hint';
 import { AlertIcon, FileIcon, XIcon, ZapIcon } from '@/components/ui/icons';
+import { attachmentSelectionError, remainingFileSlots } from '@/lib/attachment-selection';
 import { createSecretLink } from '@/lib/create-secret-link';
 import type { TtlUnit } from '@/lib/expiration';
 import { decodeImagePreview, isImageCandidate } from '@/lib/image-preview';
@@ -29,7 +30,7 @@ import {
     type SecretFormat,
 } from '@/lib/secret-formats';
 import { COMMAND } from '@/lib/ui-commands';
-import { type UploadProgress, uploadFile } from '@/lib/upload';
+import { type UploadProgress, uploadFiles } from '@/lib/upload';
 import banner from '@/styles/primitives/banner.module.css';
 import btn from '@/styles/primitives/button.module.css';
 import card from '@/styles/primitives/card.module.css';
@@ -38,7 +39,6 @@ import styles from './create-form.module.css';
 
 const DRAFT_STORAGE_KEY = 'burnotes:create:draft';
 const FORMAT_STORAGE_KEY = 'burnotes:create:format';
-const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
 function formatBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -46,20 +46,14 @@ function formatBytes(bytes: number): string {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-// Pull a file out of a paste event's DataTransfer. `clipboardData.files` is
-// the fast path (set by most browsers when the clipboard carries a binary
-// payload like a screenshot). `items` is the fallback — some browsers /
-// platforms only surface the file through getAsFile().
-function fileFromClipboard(data: DataTransfer | null): File | null {
-    if (!data) return null;
-    if (data.files.length > 0) return data.files[0];
-    for (const item of Array.from(data.items)) {
-        if (item.kind === 'file') {
-            const f = item.getAsFile();
-            if (f) return f;
-        }
-    }
-    return null;
+// Clipboard items are a fallback for browsers that omit the files list.
+function filesFromClipboard(data: DataTransfer | null): File[] {
+    if (!data) return [];
+    if (data.files.length > 0) return Array.from(data.files);
+    return Array.from(data.items).flatMap((item) => {
+        const file = item.kind === 'file' ? item.getAsFile() : null;
+        return file ? [file] : [];
+    });
 }
 
 // Clipboard files often arrive without a name (typically true for
@@ -78,6 +72,7 @@ type Props = {
     enablePassword?: boolean;
     enableFileAttachments?: boolean;
     defaultFilename?: string;
+    maxFileSizeBytes?: number;
 };
 
 export function CreateForm({
@@ -85,6 +80,7 @@ export function CreateForm({
     enablePassword = false,
     enableFileAttachments = true,
     defaultFilename = DEFAULT_SECRET_FILENAME,
+    maxFileSizeBytes = 25 * 1024 * 1024,
 }: Props) {
     const t = useTranslations('create');
     const tErrors = useTranslations('errors');
@@ -100,8 +96,12 @@ export function CreateForm({
     const [name, setName] = useState(defaultFilename);
     const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
     const [password, setPassword] = useState('');
-    const [file, setFile] = useState<File | null>(null);
-    const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
+    const filesRef = useRef<File[]>([]);
+    const imageMode = files.length > 0 && isImageCandidate(files[0]);
+    const maxFiles = remainingFileSlots(files);
+    const [restrictDownload, setRestrictDownload] = useState(false);
+    const [imagePreviewUrls, setImagePreviewUrls] = useState<Map<File, string>>(new Map());
     // Default ON: when the sender attaches an image, the recipient sees a
     // thumbnail inline after reveal. The checkbox only appears when there's
     // an image to preview, so a non-image attachment never asks the user.
@@ -117,7 +117,7 @@ export function CreateForm({
     const passwordValid = !passwordTouched || isValidPassword(password);
 
     // const activeStep = link ? 2 : 1; // re-enable with the LifecycleSteps usages
-    const hasContent = secret.trim().length > 0 || file !== null;
+    const hasContent = secret.trim().length > 0 || files.length > 0;
 
     useEffect(() => {
         const draft = window.sessionStorage.getItem(DRAFT_STORAGE_KEY);
@@ -143,37 +143,37 @@ export function CreateForm({
     }, [format]);
 
     useEffect(() => {
-        if (!file) {
-            setImagePreviewUrl(null);
-            return;
-        }
-        const handle = decodeImagePreview(file, { type: file.type, name: file.name });
-        if (!handle) {
-            setImagePreviewUrl(null);
-            return;
-        }
         let cancelled = false;
-        setImagePreviewUrl(null);
-        handle.promise.then((url) => {
-            if (!cancelled) setImagePreviewUrl(url);
+        setImagePreviewUrls(new Map());
+        const handles = files.map((file) => {
+            const handle = decodeImagePreview(file, file);
+            handle?.promise.then((url) => {
+                if (!cancelled && url) setImagePreviewUrls((urls) => new Map(urls).set(file, url));
+            });
+            return handle;
         });
         return () => {
             cancelled = true;
-            handle.abort();
+            for (const handle of handles) handle?.abort();
         };
-    }, [file]);
+    }, [files]);
 
-    function chooseFile(next: File | null) {
-        if (!next) {
-            setFile(null);
-            return;
-        }
-        if (next.size > MAX_FILE_SIZE_BYTES) {
-            setError(tErrors('fileTooLarge', { max: formatBytes(MAX_FILE_SIZE_BYTES) }));
+    function replaceFiles(next: File[]) {
+        filesRef.current = next;
+        setFiles(next);
+        if (!next.length) setRestrictDownload(false);
+    }
+
+    function chooseFiles(incoming: File[]) {
+        if (isSubmitting || link || !incoming.length) return;
+        const current = filesRef.current;
+        const error = attachmentSelectionError(current, incoming, maxFileSizeBytes);
+        if (error) {
+            setError(tErrors(error, { max: formatBytes(maxFileSizeBytes), count: remainingFileSlots(current) }));
             return;
         }
         setError('');
-        setFile(next);
+        replaceFiles([...current, ...incoming]);
     }
 
     // Drop-target is window-wide: a user can drag a file onto any part of the
@@ -183,11 +183,11 @@ export function CreateForm({
     // required because the browser fires `dragleave` every time the cursor
     // crosses a child element; a plain boolean would flicker.
     const dragDepth = useRef(0);
-    // Effect captures a stale chooseFile closure otherwise; chooseFile is
+    // Effect captures a stale chooseFiles closure otherwise; chooseFiles is
     // re-created each render. The ref always points at the latest version.
-    const chooseFileRef = useRef(chooseFile);
+    const chooseFilesRef = useRef(chooseFiles);
     useEffect(() => {
-        chooseFileRef.current = chooseFile;
+        chooseFilesRef.current = chooseFiles;
     });
 
     useEffect(() => {
@@ -225,8 +225,8 @@ export function CreateForm({
             event.preventDefault();
             dragDepth.current = 0;
             setIsDragging(false);
-            const dropped = event.dataTransfer?.files?.[0];
-            if (dropped) chooseFileRef.current(dropped);
+            const dropped = Array.from(event.dataTransfer?.files ?? []);
+            chooseFilesRef.current(dropped);
         }
 
         window.addEventListener('dragenter', onEnter);
@@ -244,9 +244,8 @@ export function CreateForm({
         // outside the form (e.g. into a password field nearby) doesn't lose
         // its native behavior since we only act when files are present.
         function onPaste(event: ClipboardEvent) {
-            const picked = fileFromClipboard(event.clipboardData);
-            if (!picked) return;
-            chooseFileRef.current(ensurePastedFilename(picked));
+            const picked = filesFromClipboard(event.clipboardData);
+            chooseFilesRef.current(picked.map(ensurePastedFilename));
         }
         window.addEventListener('paste', onPaste);
         return () => {
@@ -278,9 +277,9 @@ export function CreateForm({
         abortRef.current = new AbortController();
         try {
             let uploadResult: { fileRef: import('@/lib/secret-crypto').FileRef; uploadToken: string } | null = null;
-            if (file) {
-                setUploadProgress({ loaded: 0, total: file.size });
-                uploadResult = await uploadFile(file, {
+            if (files.length) {
+                setUploadProgress({ loaded: 0, total: files.reduce((total, file) => total + file.size, 0) });
+                uploadResult = await uploadFiles(files, {
                     signal: abortRef.current.signal,
                     onProgress: (p) => setUploadProgress(p),
                 });
@@ -290,14 +289,15 @@ export function CreateForm({
             // preview AND the user kept the checkbox checked. createSecretLink
             // (and encodePlaintext below it) also strip the flag if there's
             // no fileRef, but filtering here keeps the wire shape predictable.
-            const fileIsImage = file !== null && isImageCandidate({ type: file.type, name: file.name });
+            const fileIsImage = imageMode;
             const next = await createSecretLink(secret, {
                 expiresInSeconds,
                 format,
                 maxViews: effectiveMaxViews,
                 ...(effectivePassword.length > 0 ? { password: effectivePassword } : {}),
                 ...(uploadResult ? { fileRef: uploadResult.fileRef, uploadToken: uploadResult.uploadToken } : {}),
-                ...(uploadResult && fileIsImage && previewImage ? { previewImage: true } : {}),
+                ...(uploadResult && fileIsImage && (previewImage || restrictDownload) ? { previewImage: true } : {}),
+                ...(uploadResult && fileIsImage && restrictDownload ? { restrictDownload: true } : {}),
                 // Always sent, even when unchanged: the operator's default can
                 // change between create and read, and the recipient should
                 // get the name the sender saw.
@@ -339,7 +339,7 @@ export function CreateForm({
         setName(defaultFilename);
         setLink('');
         setPassword('');
-        setFile(null);
+        replaceFiles([]);
         setPreviewImage(true);
         setError('');
     }
@@ -397,61 +397,90 @@ export function CreateForm({
                         format={format}
                         autoFocus
                         toolbarStart={
-                            enableFileAttachments && file === null ? (
+                            enableFileAttachments && (files.length === 0 || imageMode) ? (
                                 <>
                                     <button
                                         type="button"
                                         className={`${btn.btn} ${btn.btnGhost}`}
                                         onClick={() => fileInputRef.current?.click()}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || maxFiles === 0}
                                     >
                                         <FileIcon size={14} />
-                                        <ActionLabel command={COMMAND.attachFile}>{t('attachFile')}</ActionLabel>
+                                        <ActionLabel command={imageMode ? COMMAND.addImage : COMMAND.attachFile}>
+                                            {t(imageMode ? 'addImage' : 'attachFile')}
+                                        </ActionLabel>
                                     </button>
                                     <Hint label={t('attachFile')}>{tHints('attachFile')}</Hint>
                                 </>
                             ) : null
                         }
                     />
-                    {enableFileAttachments && file ? (
+                    {enableFileAttachments && files.length > 0 ? (
                         <div className={styles.fileInfoCard}>
-                            <div className={styles.fileInfo}>
-                                {imagePreviewUrl ? (
-                                    // biome-ignore lint/performance/noImgElement: blob:-URL клиентского файла, next/image не подходит.
-                                    <img
-                                        src={imagePreviewUrl}
-                                        alt={file.name}
-                                        className={styles.fileInfoPreview}
-                                        onError={() => setImagePreviewUrl(null)}
-                                    />
-                                ) : (
-                                    <FileIcon size={16} />
-                                )}
-                                <span className={styles.fileInfoName}>{file.name}</span>
-                                <span className={styles.fileInfoMeta}>
-                                    {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
-                                </span>
-                                <button
-                                    type="button"
-                                    className={`${btn.btn} ${btn.btnGhost} ${btn.btnDanger} ${btn.btnIconSm}`}
-                                    onClick={() => chooseFile(null)}
-                                    disabled={isSubmitting}
-                                    aria-label={t('removeFile')}
-                                    title={t('removeFile')}
-                                >
-                                    <XIcon size={14} />
-                                </button>
-                            </div>
-                            {isImageCandidate({ type: file.type, name: file.name }) ? (
-                                <label className={styles.fileInfoPreviewToggle}>
-                                    <input
-                                        type="checkbox"
-                                        checked={previewImage}
-                                        onChange={(e) => setPreviewImage(e.target.checked)}
+                            {files.map((file, index) => (
+                                // biome-ignore lint/suspicious/noArrayIndexKey: rows have no local state; previews are keyed by File identity.
+                                <div className={styles.fileInfo} key={index}>
+                                    {imagePreviewUrls.get(file) ? (
+                                        // biome-ignore lint/performance/noImgElement: local decrypted blob URL.
+                                        <img
+                                            src={imagePreviewUrls.get(file)}
+                                            alt={file.name}
+                                            className={styles.fileInfoPreview}
+                                            onError={() =>
+                                                setImagePreviewUrls((urls) => {
+                                                    const next = new Map(urls);
+                                                    next.delete(file);
+                                                    return next;
+                                                })
+                                            }
+                                        />
+                                    ) : (
+                                        <FileIcon size={16} />
+                                    )}
+                                    <span className={styles.fileInfoName}>{file.name}</span>
+                                    <span className={styles.fileInfoMeta}>
+                                        {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className={`${btn.btn} ${btn.btnGhost} ${btn.btnDanger} ${btn.btnIconSm}`}
+                                        onClick={() => replaceFiles(files.filter((_, position) => position !== index))}
                                         disabled={isSubmitting}
-                                    />
-                                    <span>{t('previewImageLabel')}</span>
-                                </label>
+                                        aria-label={`${t('removeFile')}: ${file.name}`}
+                                        title={t('removeFile')}
+                                    >
+                                        <XIcon size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                            {imageMode ? (
+                                <>
+                                    <span className={styles.fileInfoMeta}>
+                                        {t('imageSlots', { count: files.length, remaining: maxFiles })}
+                                    </span>
+                                    <label className={styles.fileInfoPreviewToggle}>
+                                        <input
+                                            type="checkbox"
+                                            checked={previewImage || restrictDownload}
+                                            onChange={(e) => setPreviewImage(e.target.checked)}
+                                            disabled={isSubmitting || restrictDownload}
+                                        />
+                                        <span>{t('previewImageLabel')}</span>
+                                    </label>
+                                    <label className={styles.fileInfoPreviewToggle}>
+                                        <input
+                                            type="checkbox"
+                                            checked={restrictDownload}
+                                            aria-describedby="restrict-download-hint"
+                                            onChange={(e) => setRestrictDownload(e.target.checked)}
+                                            disabled={isSubmitting}
+                                        />
+                                        <span>{t('restrictDownload')}</span>
+                                    </label>
+                                    <p id="restrict-download-hint" className={styles.fileInfoMeta}>
+                                        {t('restrictDownloadHint')}
+                                    </p>
+                                </>
                             ) : null}
                         </div>
                     ) : null}
@@ -460,7 +489,13 @@ export function CreateForm({
                             ref={fileInputRef}
                             type="file"
                             hidden
-                            onChange={(e) => chooseFile(e.target.files?.[0] ?? null)}
+                            multiple={imageMode && maxFiles > 1}
+                            accept={imageMode ? 'image/*,.heic,.heif' : undefined}
+                            disabled={isSubmitting || maxFiles === 0}
+                            onChange={(e) => {
+                                chooseFiles(Array.from(e.target.files ?? []));
+                                e.target.value = '';
+                            }}
                         />
                     ) : null}
                     <div className={field.pair}>
@@ -483,7 +518,7 @@ export function CreateForm({
                     ) : null}
                 </div>
                 <footer className={card.footer}>
-                    {secret.length > 0 || file ? (
+                    {secret.length > 0 || files.length > 0 ? (
                         <button
                             type="button"
                             className={`${btn.btn} ${btn.btnGhost}`}
@@ -491,7 +526,7 @@ export function CreateForm({
                                 setSecret('');
                                 setFormat(DEFAULT_SECRET_FORMAT);
                                 setName(defaultFilename);
-                                setFile(null);
+                                replaceFiles([]);
                             }}
                             disabled={isSubmitting}
                         >

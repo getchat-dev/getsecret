@@ -27,6 +27,10 @@
         "burned": "Vista destinatario · scaduto"
     },
     "create": {
+        "addImage": "Aggiungi immagine",
+        "imageSlots": "{count}/20 immagini · puoi aggiungerne altre {remaining}",
+        "restrictDownload": "Limita il download",
+        "restrictDownloadHint": "Nasconde i pulsanti di download. Restano possibili screenshot e salvataggi tramite gli strumenti del browser. Le animazioni vengono mostrate come immagini fisse.",
         "title1": "Condividi segreti che",
         "title2": "svaniscono alla lettura.",
         "lede": "Incolla una password, un token o qualsiasi stringa sensibile. La cifriamo nel tuo browser e ti restituiamo un link monouso. La chiave di decifratura non tocca mai i nostri server — vive dopo il # nell'URL.",
@@ -151,6 +155,9 @@
         "ownSecretBody": "Aprirlo in questo browser lo brucerà per il destinatario. Chiudi la scheda se volevi solo verificare il link."
     },
     "revealed": {
+        "previewUnavailable": "Impossibile mostrare questa immagine.",
+        "retry": "Riprova",
+        "attachmentLoadFailed": "Impossibile caricare l’allegato.",
         "title1": "Eccolo.",
         "title2": "Non perderlo.",
         "lede": "Il payload cifrato è stato eliminato dai nostri server. Questa pagina è l'unico posto dove esiste ora — copialo nel password manager prima di chiudere la scheda.",
@@ -210,6 +217,9 @@
     },
     "tabsLegend": "Ciclo di vita del tuo segreto",
     "errors": {
+        "attachmentCount": "Ora puoi aggiungere al massimo {count} file.",
+        "imagesOnly": "A questa selezione si possono aggiungere solo immagini.",
+        "attachmentMetadata": "I metadati del file sono troppo grandi o non validi.",
         "linkMissingKey": "Manca la chiave di decifratura in questo link.",
         "linkKeyMismatch": "Questa chiave di decifratura non corrisponde al link del segreto.",
         "linkInvalidKey": "Chiave di decifratura non valida o danneggiata.",

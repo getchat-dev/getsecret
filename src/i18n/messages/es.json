@@ -27,6 +27,10 @@
         "burned": "Vista del destinatario · expirado"
     },
     "create": {
+        "addImage": "Añadir imagen",
+        "imageSlots": "{count}/20 imágenes · puedes añadir {remaining} más",
+        "restrictDownload": "Limitar las descargas",
+        "restrictDownloadHint": "Oculta los botones de descarga. Las capturas de pantalla y el guardado mediante herramientas del navegador siguen siendo posibles. Las animaciones se muestran como una imagen fija.",
         "title1": "Comparte secretos que",
         "title2": "se desvanecen al leerse.",
         "lede": "Pega una contraseña, token o cualquier cadena sensible. La ciframos en tu navegador y te devolvemos un enlace de un solo uso. La clave de descifrado nunca toca nuestros servidores — vive después del # en la URL.",
@@ -151,6 +155,9 @@
         "ownSecretBody": "Abrirlo en este navegador lo destruirá para el destinatario. Cierra la pestaña si solo querías comprobar el enlace."
     },
     "revealed": {
+        "previewUnavailable": "No se pudo mostrar esta imagen.",
+        "retry": "Reintentar",
+        "attachmentLoadFailed": "No se pudo cargar el archivo adjunto.",
         "title1": "Aquí está.",
         "title2": "No lo pierdas.",
         "lede": "La carga cifrada ha sido eliminada de nuestros servidores. Esta página es el único lugar donde existe este secreto ahora — cópialo a tu gestor de contraseñas antes de cerrar la pestaña.",
@@ -210,6 +217,9 @@
     },
     "tabsLegend": "Ciclo de vida de tu secreto",
     "errors": {
+        "attachmentCount": "Ahora puedes añadir como máximo {count} archivos.",
+        "imagesOnly": "Solo se pueden añadir imágenes a esta selección.",
+        "attachmentMetadata": "Los metadatos del archivo son demasiado grandes o no son válidos.",
         "linkMissingKey": "A este enlace le falta la clave de descifrado.",
         "linkKeyMismatch": "Esta clave de descifrado no coincide con el enlace del secreto.",
         "linkInvalidKey": "Clave de descifrado inválida o corrupta.",

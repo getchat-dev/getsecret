@@ -31,6 +31,10 @@
         "burned": "Recipient view · expired"
     },
     "create": {
+        "addImage": "Add image",
+        "imageSlots": "{count}/20 images · room for {remaining} more",
+        "restrictDownload": "Limit downloading",
+        "restrictDownloadHint": "Removes download controls. Screenshots and saving through browser tools remain possible. Animated images are shown as a still frame.",
         "title1": "Share secrets that",
         "title2": "vanish on read.",
         "lede": "Paste a password, token, or any sensitive string — or attach a file. We encrypt everything in your browser and hand back a single-use link. The decryption key never touches our servers — it lives after the # in the URL.",
@@ -155,6 +159,9 @@
         "ownSecretBody": "Opening it in this browser will burn it for the recipient. Close the tab if you only meant to verify the link."
     },
     "revealed": {
+        "previewUnavailable": "Cannot display this image.",
+        "retry": "Try again",
+        "attachmentLoadFailed": "Could not load the attachment.",
         "title1": "Here it is.",
         "title2": "Don't lose it.",
         "lede": "The encrypted payload has been deleted from our servers. This page is the only place this secret exists right now — copy it into your password manager or wherever it belongs before closing the tab.",
@@ -214,6 +221,9 @@
     },
     "tabsLegend": "Lifecycle of your secret",
     "errors": {
+        "attachmentCount": "You can add at most {count} files now.",
+        "imagesOnly": "Only images can be added to this selection.",
+        "attachmentMetadata": "File metadata is too large or invalid.",
         "linkMissingKey": "This link is missing its decryption key.",
         "linkKeyMismatch": "This decryption key does not match the secret link.",
         "linkInvalidKey": "Invalid or corrupted decryption key.",

@@ -27,24 +27,24 @@ function randomBytes(length: number): Uint8Array<ArrayBuffer> {
 describe('file-container', () => {
     it('round-trips a file with its metadata', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], key);
         const decoded = await decodeContainer(container, key);
 
-        expect(decoded.meta).toEqual(META);
-        expect(Array.from(decoded.bytes)).toEqual(Array.from(HELLO));
+        expect(decoded[0].meta).toEqual(META);
+        expect(Array.from(decoded[0].bytes)).toEqual(Array.from(HELLO));
     });
 
-    it('accepts ArrayBuffer input on encode', async () => {
+    it('round-trips bytes from an ArrayBuffer', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO.buffer, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO.buffer), meta: META }], key);
         const decoded = await decodeContainer(container, key);
 
-        expect(Array.from(decoded.bytes)).toEqual(Array.from(HELLO));
+        expect(Array.from(decoded[0].bytes)).toEqual(Array.from(HELLO));
     });
 
     it('embeds the magic + version in the framing header', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], key);
 
         expect(container[0]).toBe(0x42); // 'B'
         expect(container[1]).toBe(0x4e); // 'N'
@@ -55,11 +55,11 @@ describe('file-container', () => {
     it('handles an empty file', async () => {
         const key = randomKey();
         const meta: FileMeta = { filename: 'empty.bin', mime: 'application/octet-stream', size: 0 };
-        const container = await encodeContainer(new Uint8Array(0), meta, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(new Uint8Array(0)), meta: meta }], key);
         const decoded = await decodeContainer(container, key);
 
-        expect(decoded.meta).toEqual(meta);
-        expect(decoded.bytes.length).toBe(0);
+        expect(decoded[0].meta).toEqual(meta);
+        expect(decoded[0].bytes.length).toBe(0);
     });
 
     it('preserves every byte value in the file body', async () => {
@@ -68,10 +68,10 @@ describe('file-container', () => {
         for (let i = 0; i < 256; i += 1) all[i] = i;
         const meta: FileMeta = { filename: 'all.bin', mime: 'application/octet-stream', size: 256 };
 
-        const container = await encodeContainer(all, meta, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(all), meta: meta }], key);
         const decoded = await decodeContainer(container, key);
 
-        expect(Array.from(decoded.bytes)).toEqual(Array.from(all));
+        expect(Array.from(decoded[0].bytes)).toEqual(Array.from(all));
     });
 
     it('handles a 1 MiB file', async () => {
@@ -79,27 +79,29 @@ describe('file-container', () => {
         const big = randomBytes(1024 * 1024);
         const meta: FileMeta = { filename: 'blob.bin', mime: 'application/octet-stream', size: big.length };
 
-        const container = await encodeContainer(big, meta, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(big), meta: meta }], key);
         const decoded = await decodeContainer(container, key);
 
-        expect(decoded.bytes.length).toBe(big.length);
-        expect(Array.from(decoded.bytes.subarray(0, 64))).toEqual(Array.from(big.subarray(0, 64)));
-        expect(Array.from(decoded.bytes.subarray(big.length - 64))).toEqual(Array.from(big.subarray(big.length - 64)));
+        expect(decoded[0].bytes.length).toBe(big.length);
+        expect(Array.from(decoded[0].bytes.subarray(0, 64))).toEqual(Array.from(big.subarray(0, 64)));
+        expect(Array.from(decoded[0].bytes.subarray(big.length - 64))).toEqual(
+            Array.from(big.subarray(big.length - 64)),
+        );
     });
 
     it('preserves unicode in filename and MIME', async () => {
         const key = randomKey();
         const meta: FileMeta = { filename: 'договор.pdf', mime: 'application/pdf; charset=utf-8', size: 11 };
 
-        const container = await encodeContainer(HELLO, meta, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: meta }], key);
         const decoded = await decodeContainer(container, key);
 
-        expect(decoded.meta).toEqual(meta);
+        expect(decoded[0].meta).toEqual(meta);
     });
 
     it('rejects a container with bad magic', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], key);
         container[0] = 0;
 
         await expect(decodeContainer(container, key)).rejects.toThrow(/magic/);
@@ -107,7 +109,7 @@ describe('file-container', () => {
 
     it('rejects an unsupported version', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], key);
         container[3] = 0x99;
 
         await expect(decodeContainer(container, key)).rejects.toThrow(/version/);
@@ -115,7 +117,7 @@ describe('file-container', () => {
 
     it('rejects a tampered IV', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], key);
         container[4] ^= 0xff;
 
         await expect(decodeContainer(container, key)).rejects.toThrow(/decryption failed/);
@@ -123,7 +125,7 @@ describe('file-container', () => {
 
     it('rejects a tampered ciphertext byte', async () => {
         const key = randomKey();
-        const container = await encodeContainer(HELLO, META, key);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], key);
         container[container.length - 1] ^= 0xff;
 
         await expect(decodeContainer(container, key)).rejects.toThrow(/decryption failed/);
@@ -132,7 +134,7 @@ describe('file-container', () => {
     it('rejects decryption with the wrong key', async () => {
         const k1 = randomKey();
         const k2 = randomKey();
-        const container = await encodeContainer(HELLO, META, k1);
+        const container = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], k1);
 
         await expect(decodeContainer(container, k2)).rejects.toThrow(/decryption failed/);
     });
@@ -146,10 +148,69 @@ describe('file-container', () => {
 
     it('rejects encode and decode with an invalid key length', async () => {
         const shortKey = new Uint8Array(16);
-        await expect(encodeContainer(HELLO, META, shortKey)).rejects.toThrow(/key length/);
+        await expect(encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], shortKey)).rejects.toThrow(
+            /key length/,
+        );
 
         const validKey = randomKey();
-        const valid = await encodeContainer(HELLO, META, validKey);
+        const valid = await encodeContainer([{ bytes: new Uint8Array(HELLO), meta: META }], validKey);
         await expect(decodeContainer(valid, shortKey)).rejects.toThrow(/key length/);
+    });
+});
+
+// Independent writer for legacy fixtures and authenticated but malformed headers.
+async function fixture(header: unknown, body: Uint8Array<ArrayBuffer>, version = 2) {
+    const key = randomKey();
+    const json = new TextEncoder().encode(JSON.stringify(header));
+    const inner = new Uint8Array(4 + json.length + body.length);
+    new DataView(inner.buffer).setUint32(0, json.length);
+    inner.set(json, 4);
+    inner.set(body, 4 + json.length);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const imported = await crypto.subtle.importKey('raw', key, 'AES-GCM', false, ['encrypt']);
+    const encrypted = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, imported, inner));
+    return { key, container: new Uint8Array([0x42, 0x4e, 0x31, version, ...iv, ...encrypted]) };
+}
+
+describe('multi-file containers', () => {
+    it('reads an existing v1 file', async () => {
+        const { key, container } = await fixture(META, HELLO, 1);
+        expect(await decodeContainer(container, key)).toEqual([{ meta: META, bytes: HELLO }]);
+    });
+
+    it('round-trips 20 files including duplicate names and empty files in order', async () => {
+        const key = randomKey();
+        const files = Array.from({ length: 20 }, (_, size) => ({
+            meta: { filename: 'same.png', mime: 'image/png', size },
+            bytes: new Uint8Array(size).fill(size),
+        }));
+        const container = await encodeContainer(files, key);
+        expect(await decodeContainer(container, key)).toEqual(files);
+    });
+
+    it('checks counts and metadata before encoding', async () => {
+        const key = randomKey();
+        await expect(encodeContainer([], key)).rejects.toThrow(/count/);
+        await expect(encodeContainer(Array(21).fill({ meta: META, bytes: HELLO }), key)).rejects.toThrow(/count/);
+        await expect(encodeContainer([{ meta: { ...META, size: 1 }, bytes: HELLO }], key)).rejects.toThrow(/size/);
+        await expect(
+            encodeContainer([{ meta: { ...META, filename: 'a'.repeat(21000) }, bytes: HELLO }], key),
+        ).rejects.toThrow(/header/);
+    });
+
+    it.each(
+        [
+            [],
+            Array(21).fill(META),
+            [{ ...META, size: -1 }],
+            [{ ...META, size: 0.5 }],
+            [{ ...META, size: Number.MAX_SAFE_INTEGER + 1 }],
+            [{ ...META, size: 12 }],
+            [{ ...META, size: 10 }],
+            META,
+        ].map((header) => ({ header })),
+    )('rejects malformed authenticated metadata %#', async ({ header }) => {
+        const { key, container } = await fixture(header, HELLO);
+        await expect(decodeContainer(container, key)).rejects.toThrow();
     });
 });
