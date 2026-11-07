@@ -1,9 +1,10 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { FormatSelect } from '@/components/secret/format-select';
 import { GeneratedLink } from '@/components/secret/generated-link';
+import { ImageLightbox } from '@/components/secret/image-lightbox';
 // Hidden for now; re-enable by uncommenting this import and the two
 // <LifecycleSteps activeStep={activeStep} /> usages below.
 // import { LifecycleSteps } from '@/components/secret/lifecycle-steps';
@@ -85,6 +86,7 @@ export function CreateForm({
     const t = useTranslations('create');
     const tErrors = useTranslations('errors');
     const tHints = useTranslations('hints');
+    const tImages = useTranslations('revealed');
 
     const [secret, setSecret] = useState('');
     const [link, setLink] = useState('');
@@ -97,6 +99,11 @@ export function CreateForm({
     const [maxViews, setMaxViews] = useState<number | null>(DEFAULT_MAX_VIEWS);
     const [password, setPassword] = useState('');
     const [files, setFiles] = useState<File[]>([]);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const previewFiles = useMemo(
+        () => files.map((file) => ({ blob: file, filename: file.name, mime: file.type })),
+        [files],
+    );
     const filesRef = useRef<File[]>([]);
     const imageMode = files.length > 0 && isImageCandidate(files[0]);
     const maxFiles = remainingFileSlots(files);
@@ -159,6 +166,7 @@ export function CreateForm({
     }, [files]);
 
     function replaceFiles(next: File[]) {
+        setLightboxIndex(null);
         filesRef.current = next;
         setFiles(next);
         if (!next.length) setRestrictDownload(false);
@@ -421,26 +429,38 @@ export function CreateForm({
                                 // biome-ignore lint/suspicious/noArrayIndexKey: rows have no local state; previews are keyed by File identity.
                                 <div className={styles.fileInfo} key={index}>
                                     {imagePreviewUrls.get(file) ? (
-                                        // biome-ignore lint/performance/noImgElement: local decrypted blob URL.
-                                        <img
-                                            src={imagePreviewUrls.get(file)}
-                                            alt={file.name}
-                                            className={styles.fileInfoPreview}
-                                            onError={() =>
-                                                setImagePreviewUrls((urls) => {
-                                                    const next = new Map(urls);
-                                                    next.delete(file);
-                                                    return next;
-                                                })
-                                            }
-                                        />
+                                        <button
+                                            type="button"
+                                            className={styles.filePreviewButton}
+                                            aria-label={tImages('openImage', { filename: file.name })}
+                                            aria-haspopup="dialog"
+                                            onClick={() => setLightboxIndex(index)}
+                                        >
+                                            {/* biome-ignore lint/performance/noImgElement: local file preview. */}
+                                            <img
+                                                src={imagePreviewUrls.get(file)}
+                                                alt={file.name}
+                                                className={styles.fileInfoPreview}
+                                                onError={() =>
+                                                    setImagePreviewUrls((urls) => {
+                                                        const next = new Map(urls);
+                                                        next.delete(file);
+                                                        return next;
+                                                    })
+                                                }
+                                            />
+                                        </button>
                                     ) : (
                                         <FileIcon size={16} />
                                     )}
-                                    <span className={styles.fileInfoName}>{file.name}</span>
-                                    <span className={styles.fileInfoMeta}>
-                                        {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
-                                    </span>
+                                    <div className={styles.fileInfoDetails}>
+                                        <span className={styles.fileInfoName} title={file.name}>
+                                            {file.name}
+                                        </span>
+                                        <span className={styles.fileInfoMeta}>
+                                            {formatBytes(file.size)} · {file.type || 'application/octet-stream'}
+                                        </span>
+                                    </div>
                                     <button
                                         type="button"
                                         className={`${btn.btn} ${btn.btnGhost} ${btn.btnDanger} ${btn.btnIconSm}`}
@@ -483,6 +503,14 @@ export function CreateForm({
                                 </>
                             ) : null}
                         </div>
+                    ) : null}
+                    {lightboxIndex !== null ? (
+                        <ImageLightbox
+                            files={previewFiles}
+                            initialIndex={lightboxIndex}
+                            restricted={restrictDownload}
+                            onClose={() => setLightboxIndex(null)}
+                        />
                     ) : null}
                     {enableFileAttachments ? (
                         <input
