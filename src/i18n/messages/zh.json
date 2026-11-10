@@ -116,9 +116,8 @@
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
-        "title": "有人给你发了一条阅后即焚的消息。",
-        "titleMulti": "有人给你发了一条加密消息。",
-        "lede": "你只能打开一次。之后消息将永远消失 — 关闭标签页前请复制或记住所需的内容。",
+        "title": "发送者确保了这条秘密不会留在聊天记录里。",
+        "lede": "打开后秘密即被销毁。请趁它还在屏幕上时复制所需内容。",
         "ledeMulti": "这条消息你还可以打开 {count, number} 次。之后将永久消失 — 趁现在复制你需要的内容。",
         "ledeUnlimited": "只要链接还有效,就可以多次打开。链接过期后,消息就会消失。",
         "filename": "encrypted_payload",

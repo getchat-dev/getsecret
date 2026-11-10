@@ -1,0 +1,73 @@
+name: burnotes-umami
+
+# Umami self-hosted analytics.
+#
+# This file is the base and works on any host: it only needs `burnotes-infra`
+# (for Postgres) and publishes Umami on localhost. Traefik routing is opt-in,
+# in `docker-compose.umami.traefik.yml`:
+#
+#   local:      docker compose -f docker-compose.umami.yml up -d
+#   production: docker compose -f docker-compose.umami.yml \
+#                              -f docker-compose.umami.traefik.yml up -d
+#
+# The split is deliberate and the direction matters: a Compose override can add
+# a network to a service but cannot take one away, so the external `web` network
+# has to live in the override rather than here. Otherwise every host without
+# Traefik would fail on a missing network.
+#
+# WARNING: Umami's tracker collects URL hash values by default. Burnotes keeps
+# the decryption key in the URL fragment, so the tracker must never be loaded on
+# `/s/[id]` — see the "Umami" section of README.md before adding any snippet to
+# the app.
+
+networks:
+  infra:
+    external: true
+    name: burnotes-infra
+
+services:
+  umami:
+    # `3.3.1` and `postgresql-latest` are the same digest — v3 dropped the
+    # `postgresql-` prefix from version tags. Pinned so an upgrade is a
+    # deliberate edit, not a silent `pull`.
+    image: docker.umami.is/umami-software/umami:3.3.1
+    init: true
+    restart: unless-stopped
+    environment:
+      DATABASE_TYPE: postgresql
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:?set UMAMI_DB_PASSWORD in .env}@postgres:5432/umami
+      # Signs authentication tokens. Must stay stable across restarts — a value
+      # that changes (or an unset one falling back to a generated default)
+      # invalidates every session. `:?` makes a missing value fail loudly.
+      APP_SECRET: ${UMAMI_APP_SECRET:?set UMAMI_APP_SECRET in .env}
+      # No outbound calls (website favicon fetching, telemetry).
+      PRIVATE_MODE: "true"
+    # Same resource ceiling as the app and Postgres containers. Umami is a
+    # Next.js server; the Node heap is left at its default because the image
+    # does not expose a NODE_OPTIONS hook the way the app image does.
+    mem_limit: 512m
+    pids_limit: 200
+    cpus: 1.0
+    # Note: no `read_only: true` here, unlike the app container — the Next.js
+    # server writes its own `.next/cache` and Prisma writes during migration.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Bound to the loopback interface, so this is reachable from the host but
+    # not from the network. Behind Traefik it stays harmless; drop it there if
+    # you would rather publish nothing at all.
+    ports:
+      - "127.0.0.1:${UMAMI_PORT:-3001}:3000"
+    healthcheck:
+      # Prisma runs the schema migration on first boot, hence the long
+      # start_period — the server does not answer until it finishes.
+      test:
+        - CMD-SHELL
+        - "wget -qO- --timeout=3 http://127.0.0.1:3000/api/heartbeat > /dev/null || exit 1"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - infra

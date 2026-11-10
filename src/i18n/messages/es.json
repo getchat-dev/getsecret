@@ -116,9 +116,8 @@
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
-        "title": "Alguien te envió un mensaje de un solo uso.",
-        "titleMulti": "Alguien te envió un mensaje cifrado.",
-        "lede": "Solo puedes abrirlo una vez. Después, el mensaje desaparecerá para siempre — copia o memoriza lo que necesites antes de cerrar la pestaña.",
+        "title": "Quien te lo envía se aseguró de que este secreto no se quede en el historial del chat.",
+        "lede": "En cuanto lo abras, el secreto se destruirá. Copia lo que necesites mientras esté en pantalla.",
         "ledeMulti": "Puedes abrir este mensaje {count, plural, one {# vez más} other {# veces más}}. Después desaparecerá — copia lo que necesites mientras puedas.",
         "ledeUnlimited": "Este enlace se puede abrir tantas veces como quieras, mientras siga vigente. Cuando el plazo se agote, el mensaje desaparecerá.",
         "filename": "encrypted_payload",

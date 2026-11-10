@@ -13,15 +13,15 @@ type Props = {
  * URLs without a locale segment) updates these texts in place, instead of
  * leaving the server-rendered English copy frozen on screen.
  *
- * Title and lede branch on the secret's reads policy so the recipient sees
- * the right expectation: a one-shot link reads as "one-time message", while
- * multi-read and unlimited links use neutral copy and explain how many
- * opens are left.
+ * The title is the same for every link: it credits the sender for keeping
+ * the secret out of the chat. The lede branches on the reads policy so the
+ * recipient knows what opening does: the last (or only) read burns it,
+ * multi-read links say how many opens are left, unlimited ones run until
+ * expiry.
  */
 export function RevealIntro({ readsRemaining }: Props) {
     const t = useTranslations('reveal');
 
-    const titleKey = readsRemaining === 1 ? 'title' : 'titleMulti';
     const lede =
         readsRemaining === null
             ? t('ledeUnlimited')
@@ -31,7 +31,7 @@ export function RevealIntro({ readsRemaining }: Props) {
 
     return (
         <>
-            <h1 className="display">{t(titleKey)}</h1>
+            <h1 className="display">{t('title')}</h1>
             <p className="lede">{lede}</p>
         </>
     );

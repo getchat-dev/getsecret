@@ -116,9 +116,8 @@
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
-        "title": "Quelqu'un vous a envoyé un message à usage unique.",
-        "titleMulti": "Quelqu'un vous a envoyé un message chiffré.",
-        "lede": "Vous ne pouvez l'ouvrir qu'une seule fois. Le message disparaîtra ensuite pour toujours — copiez ou retenez ce dont vous avez besoin avant de fermer l'onglet.",
+        "title": "L'expéditeur a veillé à ce que ce secret ne reste pas dans l'historique de vos échanges.",
+        "lede": "Dès que vous l'ouvrez, le secret est détruit. Copiez ce dont vous avez besoin tant qu'il est à l'écran.",
         "ledeMulti": "Vous pouvez ouvrir ce message encore {count, plural, one {# fois} other {# fois}}. Après, il disparaîtra — copiez ce dont vous avez besoin tant que vous le pouvez.",
         "ledeUnlimited": "Ce lien peut être ouvert autant de fois que vous voulez tant qu'il reste valide. Une fois expiré, le message disparaîtra.",
         "filename": "encrypted_payload",

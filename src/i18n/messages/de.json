@@ -116,9 +116,8 @@
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
-        "title": "Jemand hat dir eine Einmal-Nachricht geschickt.",
-        "titleMulti": "Jemand hat dir eine verschlüsselte Nachricht geschickt.",
-        "lede": "Du kannst sie nur einmal öffnen. Danach ist die Nachricht für immer weg — kopiere oder merke dir das Wichtige, bevor du den Tab schließt.",
+        "title": "Der Absender hat dafür gesorgt, dass dieses Geheimnis nicht im Chatverlauf bleibt.",
+        "lede": "Sobald du es öffnest, wird das Geheimnis vernichtet. Kopiere, was du brauchst, solange es angezeigt wird.",
         "ledeMulti": "Du kannst diese Nachricht noch {count, plural, one {# Mal} other {# Mal}} öffnen. Danach ist sie weg — kopiere, was du brauchst, solange du kannst.",
         "ledeUnlimited": "Der Link kann beliebig oft geöffnet werden, solange er gültig ist. Wenn die Zeit abläuft, ist die Nachricht weg.",
         "filename": "encrypted_payload",

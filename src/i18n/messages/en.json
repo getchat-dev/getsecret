@@ -120,9 +120,8 @@
     },
     "reveal": {
         "eyebrowSuffix": " · /s/k4n9x2ppqlmt",
-        "title": "Someone sent you a one-time message.",
-        "titleMulti": "Someone sent you an encrypted message.",
-        "lede": "You can open it only once. After that the message is gone forever — copy or memorize what you need before you close the tab.",
+        "title": "The sender made sure this secret won't stay in your chat history.",
+        "lede": "Once you open it, the secret burns. Copy what you need while it's on screen.",
         "ledeMulti": "You can open this message {count, plural, one {# more time} other {# more times}}. After that it's gone forever — copy what you need while you still can.",
         "ledeUnlimited": "This link can be opened as many times as you need, until it expires. Once the timer runs out, the message is gone.",
         "filename": "encrypted_payload",

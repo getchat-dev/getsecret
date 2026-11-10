@@ -13,6 +13,7 @@ const baseStrokeProps = {
 };
 
 function strokeIcon(defaultSize: number, content: React.ReactNode, overrides?: Partial<typeof baseStrokeProps>) {
+    // biome-ignore lint/correctness/noComponentHookFactories: Icons are created once at module scope, so their identity is stable.
     const Component = ({ size = defaultSize, ...rest }: IconProps) => (
         <svg
             width={size}

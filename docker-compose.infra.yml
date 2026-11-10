@@ -7,6 +7,7 @@ networks:
 
 volumes:
   valkey-data:
+  postgres-data:
 
 services:
   valkey:
@@ -38,3 +39,45 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
+
+  postgres:
+    image: postgres:17.11-alpine
+    restart: unless-stopped
+    # Resource ceiling, same shape as the app container. Postgres does not read
+    # cgroup limits itself — its default `shared_buffers` of 128MB happens to be
+    # the usual 25% of this ceiling, so raising or lowering `mem_limit` means
+    # revisiting `shared_buffers` by hand. `pids_limit` has to clear the
+    # per-connection backends (100 by default) plus auxiliary and worker
+    # processes.
+    mem_limit: 512m
+    pids_limit: 200
+    cpus: 1.0
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-burnotes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-burnotes-dev-secret-please-change}
+      POSTGRES_DB: ${POSTGRES_DB:-burnotes}
+      # Applied by initdb on the *first* start only — it cannot be turned on
+      # later without re-initialising the cluster, so it is set from day one.
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - infra
+    # Like Valkey, Postgres is not exposed to the host by default — the app
+    # reaches it via the `burnotes-infra` network. Uncomment for local
+    # `pnpm dev` on the host:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+    healthcheck:
+      # CMD-SHELL (not CMD) so ${POSTGRES_USER}/${POSTGRES_DB} expand inside the
+      # container; `$$` escapes them past Compose interpolation. The explicit
+      # `-h 127.0.0.1` matters: during first-run initdb the entrypoint brings up
+      # a temporary socket-only server, and a socket-based probe would report
+      # healthy before the real TCP listener exists.
+      test:
+        - CMD-SHELL
+        - 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"'
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s

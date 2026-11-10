@@ -2,7 +2,7 @@
     "name": "burnotes",
     "version": "2.52.1",
     "private": true,
-    "packageManager": "pnpm@10.33.2",
+    "packageManager": "pnpm@10.34.9",
     "scripts": {
         "dev": "next dev",
         "predev": "npm run gen:faq",
@@ -25,40 +25,41 @@
         "gen:faq": "node scripts/faq-schema.mjs"
     },
     "dependencies": {
-        "@aws-sdk/client-s3": "^3.1131.0",
-        "@aws-sdk/s3-request-presigner": "^3.1131.0",
+        "@aws-sdk/client-s3": "^3.1166.0",
+        "@aws-sdk/s3-request-presigner": "^3.1166.0",
         "@mdx-js/loader": "^3.1.1",
         "@mdx-js/react": "^3.1.1",
-        "@next/mdx": "^16.3.5",
-        "dompurify": "^3.4.15",
-        "heic-to": "^1.5.2",
+        "@next/mdx": "^16.4.6",
+        "dompurify": "^3.4.17",
+        "heic-to": "^1.6.7",
         "highlight.js": "^11.12.0",
-        "ioredis": "^5.10.1",
-        "next": "16.3.5",
-        "next-intl": "^4.14.4",
+        "ioredis": "^5.11.1",
+        "next": "16.4.6",
+        "next-intl": "^4.14.10",
         "next-themes": "^0.4.6",
         "qrcode": "^1.5.4",
-        "react": "19.3.0",
-        "react-dom": "19.3.0",
+        "react": "19.3.1",
+        "react-dom": "19.3.1",
         "remark-frontmatter": "^5.0.0",
         "remark-gfm": "^4.0.1",
-        "remark-mdx-frontmatter": "^5.2.0",
-        "typescript": "5.9.3"
+        "remark-mdx-frontmatter": "^6.0.0",
+        "typescript": "6.0.3"
     },
     "devDependencies": {
-        "@biomejs/biome": "^2.5.13",
+        "@biomejs/biome": "^2.6.6",
         "@types/ioredis-mock": "^8.2.8",
         "@types/mdx": "^2.0.14",
-        "@types/node": "22.20.2",
+        "@types/node": "22.20.5",
         "@types/qrcode": "^1.5.6",
         "@types/react": "19.3.0",
         "@types/react-dom": "19.3.0",
         "aws-sdk-client-mock": "^4.1.0",
-        "eslint": "10.10.0",
-        "eslint-config-next": "16.3.5",
+        "eslint": "10.14.0",
+        "eslint-config-next": "16.4.6",
         "ioredis-mock": "^8.13.1",
-        "jsdom": "^30.0.1",
-        "vitest": "^5.0.0"
+        "jsdom": "^31.0.0",
+        "vite": "^8.3.7",
+        "vitest": "^5.1.0"
     },
     "license": "AGPL-3.0-or-later",
     "author": "Evgenij Turin <et@markuper.com>",
@@ -68,6 +69,9 @@
             "@swc/core",
             "sharp",
             "unrs-resolver"
-        ]
+        ],
+        "overrides": {
+            "minimatch@>=7.0.0 <11.0.1": "^11.0.6"
+        }
     }
 }

@@ -1,0 +1,57 @@
+# Traefik routing for Umami — overlay on top of `docker-compose.umami.yml`:
+#
+#   docker compose -f docker-compose.umami.yml \
+#                  -f docker-compose.umami.traefik.yml up -d
+#
+# Kept separate so the base file stays usable on a host with no Traefik: an
+# override can add the external proxy network, but nothing can remove it.
+#
+# Parameterised because the two Traefik instances this project meets do not
+# speak the same dialect — the production one uses the `web`/`websecure`
+# entrypoints on a network called `web`, the shared local one (see
+# `server/config/traefik/traefik.yml`) uses `http`/`https` on
+# `mppm_b2b_infra_bitrix`. The defaults below are the production values, so an
+# unset variable keeps the deploy behaving as it did. Same approach as the
+# shared server's own service files, which drive Traefik from
+# `${COMPOSE_NETWORK_NAME}` and `${TRAEFIK_CERT_RESOLVER}`.
+#
+# Local `.env`:
+#   TRAEFIK_NETWORK=mppm_b2b_infra_bitrix
+#   TRAEFIK_ENTRYPOINT_HTTP=http
+#   TRAEFIK_ENTRYPOINT_HTTPS=https
+#   TRAEFIK_CERT_RESOLVER=          # empty: no ACME, Traefik's own certificate
+#   UMAMI_HOST=umami.burnotes.local # needs a matching line in /etc/hosts
+
+networks:
+  proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK:-web}
+
+services:
+  umami:
+    networks:
+      - proxy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-web}
+
+      - traefik.http.services.umami.loadbalancer.server.port=3000
+
+      # HTTPS router
+      - traefik.http.routers.umami.rule=Host(`${UMAMI_HOST:?set UMAMI_HOST in .env}`)
+      - traefik.http.routers.umami.entrypoints=${TRAEFIK_ENTRYPOINT_HTTPS:-websecure}
+      - traefik.http.routers.umami.tls=true
+      # Empty means "no ACME, serve whatever certificate Traefik already has",
+      # which is what the shared local instance does — its own service files
+      # pass an empty `TRAEFIK_CERT_RESOLVER` the same way.
+      - traefik.http.routers.umami.tls.certresolver=${TRAEFIK_CERT_RESOLVER-le}
+
+      # HTTP router -> redirect to HTTPS
+      - traefik.http.routers.umamiinsecure.rule=Host(`${UMAMI_HOST}`)
+      - traefik.http.routers.umamiinsecure.entrypoints=${TRAEFIK_ENTRYPOINT_HTTP:-web}
+      - traefik.http.routers.umamiinsecure.middlewares=umami-redirect-to-https
+
+      # Own redirect middleware rather than the app stack's `redirect-to-https`:
+      # that one disappears from Traefik whenever the app stack is down.
+      - traefik.http.middlewares.umami-redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.umami-redirect-to-https.redirectscheme.permanent=true
