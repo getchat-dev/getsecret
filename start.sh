@@ -128,7 +128,7 @@ case "$ACTION" in
     werf compose up --dev --docker-compose-options="$DOCKER_COMPOSE_OPTIONS" --docker-compose-command-options="$DOCKER_COMPOSE_COMMAND_OPTIONS"
     ;;
   build)
-    werf compose build "${BUILD_IMAGES[@]}" --dev --docker-compose-options="$DOCKER_COMPOSE_OPTIONS"
+    werf build "${BUILD_IMAGES[@]}" --dev
     ;;
   down)
     werf compose down --dev --docker-compose-options="$DOCKER_COMPOSE_OPTIONS" --docker-compose-command-options="$DOCKER_COMPOSE_COMMAND_OPTIONS"
