@@ -43,7 +43,7 @@
         "remark-frontmatter": "^5.0.0",
         "remark-gfm": "^4.0.1",
         "remark-mdx-frontmatter": "^6.0.0",
-        "typescript": "6.0.3"
+        "typescript": "7.0.2"
     },
     "devDependencies": {
         "@biomejs/biome": "^2.6.6",
