@@ -28,9 +28,10 @@ One-time secret sharing app on Node.js + Next.js.
 
 ## Local run
 
-Burnotes uses **pnpm**. The exact version is pinned via `packageManager` in `package.json` and resolved through Corepack — `corepack enable` (once per machine) gets you the right `pnpm` on `PATH`.
+The production image uses **Node.js 26**. Install Corepack to run the pnpm version pinned in `package.json`.
 
 ```bash
+npm install --global corepack@0.36.0
 corepack enable
 pnpm install
 pnpm hooks:install

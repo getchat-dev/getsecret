@@ -12,7 +12,7 @@ configVersion: 1
 
 ---
 image: builder
-from: node:22-alpine
+from: node:26.13.0-alpine3.24
 imageSpec:
   config:
     workingDir: /app
@@ -22,14 +22,15 @@ shell:
   beforeInstall:
     # Native postinstall fallbacks (sharp, @swc/core, etc. mostly ship
     # prebuilt musl binaries, but keep these as a deterministic safety net).
-    # `libc6-compat` provides the glibc shim some prebuilt binaries link
+    # `gcompat` provides the glibc shim some prebuilt binaries link
     # against. Corepack activates the pnpm version pinned in package.json's
     # `packageManager` field.
     # bash в дополнение к BusyBox sh — нужен для удобства exec'а в dev-контейнер
     # (`docker compose exec app bash`), для скриптов с bash-only синтаксисом и
     # для отладки. В runtime-образе `app` его сознательно нет: меньше шелла —
     # меньше живущих-с-земли при потенциальном RCE.
-    - apk add --no-cache bash python3 make g++ libc6-compat
+    - apk add --no-cache bash python3 make g++ gcompat
+    - npm install --global corepack@0.36.0
     - corepack enable
   install:
     - cd /app
@@ -82,7 +83,7 @@ git:
 
 ---
 image: app
-from: node:22-alpine
+from: node:26.13.0-alpine3.24
 imageSpec:
   config:
     user: burnotes
